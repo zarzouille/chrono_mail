@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Outil de création de countdown</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Créer votre countdown</h1>
+    <form id="countdown-form">
+        <label for="end-date">Date de fin :</label>
+        <input type="date" id="end-date" required>
+
+        <label for="bg-color">Couleur de fond :</label>
+        <input type="color" id="bg-color" value="#000000">
+
+        <label for="text-color">Couleur du texte :</label>
+        <input type="color" id="text-color" value="#ffffff">
+
+        <label for="font-size">Taille de la police :</label>
+        <input type="range" id="font-size" min="10" max="50" value="30">
+
+        <button type="submit">Générer le countdown</button>
+    </form>
+
+    <div id="preview"></div>
+    <div id="result"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
