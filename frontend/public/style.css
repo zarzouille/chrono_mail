@@ -227,3 +227,35 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .btn-google:hover { background:var(--surface2); box-shadow:var(--shadow-m); }
 .auth-divider { display:flex; align-items:center; gap:12px; margin:4px 0 16px; color:var(--muted2); font-size:12px; font-weight:500; }
 .auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* PRICING PAGE */
+.pricing-layout { max-width:1100px; margin:0 auto; padding:72px 48px; }
+.pricing-header { text-align:center; margin-bottom:56px; }
+.pricing-title { font-size:42px; font-weight:800; letter-spacing:-1px; margin-bottom:12px; }
+.pricing-subtitle { font-size:17px; color:var(--muted); max-width:480px; margin:0 auto 28px; }
+.pricing-toggle { display:flex; align-items:center; gap:12px; justify-content:center; }
+.toggle-switch { width:44px; height:24px; background:var(--border2); border-radius:100px; cursor:pointer; position:relative; transition:background .2s; }
+.toggle-switch.active { background:var(--accent); }
+.toggle-knob { width:18px; height:18px; background:white; border-radius:50%; position:absolute; top:3px; left:3px; transition:transform .2s; box-shadow:var(--shadow-s); }
+.toggle-switch.active .toggle-knob { transform:translateX(20px); }
+.saving-badge { background:var(--green-l); color:var(--green); border:1px solid #bbf7d0; border-radius:100px; padding:2px 8px; font-size:11px; font-weight:700; margin-left:4px; }
+.pricing-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-bottom:72px; align-items:start; }
+.pricing-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-xl); padding:28px; position:relative; box-shadow:var(--shadow-xs); }
+.pricing-card.featured { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), var(--shadow-l); }
+.pricing-popular-badge { position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--accent); color:white; font-size:11px; font-weight:700; padding:4px 14px; border-radius:100px; white-space:nowrap; }
+.pricing-plan-name { font-size:16px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+.pricing-price-row { display:flex; align-items:baseline; gap:4px; margin-bottom:8px; }
+.pricing-price { font-size:44px; font-weight:800; letter-spacing:-2px; }
+.pricing-period { font-size:15px; color:var(--muted); font-weight:500; }
+.pricing-desc { font-size:14px; color:var(--muted); line-height:1.6; }
+.pricing-features { display:flex; flex-direction:column; gap:10px; }
+.pricing-feature { font-size:14px; color:var(--text2); }
+.pricing-feature.muted { color:var(--muted2); }
+
+/* FAQ */
+.pricing-faq { border-top:1px solid var(--border); padding-top:56px; }
+.faq-title { font-size:24px; font-weight:800; letter-spacing:-0.5px; margin-bottom:28px; }
+.faq-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:24px; }
+.faq-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-l); padding:20px; }
+.faq-q { font-size:14px; font-weight:700; margin-bottom:8px; }
+.faq-a { font-size:13.5px; color:var(--muted); line-height:1.7; }

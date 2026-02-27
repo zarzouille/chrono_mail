@@ -483,3 +483,35 @@ async function openBillingPortal() {
         showToast('Paiement annulé');
     }
 })();
+
+// ============================================================
+// PRICING — toggle mensuel/annuel
+// ============================================================
+let billingYearly = false;
+
+function toggleBilling() {
+    billingYearly = !billingYearly;
+    const toggle = document.getElementById('billing-toggle');
+    const labelM = document.getElementById('toggle-label-monthly');
+    const labelY = document.getElementById('toggle-label-yearly');
+
+    toggle.classList.toggle('active', billingYearly);
+    labelM.style.fontWeight = billingYearly ? '400' : '700';
+    labelM.style.color      = billingYearly ? 'var(--muted)' : 'var(--text)';
+    labelY.style.fontWeight = billingYearly ? '700' : '400';
+    labelY.style.color      = billingYearly ? 'var(--text)' : 'var(--muted)';
+
+    document.getElementById('pro-price').textContent      = billingYearly ? '6.58€' : '9€';
+    document.getElementById('pro-period').textContent     = billingYearly ? '/mois (facturé 79€/an)' : '/mois';
+    document.getElementById('business-price').textContent = billingYearly ? '20.75€' : '29€';
+    document.getElementById('business-period').textContent= billingYearly ? '/mois (facturé 249€/an)' : '/mois';
+}
+
+function handlePricingCta(plan) {
+    if (!isLoggedIn()) {
+        showPage('register');
+        return;
+    }
+    const key = billingYearly ? `${plan}_yearly` : `${plan}_monthly`;
+    upgradePlan(key);
+}
