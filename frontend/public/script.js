@@ -440,3 +440,46 @@ updateNavAuth();
         }
     }
 })();
+
+// ============================================================
+// STRIPE — checkout
+// ============================================================
+async function upgradePlan(priceKey) {
+    try {
+        showToast('⏳ Redirection vers le paiement...');
+        const res  = await authFetch('/stripe/checkout', {
+            method: 'POST',
+            body:   JSON.stringify({ priceKey }),
+        });
+        const data = await res.json();
+        if (data.url) window.location.href = data.url;
+        else showToast('❌ ' + (data.error || 'Erreur'));
+    } catch (err) {
+        showToast('❌ Erreur réseau');
+    }
+}
+
+async function openBillingPortal() {
+    try {
+        const res  = await authFetch('/stripe/portal', { method: 'POST' });
+        const data = await res.json();
+        if (data.url) window.location.href = data.url;
+        else showToast('❌ ' + (data.error || 'Erreur'));
+    } catch (err) {
+        showToast('❌ Erreur réseau');
+    }
+}
+
+// Gérer le retour depuis Stripe Checkout
+(function handleCheckoutReturn() {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('checkout');
+    if (status === 'success') {
+        window.history.replaceState({}, document.title, '/');
+        showToast('🎉 Abonnement activé !');
+        if (isLoggedIn()) showPage('dashboard');
+    } else if (status === 'cancelled') {
+        window.history.replaceState({}, document.title, '/');
+        showToast('Paiement annulé');
+    }
+})();
