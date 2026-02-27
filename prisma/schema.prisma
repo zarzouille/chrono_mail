@@ -6,13 +6,19 @@ datasource db {
   provider = "postgresql"
 }
 
-// ── Utilisateur ──────────────────────────────────────────────────
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  plan      Plan     @default(FREE)
+  id       String  @id @default(cuid())
+  email    String  @unique
+  name     String?
+  password String
+  plan     Plan    @default(FREE)
+
+  // Stripe
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -20,7 +26,6 @@ model User {
   impressions Impression[]
 }
 
-// ── Countdown ────────────────────────────────────────────────────
 model Countdown {
   id     String @id @default(cuid())
   userId String
@@ -30,19 +35,15 @@ model Countdown {
   endDate  DateTime
   timezone String   @default("Europe/Paris")
 
-  // Apparence
   bgColor   String @default("#ffffff")
   textColor String @default("#2563eb")
   fontSize  Int    @default(36)
   width     Int    @default(400)
 
-  // Expiration
   expiredBehavior ExpiredBehavior @default(SHOW_ZEROS)
   expiredText     String?
   expiredImageUrl String?
-
-  // Lien au clic (Pro+)
-  clickUrl String?
+  clickUrl        String?
 
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -53,7 +54,6 @@ model Countdown {
   @@index([userId])
 }
 
-// ── Impression ───────────────────────────────────────────────────
 model Impression {
   id          String    @id @default(cuid())
   countdownId String
@@ -70,7 +70,6 @@ model Impression {
   @@index([createdAt])
 }
 
-// ── Enums ────────────────────────────────────────────────────────
 enum Plan {
   FREE
   PRO
