@@ -259,3 +259,8 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .faq-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-l); padding:20px; }
 .faq-q { font-size:14px; font-weight:700; margin-bottom:8px; }
 .faq-a { font-size:13.5px; color:var(--muted); line-height:1.7; }
+
+/* PRICING BOUTONS */
+.pricing-btn { width:100%; justify-content:center; margin:20px 0; }
+.plan-chip-pro      { background:#eff4ff; color:var(--accent); border:1px solid #c7d7fd; }
+.plan-chip-business { background:#fdf4ff; color:#7c3aed; border:1px solid #e9d5ff; }

@@ -148,7 +148,7 @@
                     <div class="pricing-period">/mois</div>
                 </div>
                 <div class="pricing-desc">Pour découvrir et tester chrono.mail</div>
-                <button class="btn btn-ghost" style="width:100%;justify-content:center;margin:20px 0" onclick="showPage('register')">Commencer gratuitement</button>
+                <button class="btn btn-ghost pricing-btn" id="cta-free" onclick="showPage('register')" style="width:100%;justify-content:center;margin:20px 0">Commencer gratuitement</button>
                 <div class="pricing-features">
                     <div class="pricing-feature">✓ 3 countdowns actifs</div>
                     <div class="pricing-feature">✓ GIF animé standard</div>
@@ -170,7 +170,7 @@
                     <div class="pricing-period" id="pro-period">/mois</div>
                 </div>
                 <div class="pricing-desc">Pour les marketeurs et créateurs de contenu</div>
-                <button class="btn btn-primary" style="width:100%;justify-content:center;margin:20px 0" onclick="handlePricingCta('pro')">Commencer avec Pro →</button>
+                <button class="btn btn-primary pricing-btn" id="cta-pro" onclick="handlePricingCta('pro')" style="width:100%;justify-content:center;margin:20px 0">Commencer avec Pro →</button>
                 <div class="pricing-features">
                     <div class="pricing-feature">✓ Countdowns illimités</div>
                     <div class="pricing-feature">✓ GIF animé haute qualité</div>
@@ -191,7 +191,7 @@
                     <div class="pricing-period" id="business-period">/mois</div>
                 </div>
                 <div class="pricing-desc">Pour les agences et équipes marketing</div>
-                <button class="btn btn-ghost" style="width:100%;justify-content:center;margin:20px 0" onclick="handlePricingCta('business')">Commencer avec Business →</button>
+                <button class="btn btn-ghost pricing-btn" id="cta-business" onclick="handlePricingCta('business')" style="width:100%;justify-content:center;margin:20px 0">Commencer avec Business →</button>
                 <div class="pricing-features">
                     <div class="pricing-feature">✓ Tout ce qui est inclus dans Pro</div>
                     <div class="pricing-feature">✓ White-label (votre domaine)</div>
@@ -207,23 +207,8 @@
 
         <div class="pricing-faq">
             <div class="faq-title">Questions fréquentes</div>
-            <div class="faq-grid">
-                <div class="faq-item">
-                    <div class="faq-q">Puis-je changer de plan à tout moment ?</div>
-                    <div class="faq-a">Oui, vous pouvez passer à un plan supérieur ou inférieur à tout moment. Le changement est effectif immédiatement.</div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-q">Les GIFs fonctionnent-ils dans tous les clients email ?</div>
-                    <div class="faq-a">Oui — Gmail, Apple Mail, Yahoo, Outlook 2013+, iOS Mail et tous les grands ESP. Outlook 2007-2010 affiche la première frame statique.</div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-q">Que se passe-t-il quand un countdown expire ?</div>
-                    <div class="faq-a">Par défaut, le GIF affiche 00:00:00:00. Vous pouvez configurer un texte personnalisé ou masquer l'image.</div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-q">Y a-t-il un engagement de durée ?</div>
-                    <div class="faq-a">Non, tous les plans sont sans engagement. Vous pouvez annuler à tout moment depuis votre espace de facturation.</div>
-                </div>
+            <div class="faq-grid" id="faq-grid">
+                <!-- Généré dynamiquement par script.js -->
             </div>
         </div>
     </div>
