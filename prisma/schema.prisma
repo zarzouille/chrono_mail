@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Utilisateur ──────────────────────────────────────────────────
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  plan      Plan     @default(FREE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  countdowns  Countdown[]
+  impressions Impression[]
+}
+
+// ── Countdown ────────────────────────────────────────────────────
+model Countdown {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name     String
+  endDate  DateTime
+  timezone String   @default("Europe/Paris")
+
+  // Apparence
+  bgColor   String @default("#ffffff")
+  textColor String @default("#2563eb")
+  fontSize  Int    @default(36)
+  width     Int    @default(400)
+
+  // Expiration
+  expiredBehavior ExpiredBehavior @default(SHOW_ZEROS)
+  expiredText     String?
+  expiredImageUrl String?
+
+  // Lien au clic (Pro+)
+  clickUrl String?
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  impressions Impression[]
+
+  @@index([userId])
+}
+
+// ── Impression ───────────────────────────────────────────────────
+model Impression {
+  id          String    @id @default(cuid())
+  countdownId String
+  countdown   Countdown @relation(fields: [countdownId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  userAgent String?
+  ip        String?
+
+  @@index([countdownId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ── Enums ────────────────────────────────────────────────────────
+enum Plan {
+  FREE
+  PRO
+  BUSINESS
+}
+
+enum ExpiredBehavior {
+  SHOW_ZEROS
+  SHOW_TEXT
+  SHOW_IMAGE
+  HIDE
+}

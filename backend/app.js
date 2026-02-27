@@ -1,15 +1,23 @@
-const express = require('express');
-const app = express();
-const apiRouter = require('./routes/api');
+require('dotenv').config();
+const express  = require('express');
+const passport = require('./lib/passport');
+const app      = express();
 
-// Middleware pour servir les fichiers statiques
-app.use(express.static('frontend/public'));
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(passport.initialize());
 
 // Routes API
+const authRoutes = require('./routes/auth-routes');
+const apiRouter  = require('./routes/api');
+app.use('/', authRoutes);
 app.use('/', apiRouter);
 
-// Démarrer le serveur
+// Fichiers statiques — en dernier
+app.use(express.static('frontend/public'));
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Serveur démarré sur le port ${PORT}`);
+    console.log(`Serveur démarré sur http://localhost:${PORT}`);
 });
