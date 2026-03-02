@@ -1,33 +1,72 @@
-const { createCanvas } = require('@napi-rs/canvas');
+const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const GIFEncoder = require('gif-encoder-2');
 
 /**
- * Génère un GIF animé de countdown à partir d'une date cible.
+ * Génère un GIF animé de countdown.
  *
- * @param {string} endDate     - Date cible ISO 8601  ex: "2026-03-15T23:59:00"
- * @param {string} bgColor     - Couleur de fond hex  ex: "#ffffff"
- * @param {string} textColor   - Couleur texte hex    ex: "#2563eb"
- * @param {number} fontSize    - Taille de police     ex: 36
- * @param {number} width       - Largeur en px        ex: 400
- * @returns {Promise<Buffer>}  - Buffer du GIF animé
+ * @param {string} endDate          - Date cible ISO 8601
+ * @param {string} bgColor          - Couleur de fond hex
+ * @param {string} textColor        - Couleur texte hex
+ * @param {number} fontSize         - Taille de police
+ * @param {number} width            - Largeur en px
+ * @param {object} options          - Options avancées
+ * @param {string} options.fontFamily    - 'monospace' | 'serif' | 'sans-serif' | 'cursive'
+ * @param {string} options.style         - 'flat' | 'rounded' | 'bordered'
+ * @param {string} options.labelDays     - Label jours personnalisé
+ * @param {string} options.labelHours    - Label heures personnalisé
+ * @param {string} options.labelMinutes  - Label minutes personnalisé
+ * @param {string} options.labelSeconds  - Label secondes personnalisé
+ * @param {string} options.expiredBehavior - 'SHOW_ZEROS' | 'SHOW_TEXT' | 'SHOW_IMAGE' | 'REDIRECT'
+ * @param {string} options.expiredText   - Texte affiché à l'expiration
+ * @param {string} options.bgImageUrl    - URL image de fond (Pro)
+ * @param {boolean} options.perpetual    - Timer perpétuel/evergreen (Business)
+ * @param {number}  options.perpetualSeconds - Durée en secondes pour timer perpétuel
  */
 async function generateCountdownGif(
     endDate,
     bgColor   = '#ffffff',
     textColor = '#2563eb',
     fontSize  = 36,
-    width     = 400
+    width     = 400,
+    options   = {}
 ) {
+    const {
+        fontFamily       = 'monospace',
+        style            = 'rounded',
+        labelDays        = 'JOURS',
+        labelHours       = 'HEURES',
+        labelMinutes     = 'MIN',
+        labelSeconds     = 'SEC',
+        expiredBehavior  = 'SHOW_ZEROS',
+        expiredText      = 'Offre terminée',
+        bgImageUrl       = null,
+        perpetual        = false,
+        perpetualSeconds = 86400,
+    } = options;
+
     // ── Dimensions ───────────────────────────────────────────────
     const W      = Math.max(200, Math.min(800, parseInt(width) || 400));
     const H      = Math.round(W * 0.28);
-    const FRAMES = 10; // 10 secondes d'animation en boucle
+    const FRAMES = 10;
+
+    // ── Image de fond (Pro) ──────────────────────────────────────
+    let bgImage = null;
+    if (bgImageUrl) {
+        try { bgImage = await loadImage(bgImageUrl); } catch (e) { /* ignore */ }
+    }
 
     // ── Calcul du temps restant ──────────────────────────────────
-    const target = new Date(endDate).getTime();
+    const target = perpetual ? null : new Date(endDate).getTime();
 
     function getTimeLeft(offsetSeconds = 0) {
-        const diff = target - Date.now() - offsetSeconds * 1000;
+        let diff;
+        if (perpetual) {
+            // Timer perpétuel : repart de perpetualSeconds à chaque ouverture
+            diff = (perpetualSeconds - offsetSeconds) * 1000;
+        } else {
+            diff = target - Date.now() - offsetSeconds * 1000;
+        }
+
         if (diff <= 0) {
             return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
         }
@@ -51,8 +90,8 @@ async function generateCountdownGif(
 
     // ── Encodeur GIF ─────────────────────────────────────────────
     const encoder = new GIFEncoder(W, H, 'neuquant', true);
-    encoder.setDelay(1000);  // 1 frame par seconde
-    encoder.setRepeat(0);    // boucle infinie
+    encoder.setDelay(1000);
+    encoder.setRepeat(0);
     encoder.setQuality(10);
     encoder.start();
 
@@ -61,64 +100,88 @@ async function generateCountdownGif(
         const { days, hours, minutes, seconds, expired } = timeLeft;
 
         // Fond
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, W, H);
+        if (bgImage) {
+            ctx.drawImage(bgImage, 0, 0, W, H);
+        } else {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, W, H);
+        }
 
         if (expired) {
-            ctx.fillStyle    = textColor;
-            ctx.font         = `bold ${Math.round(fSize * 0.65)}px monospace`;
-            ctx.textAlign    = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('Offre terminee', W / 2, H / 2);
+            if (expiredBehavior === 'SHOW_TEXT') {
+                ctx.fillStyle    = textColor;
+                ctx.font         = `bold ${Math.round(fSize * 0.65)}px ${fontFamily}`;
+                ctx.textAlign    = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(expiredText, W / 2, H / 2);
+            } else {
+                // SHOW_ZEROS — afficher 00:00:00:00
+                drawUnits([
+                    { value: '00', label: labelDays },
+                    { value: '00', label: labelHours },
+                    { value: '00', label: labelMinutes },
+                    { value: '00', label: labelSeconds },
+                ]);
+            }
             return;
         }
 
-        // ── 4 blocs ──────────────────────────────────────────────
-        const units = [
-            { value: pad(days),    label: 'JOURS'   },
-            { value: pad(hours),   label: 'HEURES'  },
-            { value: pad(minutes), label: 'MIN'     },
-            { value: pad(seconds), label: 'SEC'     },
-        ];
+        drawUnits([
+            { value: pad(days),    label: labelDays },
+            { value: pad(hours),   label: labelHours },
+            { value: pad(minutes), label: labelMinutes },
+            { value: pad(seconds), label: labelSeconds },
+        ]);
+    }
 
+    function drawUnits(units) {
         const gap    = Math.round(W * 0.02);
         const blockW = Math.round((W - gap * 5) / 4);
         const blockH = Math.round(H * 0.74);
         const blockY = Math.round((H - blockH) / 2);
         const startX = gap;
-        const r      = Math.round(blockW * 0.1);
+        const r      = style === 'flat' ? 0 : style === 'bordered' ? 4 : Math.round(blockW * 0.1);
 
         units.forEach(({ value, label }, i) => {
             const x = startX + i * (blockW + gap);
 
-            // Fond du bloc
-            ctx.fillStyle = '#f0f4ff';
-            roundRect(ctx, x, blockY, blockW, blockH, r);
-            ctx.fill();
+            // Fond du bloc selon le style
+            if (style === 'bordered') {
+                ctx.fillStyle = 'transparent';
+            } else {
+                ctx.fillStyle = hexToRgba(textColor, 0.08);
+                roundRect(ctx, x, blockY, blockW, blockH, r);
+                ctx.fill();
+            }
 
             // Bordure
-            ctx.strokeStyle = textColor + '33';
-            ctx.lineWidth   = 1;
+            if (style === 'bordered') {
+                ctx.strokeStyle = textColor;
+                ctx.lineWidth   = 2;
+            } else {
+                ctx.strokeStyle = hexToRgba(textColor, 0.2);
+                ctx.lineWidth   = 1;
+            }
             roundRect(ctx, x, blockY, blockW, blockH, r);
             ctx.stroke();
 
-            // Valeur numerique
+            // Valeur numérique
             ctx.fillStyle    = textColor;
-            ctx.font         = `bold ${fSize}px monospace`;
+            ctx.font         = `bold ${fSize}px ${fontFamily}`;
             ctx.textAlign    = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(value, x + blockW / 2, blockY + blockH * 0.44);
 
             // Label
-            ctx.fillStyle    = textColor + '88';
+            ctx.fillStyle    = hexToRgba(textColor, 0.6);
             ctx.font         = `bold ${fSizeSm}px sans-serif`;
             ctx.textBaseline = 'top';
             ctx.fillText(label, x + blockW / 2, blockY + blockH * 0.70);
 
-            // Separateur entre blocs
+            // Séparateur
             if (i < units.length - 1) {
-                ctx.fillStyle    = textColor + '66';
-                ctx.font         = `bold ${Math.round(fSize * 0.7)}px monospace`;
+                ctx.fillStyle    = hexToRgba(textColor, 0.5);
+                ctx.font         = `bold ${Math.round(fSize * 0.7)}px ${fontFamily}`;
                 ctx.textBaseline = 'middle';
                 ctx.textAlign    = 'center';
                 ctx.fillText(':', x + blockW + gap / 2, blockY + blockH * 0.42);
@@ -133,11 +196,10 @@ async function generateCountdownGif(
     }
 
     encoder.finish();
-
     return encoder.out.getData();
 }
 
-// ── Utilitaire : rectangle arrondi ──────────────────────────────
+// ── Utilitaires ──────────────────────────────────────────────────
 function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -150,6 +212,14 @@ function roundRect(ctx, x, y, w, h, r) {
     ctx.lineTo(x,     y + r);
     ctx.quadraticCurveTo(x,     y,     x + r, y);
     ctx.closePath();
+}
+
+function hexToRgba(hex, alpha) {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
 }
 
 module.exports = { generateCountdownGif };

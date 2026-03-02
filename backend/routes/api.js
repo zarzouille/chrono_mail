@@ -2,7 +2,7 @@ const express  = require('express');
 const router   = express.Router();
 const { generateCountdownGif } = require('../services/countdown-generator');
 const prisma   = require('../lib/prisma');
-const { requireAuth, requirePlan } = require('../lib/auth');
+const { requireAuth } = require('../lib/auth');
 
 // ── Santé ─────────────────────────────────────────────────────────
 router.get('/health', (req, res) => {
@@ -10,25 +10,38 @@ router.get('/health', (req, res) => {
 });
 
 // ── Créer un countdown ────────────────────────────────────────────
-// POST /countdown  (authentifié)
 router.post('/countdown', requireAuth, async (req, res) => {
     try {
+        const plan = req.user.plan;
         const {
-            name      = 'Mon countdown',
+            name             = 'Mon countdown',
             endDate,
-            bgColor   = '#ffffff',
-            textColor = '#2563eb',
-            fontSize  = 36,
-            width     = 400,
-            timezone  = 'Europe/Paris',
+            bgColor          = '#ffffff',
+            textColor        = '#2563eb',
+            fontSize         = 36,
+            width            = 400,
+            timezone         = 'Europe/Paris',
+            // Free
+            fontFamily       = 'monospace',
+            style            = 'rounded',
+            // Pro
+            labelDays        = 'JOURS',
+            labelHours       = 'HEURES',
+            labelMinutes     = 'MIN',
+            labelSeconds     = 'SEC',
+            expiredBehavior  = 'SHOW_ZEROS',
+            expiredText      = 'Offre terminée',
+            expiredRedirect  = null,
+            bgImageUrl       = null,
+            // Business
+            perpetual        = false,
+            perpetualSeconds = 86400,
         } = req.body;
 
-        if (!endDate) {
-            return res.status(400).json({ error: 'endDate est requis' });
-        }
+        if (!endDate) return res.status(400).json({ error: 'endDate est requis' });
 
-        // Vérifier la limite du plan Free (3 countdowns max)
-        if (req.user.plan === 'FREE') {
+        // ── Limites par plan ──────────────────────────────────────
+        if (plan === 'FREE') {
             const count = await prisma.countdown.count({ where: { userId: req.user.id } });
             if (count >= 3) {
                 return res.status(403).json({
@@ -38,16 +51,39 @@ router.post('/countdown', requireAuth, async (req, res) => {
             }
         }
 
+        // Labels personnalisés — Pro uniquement
+        const finalLabels = plan === 'FREE' ? {
+            labelDays: 'JOURS', labelHours: 'HEURES', labelMinutes: 'MIN', labelSeconds: 'SEC',
+        } : { labelDays, labelHours, labelMinutes, labelSeconds };
+
+        // Image de fond, redirect — Pro uniquement
+        const finalBgImageUrl      = plan === 'FREE' ? null : bgImageUrl;
+        const finalExpiredRedirect = plan === 'FREE' ? null : expiredRedirect;
+        const finalExpiredBehavior = plan === 'FREE' && expiredBehavior === 'REDIRECT' ? 'SHOW_ZEROS' : expiredBehavior;
+
+        // Timer perpétuel — Business uniquement
+        const finalPerpetual        = plan === 'BUSINESS' ? perpetual : false;
+        const finalPerpetualSeconds = plan === 'BUSINESS' ? parseInt(perpetualSeconds) : 86400;
+
         const countdown = await prisma.countdown.create({
             data: {
-                userId:    req.user.id,
+                userId:           req.user.id,
                 name,
-                endDate:   new Date(endDate),
+                endDate:          new Date(endDate),
                 bgColor,
                 textColor,
-                fontSize:  parseInt(fontSize),
-                width:     parseInt(width),
+                fontSize:         parseInt(fontSize),
+                width:            parseInt(width),
                 timezone,
+                fontFamily,
+                style,
+                ...finalLabels,
+                expiredBehavior:  finalExpiredBehavior,
+                expiredText,
+                expiredRedirect:  finalExpiredRedirect,
+                bgImageUrl:       finalBgImageUrl,
+                perpetual:        finalPerpetual,
+                perpetualSeconds: finalPerpetualSeconds,
             },
         });
 
@@ -64,7 +100,6 @@ router.post('/countdown', requireAuth, async (req, res) => {
 });
 
 // ── Lister les countdowns ─────────────────────────────────────────
-// GET /countdowns  (authentifié)
 router.get('/countdowns', requireAuth, async (req, res) => {
     try {
         const countdowns = await prisma.countdown.findMany({
@@ -80,13 +115,11 @@ router.get('/countdowns', requireAuth, async (req, res) => {
 });
 
 // ── Supprimer un countdown ────────────────────────────────────────
-// DELETE /countdown/:id  (authentifié)
 router.delete('/countdown/:id', requireAuth, async (req, res) => {
     try {
         const cd = await prisma.countdown.findUnique({ where: { id: req.params.id } });
         if (!cd) return res.status(404).json({ error: 'Countdown introuvable' });
         if (cd.userId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' });
-
         await prisma.countdown.delete({ where: { id: req.params.id } });
         res.json({ success: true });
     } catch (err) {
@@ -94,12 +127,17 @@ router.delete('/countdown/:id', requireAuth, async (req, res) => {
     }
 });
 
-// ── GIF depuis la base (avec log impression) ──────────────────────
-// GET /gif/:id  (public — intégré dans les emails)
+// ── GIF depuis la base ────────────────────────────────────────────
 router.get('/gif/:id', async (req, res) => {
     try {
         const countdown = await prisma.countdown.findUnique({ where: { id: req.params.id } });
         if (!countdown) return res.status(404).send('Countdown introuvable');
+
+        // Redirect post-expiration (Pro)
+        if (countdown.expiredBehavior === 'REDIRECT' && countdown.expiredRedirect) {
+            const isExpired = !countdown.perpetual && new Date(countdown.endDate) <= new Date();
+            if (isExpired) return res.redirect(countdown.expiredRedirect);
+        }
 
         // Log impression en arrière-plan
         prisma.impression.create({
@@ -117,9 +155,27 @@ router.get('/gif/:id', async (req, res) => {
             countdown.textColor,
             countdown.fontSize,
             countdown.width,
+            {
+                fontFamily:       countdown.fontFamily,
+                style:            countdown.style,
+                labelDays:        countdown.labelDays,
+                labelHours:       countdown.labelHours,
+                labelMinutes:     countdown.labelMinutes,
+                labelSeconds:     countdown.labelSeconds,
+                expiredBehavior:  countdown.expiredBehavior,
+                expiredText:      countdown.expiredText,
+                bgImageUrl:       countdown.bgImageUrl,
+                perpetual:        countdown.perpetual,
+                perpetualSeconds: countdown.perpetualSeconds,
+            }
         );
 
-        res.set({ 'Content-Type': 'image/gif', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
+        res.set({
+            'Content-Type':  'image/gif',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma':        'no-cache',
+            'Expires':       '0',
+        });
         res.send(gifBuffer);
 
     } catch (err) {
@@ -128,14 +184,22 @@ router.get('/gif/:id', async (req, res) => {
     }
 });
 
-// ── GIF à la volée (sans sauvegarde, pour preview) ────────────────
-// GET /gif?endDate=...
+// ── GIF preview (sans sauvegarde) ────────────────────────────────
 router.get('/gif', async (req, res) => {
     try {
-        const { endDate = new Date(Date.now() + 86400000).toISOString(), bgColor = '#ffffff', textColor = '#2563eb', fontSize = 36, width = 400 } = req.query;
+        const {
+            endDate    = new Date(Date.now() + 86400000).toISOString(),
+            bgColor    = '#ffffff',
+            textColor  = '#2563eb',
+            fontSize   = 36,
+            width      = 400,
+            fontFamily = 'monospace',
+            style      = 'rounded',
+        } = req.query;
+
         if (isNaN(new Date(endDate).getTime())) return res.status(400).json({ error: 'endDate invalide' });
 
-        const gifBuffer = await generateCountdownGif(endDate, bgColor, textColor, fontSize, width);
+        const gifBuffer = await generateCountdownGif(endDate, bgColor, textColor, fontSize, width, { fontFamily, style });
         res.set({ 'Content-Type': 'image/gif', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
         res.send(gifBuffer);
     } catch (err) {

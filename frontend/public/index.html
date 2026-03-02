@@ -299,6 +299,8 @@
         </div>
         <div class="create-layout">
             <div class="create-form-col">
+
+                <!-- INFORMATIONS -->
                 <div class="form-card">
                     <div class="form-card-title">📋 Informations</div>
                     <div class="form-group">
@@ -320,8 +322,44 @@
                         </select>
                     </div>
                 </div>
+
+                <!-- APPARENCE -->
                 <div class="form-card">
                     <div class="form-card-title">🎨 Apparence</div>
+
+                    <div class="form-group">
+                        <label class="form-label">Style de template</label>
+                        <div class="style-picker" id="style-picker">
+                            <div class="style-opt selected" data-style="rounded" onclick="pickStyle(this)">
+                                <div class="style-preview rounded-preview"></div>
+                                <span>Arrondi</span>
+                            </div>
+                            <div class="style-opt" data-style="flat" onclick="pickStyle(this)">
+                                <div class="style-preview flat-preview"></div>
+                                <span>Flat</span>
+                            </div>
+                            <div class="style-opt" data-style="bordered" onclick="pickStyle(this)">
+                                <div class="style-preview bordered-preview"></div>
+                                <span>Bordure</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Police</label>
+                        <div class="font-picker" id="font-picker">
+                            <div class="font-opt selected" data-font="monospace" onclick="pickFont(this)" style="font-family:monospace">Mono</div>
+                            <div class="font-opt" data-font="sans-serif" onclick="pickFont(this)" style="font-family:sans-serif">Sans</div>
+                            <div class="font-opt" data-font="serif" onclick="pickFont(this)" style="font-family:serif">Serif</div>
+                            <div class="font-opt" data-font="cursive" onclick="pickFont(this)" style="font-family:cursive">Cursive</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Taille du texte <span id="font-size-display">36px</span></label>
+                        <input type="range" class="form-range" id="cd-fontsize" min="20" max="56" value="36" step="2" oninput="updateFontSize(this.value)">
+                    </div>
+
                     <div class="form-group">
                         <label class="form-label">Couleur principale</label>
                         <div class="color-swatches" id="color-picker">
@@ -334,6 +372,7 @@
                             <div class="swatch" style="background:#1a1916" data-color="#1a1916" onclick="pickColor(this)"></div>
                         </div>
                     </div>
+
                     <div class="form-group">
                         <label class="form-label">Couleur de fond</label>
                         <div class="color-swatches" id="bg-picker">
@@ -344,50 +383,99 @@
                             <div class="swatch" style="background:#1a1916" data-color="#1a1916" onclick="pickBg(this)"></div>
                         </div>
                     </div>
+
                     <div class="form-group" style="margin-bottom:0">
                         <label class="form-label">Largeur du GIF (px)</label>
                         <input type="number" class="form-input" id="cd-width" value="400" min="200" max="800">
                     </div>
                 </div>
+
+                <!-- LABELS — Pro -->
+                <div class="form-card" id="card-labels">
+                    <div class="form-card-title">🏷️ Labels <span class="plan-gate-badge" id="badge-labels">Pro</span></div>
+                    <div id="labels-fields">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                            <div class="form-group" style="margin-bottom:0">
+                                <label class="form-label">Jours</label>
+                                <input type="text" class="form-input" id="cd-label-days" value="JOURS" maxlength="10">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0">
+                                <label class="form-label">Heures</label>
+                                <input type="text" class="form-input" id="cd-label-hours" value="HEURES" maxlength="10">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0">
+                                <label class="form-label">Minutes</label>
+                                <input type="text" class="form-input" id="cd-label-minutes" value="MIN" maxlength="10">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0">
+                                <label class="form-label">Secondes</label>
+                                <input type="text" class="form-input" id="cd-label-seconds" value="SEC" maxlength="10">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="plan-gate-overlay" id="overlay-labels" onclick="showPage('pricing')">
+                        <div class="plan-gate-msg">🔒 Disponible en <strong>Pro</strong> — Cliquez pour upgrader</div>
+                    </div>
+                </div>
+
+                <!-- POST-EXPIRATION -->
                 <div class="form-card">
                     <div class="form-card-title">⏰ Après expiration</div>
                     <div class="form-group" style="margin-bottom:0">
                         <label class="form-label">Comportement</label>
-                        <select class="form-input" id="cd-expired">
+                        <select class="form-input" id="cd-expired" onchange="updateExpiredUI()">
                             <option value="SHOW_ZEROS">Afficher 00:00:00:00</option>
-                            <option value="SHOW_TEXT">Afficher texte personnalisé</option>
+                            <option value="SHOW_TEXT">Afficher un texte</option>
+                            <option value="REDIRECT" id="opt-redirect">Rediriger vers une URL <span>— Pro</span></option>
                         </select>
                     </div>
+                    <div id="expired-text-row" style="display:none;margin-top:12px">
+                        <label class="form-label">Texte à afficher</label>
+                        <input type="text" class="form-input" id="cd-expired-text" value="Offre terminée" placeholder="Offre terminée">
+                    </div>
+                    <div id="expired-redirect-row" style="display:none;margin-top:12px;position:relative">
+                        <label class="form-label">URL de redirection <span class="plan-gate-badge">Pro</span></label>
+                        <input type="url" class="form-input" id="cd-expired-redirect" placeholder="https://votresite.com/nouvelle-offre">
+                        <div class="plan-gate-overlay" id="overlay-redirect" onclick="showPage('pricing')" style="border-radius:var(--radius)">
+                            <div class="plan-gate-msg">🔒 <strong>Pro</strong></div>
+                        </div>
+                    </div>
                 </div>
+
             </div>
+
+            <!-- PREVIEW PANEL -->
             <div class="preview-panel">
                 <div class="panel-card">
                     <div class="panel-header">
-                        <div class="panel-header-title">Preview GIF</div>
+                        <div class="panel-header-title">Preview</div>
                         <div class="live-badge" style="font-size:10px;padding:2px 8px"><div class="live-badge-dot"></div>Temps réel</div>
                     </div>
                     <div class="gif-preview-box" id="gif-preview-box">
-                        <div class="gif-preview-inner">
-                            <div class="gif-unit"><div class="gif-num" id="prev-days" style="background:#eff4ff;color:#2563eb;border-color:#c7d7fd">04</div><div class="gif-label">jours</div></div>
+                        <div class="gif-preview-inner" id="gif-preview-inner">
+                            <div class="gif-unit"><div class="gif-num" id="prev-days">04</div><div class="gif-label" id="prev-label-days">JOURS</div></div>
                             <div class="gif-sep">:</div>
-                            <div class="gif-unit"><div class="gif-num" id="prev-hours" style="background:#eff4ff;color:#2563eb;border-color:#c7d7fd">18</div><div class="gif-label">heures</div></div>
+                            <div class="gif-unit"><div class="gif-num" id="prev-hours">18</div><div class="gif-label" id="prev-label-hours">HEURES</div></div>
                             <div class="gif-sep">:</div>
-                            <div class="gif-unit"><div class="gif-num" id="prev-mins" style="background:#eff4ff;color:#2563eb;border-color:#c7d7fd">33</div><div class="gif-label">min</div></div>
+                            <div class="gif-unit"><div class="gif-num" id="prev-mins">33</div><div class="gif-label" id="prev-label-mins">MIN</div></div>
                             <div class="gif-sep">:</div>
-                            <div class="gif-unit"><div class="gif-num" id="prev-secs" style="background:#eff4ff;color:#2563eb;border-color:#c7d7fd">00</div><div class="gif-label">sec</div></div>
+                            <div class="gif-unit"><div class="gif-num" id="prev-secs">00</div><div class="gif-label" id="prev-label-secs">SEC</div></div>
                         </div>
                     </div>
                     <div class="preview-warning">⚠️ Aperçu indicatif — le rendu GIF final peut légèrement varier</div>
+
                     <div class="code-section" id="code-section" style="display:none">
                         <div class="code-section-title">Code à intégrer</div>
                         <div class="code-tabs-row">
                             <button class="code-tab-btn active" onclick="switchCodeTab('minimal',this)">Minimal</button>
                             <button class="code-tab-btn" onclick="switchCodeTab('standard',this)">Standard</button>
-                            <button class="code-tab-btn" onclick="switchCodeTab('esp',this)">+ Lien</button>
+                            <button class="code-tab-btn" onclick="switchCodeTab('klaviyo',this)">Klaviyo</button>
+                            <button class="code-tab-btn" onclick="switchCodeTab('mailchimp',this)">Mailchimp</button>
                         </div>
                         <div id="code-minimal" class="code-panel active"><div class="code-block" id="code-minimal-content"></div></div>
                         <div id="code-standard" class="code-panel"><div class="code-block" id="code-standard-content"></div></div>
-                        <div id="code-esp" class="code-panel"><div class="code-block" id="code-esp-content"></div></div>
+                        <div id="code-klaviyo" class="code-panel"><div class="code-block" id="code-klaviyo-content"></div></div>
+                        <div id="code-mailchimp" class="code-panel"><div class="code-block" id="code-mailchimp-content"></div></div>
                         <div class="copy-row">
                             <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="copyCurrentCode()">📋 Copier le code</button>
                             <button class="btn btn-surface btn-sm" onclick="copyUrl()">🔗 URL</button>
@@ -397,6 +485,7 @@
                             <span class="url-value" id="gif-url-display">—</span>
                         </div>
                     </div>
+
                     <div class="compat-section">
                         <div class="compat-title">Compatibilité</div>
                         <span style="color:var(--green)">✓</span> Gmail · Apple Mail · iOS Mail<br>

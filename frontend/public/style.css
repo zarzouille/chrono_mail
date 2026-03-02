@@ -264,3 +264,28 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .pricing-btn { width:100%; justify-content:center; margin:20px 0; }
 .plan-chip-pro      { background:#eff4ff; color:var(--accent); border:1px solid #c7d7fd; }
 .plan-chip-business { background:#fdf4ff; color:#7c3aed; border:1px solid #e9d5ff; }
+
+/* STYLE PICKER */
+.style-picker { display:flex; gap:10px; }
+.style-opt { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; padding:8px; border-radius:var(--radius); border:2px solid var(--border); flex:1; font-size:12px; font-weight:600; color:var(--muted); transition:all .15s; }
+.style-opt:hover { border-color:var(--accent); color:var(--accent); }
+.style-opt.selected { border-color:var(--accent); color:var(--accent); background:var(--accent-l); }
+.style-preview { width:100%; height:28px; background:var(--accent-l); border:1px solid var(--accent); }
+.rounded-preview { border-radius:6px; }
+.flat-preview { border-radius:0; }
+.bordered-preview { background:transparent; border:2px solid var(--accent); border-radius:3px; }
+
+/* FONT PICKER */
+.font-picker { display:flex; gap:8px; }
+.font-opt { flex:1; text-align:center; padding:8px 4px; border:2px solid var(--border); border-radius:var(--radius); font-size:15px; cursor:pointer; transition:all .15s; color:var(--muted2); }
+.font-opt:hover { border-color:var(--accent); color:var(--accent); }
+.font-opt.selected { border-color:var(--accent); color:var(--accent); background:var(--accent-l); }
+
+/* RANGE SLIDER */
+.form-range { width:100%; accent-color:var(--accent); height:4px; cursor:pointer; }
+
+/* PLAN GATE */
+.plan-gate-badge { background:var(--accent); color:white; font-size:10px; font-weight:700; padding:2px 7px; border-radius:100px; margin-left:6px; vertical-align:middle; }
+.plan-gate-overlay { position:absolute; inset:0; background:rgba(248,247,244,0.85); backdrop-filter:blur(2px); border-radius:var(--radius-l); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:10; }
+.plan-gate-msg { font-size:13px; font-weight:600; color:var(--text2); text-align:center; }
+.form-card { position:relative; overflow:hidden; }

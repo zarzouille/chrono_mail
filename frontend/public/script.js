@@ -47,6 +47,7 @@ function showPage(name) {
     window.scrollTo(0, 0);
     if (name === 'dashboard') loadDashboard();
     if (name === 'pricing')   renderPricing();
+    if (name === 'create')    { applyPlanGates(); updateExpiredUI(); }
 }
 
 // ============================================================
@@ -125,6 +126,9 @@ updateHeroTimer();
 let previewTarget = new Date(Date.now() + 4 * 86400000 + 18 * 3600000 + 33 * 60000);
 let currentColor  = '#2563eb';
 let currentBg     = '#ffffff';
+let currentFont   = 'monospace';
+let currentStyle  = 'rounded';
+let currentFontSize = 36;
 let activeCodeTab = 'minimal';
 let currentGifUrl = '';
 
@@ -136,6 +140,18 @@ setTimeout(() => {
 function updatePreview() {
     const el = document.getElementById('cd-date');
     if (el && el.value) previewTarget = new Date(el.value);
+    // Sync labels
+    const plan = getUser()?.plan || 'FREE';
+    if (plan !== 'FREE') {
+        const days = document.getElementById('cd-label-days');
+        const hours = document.getElementById('cd-label-hours');
+        const mins  = document.getElementById('cd-label-minutes');
+        const secs  = document.getElementById('cd-label-seconds');
+        if(days)  document.getElementById('prev-label-days').textContent  = days.value || 'JOURS';
+        if(hours) document.getElementById('prev-label-hours').textContent = hours.value || 'HEURES';
+        if(mins)  document.getElementById('prev-label-mins').textContent  = mins.value  || 'MIN';
+        if(secs)  document.getElementById('prev-label-secs').textContent  = secs.value  || 'SEC';
+    }
 }
 
 function updatePreviewTimer() {
@@ -147,7 +163,7 @@ function updatePreviewTimer() {
 setInterval(updatePreviewTimer, 1000);
 
 // ============================================================
-// COULEURS
+// COULEURS / POLICE / STYLE / TAILLE
 // ============================================================
 function pickColor(el) {
     document.querySelectorAll('#color-picker .swatch').forEach(e => e.classList.remove('selected'));
@@ -159,9 +175,67 @@ function pickBg(el) {
     const box = document.getElementById('gif-preview-box'); if(box) box.style.background = currentBg;
     applyPreviewColors();
 }
+function pickFont(el) {
+    document.querySelectorAll('#font-picker .font-opt').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected'); currentFont = el.dataset.font;
+    document.querySelectorAll('.gif-num').forEach(e => e.style.fontFamily = currentFont);
+}
+function pickStyle(el) {
+    document.querySelectorAll('#style-picker .style-opt').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected'); currentStyle = el.dataset.style;
+    applyPreviewStyle();
+}
+function updateFontSize(val) {
+    currentFontSize = parseInt(val);
+    document.getElementById('font-size-display').textContent = val + 'px';
+    document.querySelectorAll('.gif-num').forEach(e => e.style.fontSize = val + 'px');
+}
+function applyPreviewStyle() {
+    const nums = document.querySelectorAll('.gif-num');
+    nums.forEach(el => {
+        if(currentStyle === 'flat')     { el.style.borderRadius='0'; el.style.border='none'; }
+        else if(currentStyle === 'bordered') { el.style.borderRadius='4px'; el.style.border=`2px solid ${currentColor}`; el.style.background='transparent'; }
+        else { el.style.borderRadius='10px'; }
+    });
+}
 function applyPreviewColors() {
     const hex = currentColor.replace('#',''); const r=parseInt(hex.slice(0,2),16), g=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
-    document.querySelectorAll('.gif-num').forEach(el => { el.style.color=currentColor; el.style.background=`rgba(${r},${g},${b},0.1)`; el.style.borderColor=`rgba(${r},${g},${b},0.25)`; });
+    document.querySelectorAll('.gif-num').forEach(el => {
+        el.style.color=currentColor;
+        if(currentStyle !== 'bordered') { el.style.background=`rgba(${r},${g},${b},0.1)`; el.style.borderColor=`rgba(${r},${g},${b},0.25)`; }
+    });
+    document.querySelectorAll('.gif-sep').forEach(el => el.style.color = currentColor);
+}
+
+// ============================================================
+// POST-EXPIRATION UI
+// ============================================================
+function updateExpiredUI() {
+    const val = document.getElementById('cd-expired')?.value;
+    const textRow     = document.getElementById('expired-text-row');
+    const redirectRow = document.getElementById('expired-redirect-row');
+    if(textRow)     textRow.style.display     = val === 'SHOW_TEXT' ? 'block' : 'none';
+    if(redirectRow) redirectRow.style.display = val === 'REDIRECT'  ? 'block' : 'none';
+}
+
+// ============================================================
+// PLAN GATES — verrouiller les options selon le plan
+// ============================================================
+function applyPlanGates() {
+    const plan = getUser()?.plan || 'FREE';
+    const overlayLabels   = document.getElementById('overlay-labels');
+    const overlayRedirect = document.getElementById('overlay-redirect');
+    const optRedirect     = document.getElementById('opt-redirect');
+
+    if(plan === 'FREE') {
+        if(overlayLabels)   overlayLabels.style.display   = 'flex';
+        if(overlayRedirect) overlayRedirect.style.display = 'flex';
+        if(optRedirect)     optRedirect.disabled = true;
+    } else {
+        if(overlayLabels)   overlayLabels.style.display   = 'none';
+        if(overlayRedirect) overlayRedirect.style.display = 'none';
+        if(optRedirect)     optRedirect.disabled = false;
+    }
 }
 
 // ============================================================
@@ -169,14 +243,33 @@ function applyPreviewColors() {
 // ============================================================
 async function publishCountdown() {
     const btn = document.getElementById('publish-btn');
-    const name = document.getElementById('cd-name')?.value || 'Mon countdown';
-    const endDate = document.getElementById('cd-date')?.value;
-    const width = document.getElementById('cd-width')?.value || 400;
-    const timezone = document.getElementById('cd-timezone')?.value || 'Europe/Paris';
+    const name            = document.getElementById('cd-name')?.value || 'Mon countdown';
+    const endDate         = document.getElementById('cd-date')?.value;
+    const width           = document.getElementById('cd-width')?.value || 400;
+    const timezone        = document.getElementById('cd-timezone')?.value || 'Europe/Paris';
+    const expiredBehavior = document.getElementById('cd-expired')?.value || 'SHOW_ZEROS';
+    const expiredText     = document.getElementById('cd-expired-text')?.value || 'Offre terminée';
+    const expiredRedirect = document.getElementById('cd-expired-redirect')?.value || null;
+    const labelDays       = document.getElementById('cd-label-days')?.value || 'JOURS';
+    const labelHours      = document.getElementById('cd-label-hours')?.value || 'HEURES';
+    const labelMinutes    = document.getElementById('cd-label-minutes')?.value || 'MIN';
+    const labelSeconds    = document.getElementById('cd-label-seconds')?.value || 'SEC';
+
     if (!endDate) { showToast('⚠️ Veuillez choisir une date'); return; }
     btn.textContent = '⏳ Génération...'; btn.disabled = true;
     try {
-        const res = await authFetch('/countdown', { method:'POST', body: JSON.stringify({name, endDate, bgColor:currentBg, textColor:currentColor, fontSize:36, width:parseInt(width), timezone}) });
+        const res = await authFetch('/countdown', {
+            method: 'POST',
+            body: JSON.stringify({
+                name, endDate, timezone,
+                bgColor: currentBg, textColor: currentColor,
+                fontSize: currentFontSize, width: parseInt(width),
+                fontFamily: currentFont, style: currentStyle,
+                labelDays, labelHours, labelMinutes, labelSeconds,
+                expiredBehavior, expiredText,
+                expiredRedirect: expiredRedirect || undefined,
+            })
+        });
         const data = await res.json();
         if (!res.ok) { showToast('❌ ' + (data.message || data.error || 'Erreur')); return; }
         currentGifUrl = data.gifUrl;
@@ -189,14 +282,17 @@ async function publishCountdown() {
 function displayCode(gifUrl) {
     const section = document.getElementById('code-section'); if(section) section.style.display='block';
     const urlDisplay = document.getElementById('gif-url-display'); if(urlDisplay) urlDisplay.textContent = gifUrl;
+    const w = document.getElementById('cd-width')?.value || 400;
     window._codeSnippets = {
-        minimal:  `<img\n  src="${gifUrl}"\n  alt="Offre expire dans..."\n  width="400"\n/>`,
-        standard: `<img\n  src="${gifUrl}"\n  border="0"\n  style="display:block"\n  alt="Timer from chrono.mail"\n  width="400"\n/>`,
-        esp:      `<a href="https://votresite.com/offre" target="_blank">\n  <img\n    src="${gifUrl}"\n    border="0"\n    style="display:block"\n    alt="Timer from chrono.mail"\n    width="400"\n  />\n</a>`,
+        minimal:   `<img src="${gifUrl}" alt="Offre expire dans..." width="${w}" border="0" style="display:block" />`,
+        standard:  `<img src="${gifUrl}" border="0" style="display:block;max-width:100%" alt="Timer — chrono.mail" title="Timer — chrono.mail" width="${w}" />`,
+        klaviyo:   `<img src="${gifUrl}" border="0" style="display:block;max-width:100%" alt="{% if first_name %}{{ first_name }}, votre offre expire dans...{% else %}Offre expire dans...{% endif %}" width="${w}" />`,
+        mailchimp: `<img src="${gifUrl}" border="0" style="display:block;max-width:100%" alt="*|FNAME|*, votre offre expire dans..." width="${w}" />`,
     };
-    document.getElementById('code-minimal-content').textContent  = window._codeSnippets.minimal;
-    document.getElementById('code-standard-content').textContent = window._codeSnippets.standard;
-    document.getElementById('code-esp-content').textContent      = window._codeSnippets.esp;
+    document.getElementById('code-minimal-content').textContent   = window._codeSnippets.minimal;
+    document.getElementById('code-standard-content').textContent  = window._codeSnippets.standard;
+    document.getElementById('code-klaviyo-content').textContent   = window._codeSnippets.klaviyo;
+    document.getElementById('code-mailchimp-content').textContent = window._codeSnippets.mailchimp;
 }
 
 function switchCodeTab(name, btn) {

@@ -13,7 +13,6 @@ model User {
   password String
   plan     Plan    @default(FREE)
 
-  // Stripe
   stripeCustomerId       String?   @unique
   stripeSubscriptionId   String?   @unique
   stripePriceId          String?
@@ -40,11 +39,30 @@ model Countdown {
   fontSize  Int    @default(36)
   width     Int    @default(400)
 
+  // Apparence avancée (Free)
+  fontFamily String @default("monospace")
+  style      String @default("rounded")
+
+  // Labels personnalisés (Pro)
+  labelDays    String @default("JOURS")
+  labelHours   String @default("HEURES")
+  labelMinutes String @default("MIN")
+  labelSeconds String @default("SEC")
+
+  // Post-expiration
   expiredBehavior ExpiredBehavior @default(SHOW_ZEROS)
   expiredText     String?
   expiredImageUrl String?
-  clickUrl        String?
+  expiredRedirect String?
 
+  // Image de fond (Pro)
+  bgImageUrl String?
+
+  // Timer perpétuel (Business)
+  perpetual        Boolean @default(false)
+  perpetualSeconds Int     @default(86400)
+
+  clickUrl  String?
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -80,5 +98,6 @@ enum ExpiredBehavior {
   SHOW_ZEROS
   SHOW_TEXT
   SHOW_IMAGE
+  REDIRECT
   HIDE
 }
