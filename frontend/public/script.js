@@ -192,6 +192,22 @@ function updateFontSize(val) {
     currentFontSize = parseInt(val);
     document.getElementById('font-size-display').textContent = val + 'px';
     document.querySelectorAll('.gif-num').forEach(e => e.style.fontSize = val + 'px');
+
+    // Scale la preview pour qu'elle reste dans la carte quelle que soit la taille
+    const inner = document.getElementById('gif-preview-inner');
+    const box   = document.getElementById('gif-preview-box');
+    if(!inner || !box) return;
+    inner.style.transform = 'scale(1)';
+    requestAnimationFrame(() => {
+        const availableW = box.clientWidth  - 40;
+        const availableH = box.clientHeight - 40;
+        const innerW     = inner.scrollWidth;
+        const innerH     = inner.scrollHeight;
+        const scaleW     = availableW / innerW;
+        const scaleH     = availableH / innerH;
+        const scale      = Math.min(1, scaleW, scaleH);
+        inner.style.transform = 'scale(' + scale + ')';
+    });
 }
 function applyPreviewStyle() {
     const hex = currentColor.replace('#','');

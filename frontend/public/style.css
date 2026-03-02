@@ -180,8 +180,8 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .panel-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-l); overflow:hidden; box-shadow:var(--shadow-s); }
 .panel-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); background:var(--bg); }
 .panel-header-title { font-size:12.5px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:0.8px; }
-.gif-preview-box { padding:20px; background:var(--bg); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:center; min-height:110px; transition:background .2s; }
-.gif-preview-inner { display:flex; gap:8px; align-items:flex-start; }
+.gif-preview-box { padding:20px; background:var(--bg); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:center; min-height:110px; transition:background .2s; overflow:hidden; }
+.gif-preview-inner { display:flex; gap:8px; align-items:flex-start; transform-origin:center center; transition:transform .15s; }
 .gif-unit { display:flex; flex-direction:column; align-items:center; gap:5px; }
 .gif-num { border-radius:var(--radius-s); min-width:44px; padding:8px 10px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:500; border:1px solid var(--border); transition:all .12s; line-height:1; }
 .gif-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--muted2); font-weight:600; }
