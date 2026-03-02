@@ -194,18 +194,43 @@ function updateFontSize(val) {
     document.querySelectorAll('.gif-num').forEach(e => e.style.fontSize = val + 'px');
 }
 function applyPreviewStyle() {
-    const nums = document.querySelectorAll('.gif-num');
-    nums.forEach(el => {
-        if(currentStyle === 'flat')     { el.style.borderRadius='0'; el.style.border='none'; }
-        else if(currentStyle === 'bordered') { el.style.borderRadius='4px'; el.style.border=`2px solid ${currentColor}`; el.style.background='transparent'; }
-        else { el.style.borderRadius='10px'; }
+    const hex = currentColor.replace('#','');
+    const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
+    document.querySelectorAll('.gif-num').forEach(el => {
+        // Reset complet avant d'appliquer le nouveau style
+        el.style.border     = '';
+        el.style.background = '';
+        el.style.borderRadius = '';
+        if(currentStyle === 'flat') {
+            el.style.borderRadius = '0';
+            el.style.background   = `rgba(${r},${g},${b},0.1)`;
+            el.style.border       = `1px solid rgba(${r},${g},${b},0.25)`;
+        } else if(currentStyle === 'bordered') {
+            el.style.borderRadius = '4px';
+            el.style.border       = `2px solid ${currentColor}`;
+            el.style.background   = 'transparent';
+        } else {
+            // rounded (défaut)
+            el.style.borderRadius = '10px';
+            el.style.background   = `rgba(${r},${g},${b},0.1)`;
+            el.style.border       = `1px solid rgba(${r},${g},${b},0.25)`;
+        }
+        el.style.color = currentColor;
     });
+    document.querySelectorAll('.gif-sep').forEach(el => el.style.color = currentColor);
 }
 function applyPreviewColors() {
-    const hex = currentColor.replace('#',''); const r=parseInt(hex.slice(0,2),16), g=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
+    const hex = currentColor.replace('#','');
+    const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
     document.querySelectorAll('.gif-num').forEach(el => {
-        el.style.color=currentColor;
-        if(currentStyle !== 'bordered') { el.style.background=`rgba(${r},${g},${b},0.1)`; el.style.borderColor=`rgba(${r},${g},${b},0.25)`; }
+        el.style.color = currentColor;
+        if(currentStyle !== 'bordered') {
+            el.style.background  = `rgba(${r},${g},${b},0.1)`;
+            el.style.border      = `1px solid rgba(${r},${g},${b},0.25)`;
+        } else {
+            el.style.background  = 'transparent';
+            el.style.border      = `2px solid ${currentColor}`;
+        }
     });
     document.querySelectorAll('.gif-sep').forEach(el => el.style.color = currentColor);
 }

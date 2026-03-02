@@ -331,21 +331,15 @@
                         <label class="form-label">Style de template</label>
                         <div class="style-picker" id="style-picker">
                             <div class="style-opt selected" data-style="rounded" onclick="pickStyle(this)">
-                                <div class="style-demo">
-                                    <div class="style-demo-block style-demo-rounded">42</div>
-                                </div>
+                                <div class="style-demo"><div class="style-demo-block style-demo-rounded">42</div></div>
                                 <span>Arrondi</span>
                             </div>
                             <div class="style-opt" data-style="flat" onclick="pickStyle(this)">
-                                <div class="style-demo">
-                                    <div class="style-demo-block style-demo-flat">42</div>
-                                </div>
+                                <div class="style-demo"><div class="style-demo-block style-demo-flat">42</div></div>
                                 <span>Flat</span>
                             </div>
                             <div class="style-opt" data-style="bordered" onclick="pickStyle(this)">
-                                <div class="style-demo">
-                                    <div class="style-demo-block style-demo-bordered">42</div>
-                                </div>
+                                <div class="style-demo"><div class="style-demo-block style-demo-bordered">42</div></div>
                                 <span>Bordure</span>
                             </div>
                         </div>
@@ -374,7 +368,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Taille du texte <span id="font-size-display">36px</span></label>
+                        <div class="font-size-row">
+                            <label class="form-label" style="margin:0">Taille du texte</label>
+                            <span class="font-size-val" id="font-size-display">36px</span>
+                        </div>
                         <input type="range" class="form-range" id="cd-fontsize" min="20" max="56" value="36" step="2" oninput="updateFontSize(this.value)">
                     </div>
 
