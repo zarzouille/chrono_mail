@@ -331,15 +331,21 @@
                         <label class="form-label">Style de template</label>
                         <div class="style-picker" id="style-picker">
                             <div class="style-opt selected" data-style="rounded" onclick="pickStyle(this)">
-                                <div class="style-preview rounded-preview"></div>
+                                <div class="style-demo">
+                                    <div class="style-demo-block style-demo-rounded">42</div>
+                                </div>
                                 <span>Arrondi</span>
                             </div>
                             <div class="style-opt" data-style="flat" onclick="pickStyle(this)">
-                                <div class="style-preview flat-preview"></div>
+                                <div class="style-demo">
+                                    <div class="style-demo-block style-demo-flat">42</div>
+                                </div>
                                 <span>Flat</span>
                             </div>
                             <div class="style-opt" data-style="bordered" onclick="pickStyle(this)">
-                                <div class="style-preview bordered-preview"></div>
+                                <div class="style-demo">
+                                    <div class="style-demo-block style-demo-bordered">42</div>
+                                </div>
                                 <span>Bordure</span>
                             </div>
                         </div>
@@ -348,10 +354,22 @@
                     <div class="form-group">
                         <label class="form-label">Police</label>
                         <div class="font-picker" id="font-picker">
-                            <div class="font-opt selected" data-font="monospace" onclick="pickFont(this)" style="font-family:monospace">Mono</div>
-                            <div class="font-opt" data-font="sans-serif" onclick="pickFont(this)" style="font-family:sans-serif">Sans</div>
-                            <div class="font-opt" data-font="serif" onclick="pickFont(this)" style="font-family:serif">Serif</div>
-                            <div class="font-opt" data-font="cursive" onclick="pickFont(this)" style="font-family:cursive">Cursive</div>
+                            <div class="font-opt selected" data-font="monospace" onclick="pickFont(this)">
+                                <span class="font-demo" style="font-family:monospace">42</span>
+                                <span class="font-name">Mono</span>
+                            </div>
+                            <div class="font-opt" data-font="sans-serif" onclick="pickFont(this)">
+                                <span class="font-demo" style="font-family:sans-serif">42</span>
+                                <span class="font-name">Sans</span>
+                            </div>
+                            <div class="font-opt" data-font="serif" onclick="pickFont(this)">
+                                <span class="font-demo" style="font-family:serif">42</span>
+                                <span class="font-name">Serif</span>
+                            </div>
+                            <div class="font-opt" data-font="cursive" onclick="pickFont(this)">
+                                <span class="font-demo" style="font-family:cursive">42</span>
+                                <span class="font-name">Cursive</span>
+                            </div>
                         </div>
                     </div>
 
