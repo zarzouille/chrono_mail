@@ -1,9 +1,36 @@
+/**
+ * script.js — chrono.mail
+ * ============================================================
+ * Sections :
+ *   1.  AUTH          — Token JWT, session utilisateur
+ *   2.  NAVIGATION    — Routage SPA
+ *   3.  API AUTH      — Login / Register
+ *   4.  FETCH AUTH    — Wrapper fetch authentifié
+ *   5.  HERO TIMER    — Timer animé landing page
+ *   6.  PREVIEW       — Timer CSS temps réel
+ *   7.  ACCORDÉONS    — Étapes de création + progression
+ *   8.  APPARENCE     — Couleur, police, style, taille
+ *   9.  COLOR PICKER  — Input natif + swatches
+ *  10.  POST-EXPIRATION — UI comportement après expiration
+ *  11.  PLAN GATES    — Verrouillage options par plan
+ *  12.  APERÇU GIF    — Vrai GIF généré côté serveur
+ *  13.  PUBLICATION   — Envoi countdown + affichage code
+ *  14.  CODE SNIPPETS — Génération et copie HTML / ESP
+ *  15.  DASHBOARD     — Chargement et rendu des countdowns
+ *  16.  PRICING       — Page tarifs dynamique
+ *  17.  FAQ           — Questions fréquentes par plan
+ *  18.  STRIPE        — Checkout, portail, retours URL
+ *  19.  TOAST         — Notifications temporaires
+ *  20.  INIT
+ */
+
+
 // ============================================================
-// AUTH — gestion du token JWT en localStorage
+// 1. AUTH — Token JWT et session utilisateur
 // ============================================================
-function getToken()  { return localStorage.getItem('cm_token'); }
-function getUser()   { return JSON.parse(localStorage.getItem('cm_user') || 'null'); }
-function isLoggedIn(){ return !!getToken(); }
+function getToken()   { return localStorage.getItem('cm_token'); }
+function getUser()    { return JSON.parse(localStorage.getItem('cm_user') || 'null'); }
+function isLoggedIn() { return !!getToken(); }
 
 function saveAuth(token, user) {
     localStorage.setItem('cm_token', token);
@@ -34,8 +61,9 @@ function handleDashboardClick() {
     else showPage('login');
 }
 
+
 // ============================================================
-// NAVIGATION
+// 2. NAVIGATION — Routage SPA
 // ============================================================
 function showPage(name) {
     if (['dashboard','create'].includes(name) && !isLoggedIn()) {
@@ -47,11 +75,12 @@ function showPage(name) {
     window.scrollTo(0, 0);
     if (name === 'dashboard') loadDashboard();
     if (name === 'pricing')   renderPricing();
-    if (name === 'create')    { applyPlanGates(); updateExpiredUI(); }
+    if (name === 'create')    { applyPlanGates(); updateExpiredUI(); goToStep(1); }
 }
 
+
 // ============================================================
-// AUTH — appels API
+// 3. API AUTH — Login / Register
 // ============================================================
 async function login() {
     const btn      = document.getElementById('login-btn');
@@ -62,7 +91,7 @@ async function login() {
     if (!email || !password) { errEl.textContent = 'Veuillez remplir tous les champs'; errEl.style.display = 'block'; return; }
     btn.textContent = '⏳ Connexion...'; btn.disabled = true;
     try {
-        const res  = await fetch('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+        const res  = await fetch('/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email, password }) });
         const data = await res.json();
         if (!res.ok) { errEl.textContent = data.error || 'Erreur de connexion'; errEl.style.display = 'block'; return; }
         saveAuth(data.token, data.user);
@@ -83,9 +112,9 @@ async function register() {
     if (password.length < 8) { errEl.textContent = 'Mot de passe trop court (8 caractères minimum)'; errEl.style.display = 'block'; return; }
     btn.textContent = '⏳ Création...'; btn.disabled = true;
     try {
-        const res  = await fetch('/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, name }) });
+        const res  = await fetch('/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email, password, name }) });
         const data = await res.json();
-        if (!res.ok) { errEl.textContent = data.error || 'Erreur lors de l\'inscription'; errEl.style.display = 'block'; return; }
+        if (!res.ok) { errEl.textContent = data.error || "Erreur lors de l'inscription"; errEl.style.display = 'block'; return; }
         saveAuth(data.token, data.user);
         showPage('dashboard');
         showToast('🎉 Compte créé, bienvenue !');
@@ -93,135 +122,217 @@ async function register() {
     finally { btn.textContent = 'Créer mon compte →'; btn.disabled = false; }
 }
 
+
 // ============================================================
-// FETCH AUTHENTIFIÉ
+// 4. FETCH AUTHENTIFIÉ
 // ============================================================
 async function authFetch(url, options = {}) {
     const token = getToken();
     return fetch(url, {
         ...options,
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
+        headers: { 'Content-Type':'application/json', ...(token ? { Authorization:`Bearer ${token}` } : {}), ...(options.headers || {}) },
     });
 }
 
+
 // ============================================================
-// HERO TIMER
+// 5. HERO TIMER — Timer animé landing page (fictif)
 // ============================================================
-const heroTarget = new Date(Date.now() + 4 * 86400000 + 18 * 3600000 + 33 * 60000);
+const heroTarget = new Date(Date.now() + 4*86400000 + 18*3600000 + 33*60000);
 function updateHeroTimer() {
     const diff = heroTarget - Date.now();
     if (diff <= 0) return;
-    const pad = n => String(n).padStart(2, '0');
-    document.getElementById('hero-days').textContent  = pad(Math.floor(diff / 86400000));
-    document.getElementById('hero-hours').textContent = pad(Math.floor((diff % 86400000) / 3600000));
-    document.getElementById('hero-mins').textContent  = pad(Math.floor((diff % 3600000) / 60000));
-    document.getElementById('hero-secs').textContent  = pad(Math.floor((diff % 60000) / 1000));
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('hero-days').textContent  = pad(Math.floor(diff/86400000));
+    document.getElementById('hero-hours').textContent = pad(Math.floor((diff%86400000)/3600000));
+    document.getElementById('hero-mins').textContent  = pad(Math.floor((diff%3600000)/60000));
+    document.getElementById('hero-secs').textContent  = pad(Math.floor((diff%60000)/1000));
 }
 setInterval(updateHeroTimer, 1000);
 updateHeroTimer();
 
-// ============================================================
-// PREVIEW TIMER
-// ============================================================
-let previewTarget = new Date(Date.now() + 4 * 86400000 + 18 * 3600000 + 33 * 60000);
-let currentColor  = '#2563eb';
-let currentBg     = '#ffffff';
-let currentFont   = 'monospace';
-let currentStyle  = 'rounded';
-let currentFontSize = 36;
-let activeCodeTab = 'minimal';
-let currentGifUrl = '';
 
+// ============================================================
+// 6. PREVIEW — Timer CSS temps réel
+// ============================================================
+let previewTarget  = new Date(Date.now() + 4*86400000 + 18*3600000 + 33*60000);
+let currentColor   = '#2563eb';
+let currentBg      = '#f8f7f4';
+let currentFont    = 'monospace';
+let currentStyle   = 'rounded';
+let currentFontSize = 36;
+let activeCodeTab  = 'minimal';
+let currentGifUrl  = '';
+
+// Pré-remplit la date à J+7
 setTimeout(() => {
     const el = document.getElementById('cd-date');
-    if (el) el.value = new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16);
+    if (el) el.value = new Date(Date.now() + 86400000*7).toISOString().slice(0,16);
 }, 0);
 
+/** Synchronise la preview avec la date et les labels saisis */
 function updatePreview() {
     const el = document.getElementById('cd-date');
     if (el && el.value) previewTarget = new Date(el.value);
-    // Sync labels
     const plan = getUser()?.plan || 'FREE';
     if (plan !== 'FREE') {
-        const days = document.getElementById('cd-label-days');
-        const hours = document.getElementById('cd-label-hours');
-        const mins  = document.getElementById('cd-label-minutes');
-        const secs  = document.getElementById('cd-label-seconds');
-        if(days)  document.getElementById('prev-label-days').textContent  = days.value || 'JOURS';
-        if(hours) document.getElementById('prev-label-hours').textContent = hours.value || 'HEURES';
-        if(mins)  document.getElementById('prev-label-mins').textContent  = mins.value  || 'MIN';
-        if(secs)  document.getElementById('prev-label-secs').textContent  = secs.value  || 'SEC';
+        const map = { days:'prev-label-days', hours:'prev-label-hours', minutes:'prev-label-mins', seconds:'prev-label-secs' };
+        const defaults = { days:'JOURS', hours:'HEURES', minutes:'MIN', seconds:'SEC' };
+        Object.entries(map).forEach(([key, id]) => {
+            const inp = document.getElementById('cd-label-' + key);
+            const out = document.getElementById(id);
+            if(inp && out) out.textContent = inp.value || defaults[key];
+        });
     }
 }
 
 function updatePreviewTimer() {
     const diff = previewTarget - Date.now();
-    const pad  = n => String(n).padStart(2, '0');
+    const pad  = n => String(n).padStart(2,'0');
     const vals = diff > 0 ? [Math.floor(diff/86400000), Math.floor((diff%86400000)/3600000), Math.floor((diff%3600000)/60000), Math.floor((diff%60000)/1000)] : [0,0,0,0];
     ['days','hours','mins','secs'].forEach((k,i) => { const el = document.getElementById('prev-'+k); if(el) el.textContent = pad(vals[i]); });
 }
 setInterval(updatePreviewTimer, 1000);
 
+
 // ============================================================
-// COULEURS / POLICE / STYLE / TAILLE
+// 7. ACCORDÉONS — Étapes de création + barre de progression
 // ============================================================
+let currentStep = 1;
+
+/**
+ * Navigue vers une étape : ferme toutes, ouvre la cible,
+ * met à jour la barre de progression et scroll vers elle.
+ */
+function goToStep(step) {
+    [1,2,3,4].forEach(i => {
+        document.getElementById('body-'+i)?.classList.remove('open');
+        document.getElementById('accordion-'+i)?.classList.remove('active');
+    });
+    document.getElementById('body-'+step)?.classList.add('open');
+    document.getElementById('accordion-'+step)?.classList.add('active');
+    currentStep = step;
+    updateProgressBar(step);
+    document.getElementById('accordion-'+step)?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+/** Toggle manuel — ferme si ouvert, ouvre sinon */
+function toggleAccordion(step) {
+    const body   = document.getElementById('body-'+step);
+    const isOpen = body?.classList.contains('open');
+    if (isOpen) {
+        body.classList.remove('open');
+        document.getElementById('accordion-'+step)?.classList.remove('active');
+    } else {
+        goToStep(step);
+    }
+}
+
+/**
+ * Met à jour la barre de progression :
+ * done (vert) pour les étapes passées, active (bleu) pour l'étape en cours.
+ */
+function updateProgressBar(activeStep) {
+    [1,2,3,4].forEach(i => {
+        const el = document.getElementById('step-'+i);
+        if (!el) return;
+        el.classList.remove('active','done');
+        if (i < activeStep)       el.classList.add('done');
+        else if (i === activeStep) el.classList.add('active');
+    });
+    [1,2,3].forEach(i => {
+        const line = document.getElementById('line-'+i+'-'+(i+1));
+        if (!line) return;
+        line.classList.remove('done','active');
+        if (i < activeStep)       line.classList.add('done');
+        else if (i === activeStep) line.classList.add('active');
+    });
+}
+
+
+// ============================================================
+// 8. APPARENCE — Couleur, police, style, taille
+// ============================================================
+
+/** Sélectionne une couleur principale via swatch */
 function pickColor(el) {
     document.querySelectorAll('#color-picker .swatch').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected'); currentColor = el.dataset.color; applyPreviewColors();
+    el.classList.add('selected');
+    currentColor = el.dataset.color;
+    // Sync avec l'input natif
+    const inp = document.getElementById('color-custom');
+    if (inp) inp.value = currentColor;
+    applyPreviewStyle();
+    applyPreviewColors();
 }
+
+/** Sélectionne une couleur de fond via swatch */
 function pickBg(el) {
     document.querySelectorAll('#bg-picker .swatch').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected'); currentBg = el.dataset.color;
-    const box = document.getElementById('gif-preview-box'); if(box) box.style.background = currentBg;
+    el.classList.add('selected');
+    currentBg = el.dataset.color;
+    const inp = document.getElementById('bg-custom');
+    if (inp) inp.value = currentBg;
+    const box = document.getElementById('gif-preview-box');
+    if (box) box.style.background = currentBg;
     applyPreviewColors();
 }
+
+/** Sélectionne une police */
 function pickFont(el) {
     document.querySelectorAll('#font-picker .font-opt').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected'); currentFont = el.dataset.font;
+    el.classList.add('selected');
+    currentFont = el.dataset.font;
     document.querySelectorAll('.gif-num').forEach(e => e.style.fontFamily = currentFont);
-    // Réapplique le style et les couleurs pour préserver les bordures/border-radius
+    // Réapplique style et couleurs pour ne pas perdre les bordures
     applyPreviewStyle();
     applyPreviewColors();
 }
+
+/** Sélectionne un style de template */
 function pickStyle(el) {
     document.querySelectorAll('#style-picker .style-opt').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected'); currentStyle = el.dataset.style;
+    el.classList.add('selected');
+    currentStyle = el.dataset.style;
     applyPreviewStyle();
 }
+
+/** Met à jour la taille de police et scale la preview si nécessaire */
 function updateFontSize(val) {
     currentFontSize = parseInt(val);
     document.getElementById('font-size-display').textContent = val + 'px';
     document.querySelectorAll('.gif-num').forEach(e => e.style.fontSize = val + 'px');
-
-    // Scale la preview pour qu'elle reste dans la carte quelle que soit la taille
+    // Scale la preview pour éviter tout débordement
     const inner = document.getElementById('gif-preview-inner');
     const box   = document.getElementById('gif-preview-box');
-    if(!inner || !box) return;
+    if (!inner || !box) return;
     inner.style.transform = 'scale(1)';
     requestAnimationFrame(() => {
         const availableW = box.clientWidth  - 40;
         const availableH = box.clientHeight - 40;
-        const innerW     = inner.scrollWidth;
-        const innerH     = inner.scrollHeight;
-        const scaleW     = availableW / innerW;
-        const scaleH     = availableH / innerH;
-        const scale      = Math.min(1, scaleW, scaleH);
+        const scale = Math.min(1, availableW / inner.scrollWidth, availableH / inner.scrollHeight);
         inner.style.transform = 'scale(' + scale + ')';
     });
 }
+
+/**
+ * Applique le style visuel (rounded/flat/bordered) sur les blocs.
+ * Remet toujours les propriétés à zéro avant d'appliquer pour éviter
+ * les résidus d'un style précédent.
+ */
 function applyPreviewStyle() {
     const hex = currentColor.replace('#','');
     const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
     document.querySelectorAll('.gif-num').forEach(el => {
-        // Reset complet avant d'appliquer le nouveau style
-        el.style.border     = '';
+        // Reset complet
+        el.style.border = '';
         el.style.background = '';
         el.style.borderRadius = '';
-        if(currentStyle === 'flat') {
+        if (currentStyle === 'flat') {
             el.style.borderRadius = '0';
             el.style.background   = `rgba(${r},${g},${b},0.1)`;
             el.style.border       = `1px solid rgba(${r},${g},${b},0.25)`;
-        } else if(currentStyle === 'bordered') {
+        } else if (currentStyle === 'bordered') {
             el.style.borderRadius = '4px';
             el.style.border       = `2px solid ${currentColor}`;
             el.style.background   = 'transparent';
@@ -235,58 +346,131 @@ function applyPreviewStyle() {
     });
     document.querySelectorAll('.gif-sep').forEach(el => el.style.color = currentColor);
 }
+
+/** Applique la couleur principale sur les blocs et séparateurs */
 function applyPreviewColors() {
     const hex = currentColor.replace('#','');
     const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
     document.querySelectorAll('.gif-num').forEach(el => {
         el.style.color = currentColor;
-        if(currentStyle !== 'bordered') {
-            el.style.background  = `rgba(${r},${g},${b},0.1)`;
-            el.style.border      = `1px solid rgba(${r},${g},${b},0.25)`;
+        if (currentStyle !== 'bordered') {
+            el.style.background = `rgba(${r},${g},${b},0.1)`;
+            el.style.border     = `1px solid rgba(${r},${g},${b},0.25)`;
         } else {
-            el.style.background  = 'transparent';
-            el.style.border      = `2px solid ${currentColor}`;
+            el.style.background = 'transparent';
+            el.style.border     = `2px solid ${currentColor}`;
         }
     });
     document.querySelectorAll('.gif-sep').forEach(el => el.style.color = currentColor);
 }
 
-// ============================================================
-// POST-EXPIRATION UI
-// ============================================================
-function updateExpiredUI() {
-    const val = document.getElementById('cd-expired')?.value;
-    const textRow     = document.getElementById('expired-text-row');
-    const redirectRow = document.getElementById('expired-redirect-row');
-    if(textRow)     textRow.style.display     = val === 'SHOW_TEXT' ? 'block' : 'none';
-    if(redirectRow) redirectRow.style.display = val === 'REDIRECT'  ? 'block' : 'none';
-}
 
 // ============================================================
-// PLAN GATES — verrouiller les options selon le plan
+// 9. COLOR PICKER — Input natif couleur personnalisée
 // ============================================================
+
+/** Applique une couleur principale depuis l'input natif */
+function pickColorCustom(value) {
+    currentColor = value;
+    document.querySelectorAll('#color-picker .swatch').forEach(e => e.classList.remove('selected'));
+    applyPreviewStyle();
+    applyPreviewColors();
+}
+
+/** Applique une couleur de fond depuis l'input natif */
+function pickBgCustom(value) {
+    currentBg = value;
+    document.querySelectorAll('#bg-picker .swatch').forEach(e => e.classList.remove('selected'));
+    const box = document.getElementById('gif-preview-box');
+    if (box) box.style.background = currentBg;
+}
+
+
+// ============================================================
+// 10. POST-EXPIRATION UI
+// ============================================================
+
+/** Affiche/masque les champs texte et redirect selon le select */
+function updateExpiredUI() {
+    const val         = document.getElementById('cd-expired')?.value;
+    const textRow     = document.getElementById('expired-text-row');
+    const redirectRow = document.getElementById('expired-redirect-row');
+    if (textRow)     textRow.style.display     = val === 'SHOW_TEXT' ? 'block' : 'none';
+    if (redirectRow) redirectRow.style.display = val === 'REDIRECT'  ? 'block' : 'none';
+}
+
+
+// ============================================================
+// 11. PLAN GATES — Verrouillage des options selon le plan
+// ============================================================
+
+/** Active ou désactive les overlays de verrouillage selon le plan */
 function applyPlanGates() {
-    const plan = getUser()?.plan || 'FREE';
+    const plan            = getUser()?.plan || 'FREE';
     const overlayLabels   = document.getElementById('overlay-labels');
     const overlayRedirect = document.getElementById('overlay-redirect');
     const optRedirect     = document.getElementById('opt-redirect');
-
-    if(plan === 'FREE') {
-        if(overlayLabels)   overlayLabels.style.display   = 'flex';
-        if(overlayRedirect) overlayRedirect.style.display = 'flex';
-        if(optRedirect)     optRedirect.disabled = true;
+    if (plan === 'FREE') {
+        if (overlayLabels)   overlayLabels.style.display   = 'flex';
+        if (overlayRedirect) overlayRedirect.style.display = 'flex';
+        if (optRedirect)     optRedirect.disabled = true;
     } else {
-        if(overlayLabels)   overlayLabels.style.display   = 'none';
-        if(overlayRedirect) overlayRedirect.style.display = 'none';
-        if(optRedirect)     optRedirect.disabled = false;
+        if (overlayLabels)   overlayLabels.style.display   = 'none';
+        if (overlayRedirect) overlayRedirect.style.display = 'none';
+        if (optRedirect)     optRedirect.disabled = false;
     }
 }
 
+
 // ============================================================
-// PUBLICATION
+// 12. APERÇU GIF RÉEL
+//     Appelle /gif?... côté serveur avec les paramètres actuels
+//     et affiche le vrai rendu — ce que l'utilisateur recevra.
+// ============================================================
+async function previewRealGif() {
+    const btn  = document.getElementById('preview-gif-btn');
+    const box  = document.getElementById('real-gif-box');
+    const img  = document.getElementById('real-gif-img');
+    const endDate = document.getElementById('cd-date')?.value;
+    const width   = document.getElementById('cd-width')?.value || 400;
+    if (!endDate) { showToast('⚠️ Choisissez d\'abord une date'); return; }
+    btn.textContent = '⏳ Génération...';
+    btn.disabled    = true;
+    if (box) box.style.display = 'none';
+    const params = new URLSearchParams({
+        endDate, width,
+        bgColor:    currentBg,
+        textColor:  currentColor,
+        fontSize:   currentFontSize,
+        fontFamily: currentFont,
+        style:      currentStyle,
+    });
+    const url = '/gif?' + params.toString() + '&_t=' + Date.now();
+    try {
+        await new Promise((resolve, reject) => {
+            const t = new Image();
+            t.onload  = resolve;
+            t.onerror = reject;
+            t.src     = url;
+        });
+        if (img) img.src = url;
+        if (box) box.style.display = 'block';
+        showToast('👁 Aperçu GIF généré !');
+    } catch (err) {
+        showToast('❌ Erreur lors de la génération');
+    } finally {
+        btn.textContent = '👁 Aperçu GIF réel';
+        btn.disabled    = false;
+    }
+}
+
+
+// ============================================================
+// 13. PUBLICATION — Envoi du countdown à l'API
 // ============================================================
 async function publishCountdown() {
-    const btn = document.getElementById('publish-btn');
+    const btn             = document.getElementById('publish-btn');
+    const btn2            = document.getElementById('publish-btn-2');
     const name            = document.getElementById('cd-name')?.value || 'Mon countdown';
     const endDate         = document.getElementById('cd-date')?.value;
     const width           = document.getElementById('cd-width')?.value || 400;
@@ -298,9 +482,8 @@ async function publishCountdown() {
     const labelHours      = document.getElementById('cd-label-hours')?.value || 'HEURES';
     const labelMinutes    = document.getElementById('cd-label-minutes')?.value || 'MIN';
     const labelSeconds    = document.getElementById('cd-label-seconds')?.value || 'SEC';
-
     if (!endDate) { showToast('⚠️ Veuillez choisir une date'); return; }
-    btn.textContent = '⏳ Génération...'; btn.disabled = true;
+    [btn, btn2].forEach(b => { if(b) { b.textContent = '⏳ Génération...'; b.disabled = true; } });
     try {
         const res = await authFetch('/countdown', {
             method: 'POST',
@@ -319,13 +502,26 @@ async function publishCountdown() {
         currentGifUrl = data.gifUrl;
         displayCode(data.gifUrl);
         showToast('🚀 Countdown publié !');
+        // Marque l'étape 4 comme done
+        document.getElementById('accordion-4')?.classList.add('done');
+        updateProgressBar(5); // 5 = toutes done
     } catch(err) { showToast('❌ Erreur réseau'); }
-    finally { btn.textContent = '✓ Publier & obtenir le code'; btn.disabled = false; }
+    finally {
+        const label = '✓ Publier & obtenir le code';
+        [btn, btn2].forEach(b => { if(b) { b.textContent = label; b.disabled = false; } });
+    }
 }
 
+
+// ============================================================
+// 14. CODE SNIPPETS — Génération et copie des snippets HTML
+//     4 onglets : Minimal, Standard, Klaviyo, Mailchimp
+// ============================================================
 function displayCode(gifUrl) {
-    const section = document.getElementById('code-section'); if(section) section.style.display='block';
-    const urlDisplay = document.getElementById('gif-url-display'); if(urlDisplay) urlDisplay.textContent = gifUrl;
+    const section    = document.getElementById('code-section');
+    const urlDisplay = document.getElementById('gif-url-display');
+    if (section)    section.style.display = 'block';
+    if (urlDisplay) urlDisplay.textContent = gifUrl;
     const w = document.getElementById('cd-width')?.value || 400;
     window._codeSnippets = {
         minimal:   `<img src="${gifUrl}" alt="Offre expire dans..." width="${w}" border="0" style="display:block" />`,
@@ -341,61 +537,64 @@ function displayCode(gifUrl) {
 
 function switchCodeTab(name, btn) {
     activeCodeTab = name;
-    document.querySelectorAll('.code-tab-btn').forEach(t => t.classList.remove('active')); btn.classList.add('active');
-    document.querySelectorAll('.code-panel').forEach(p => p.classList.remove('active')); document.getElementById('code-'+name).classList.add('active');
+    document.querySelectorAll('.code-tab-btn').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.code-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('code-'+name).classList.add('active');
 }
+
 function copyCurrentCode() {
-    const s = window._codeSnippets; if(!s) { showToast('⚠️ Publiez d\'abord le countdown'); return; }
+    const s = window._codeSnippets;
+    if (!s) { showToast('⚠️ Publiez d\'abord le countdown'); return; }
     navigator.clipboard.writeText(s[activeCodeTab]).then(() => showToast('📋 Code HTML copié !'));
 }
+
 function copyUrl() {
-    if(!currentGifUrl) { showToast('⚠️ Publiez d\'abord le countdown'); return; }
+    if (!currentGifUrl) { showToast('⚠️ Publiez d\'abord le countdown'); return; }
     navigator.clipboard.writeText(currentGifUrl).then(() => showToast('🔗 URL copiée !'));
 }
 
+
 // ============================================================
-// DASHBOARD
+// 15. DASHBOARD — Chargement et rendu des countdowns
 // ============================================================
 async function loadDashboard() {
     const grid = document.getElementById('cards-grid');
-    if(!grid) return;
+    if (!grid) return;
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Chargement...</div>';
     try {
-        const res  = await authFetch('/countdowns');
-        if(res.status === 401) { logout(); return; }
-        const data = await res.json();
-        const user  = getUser();
-        const plan  = user?.plan || 'FREE';
-        const total = data.length;
+        const res = await authFetch('/countdowns');
+        if (res.status === 401) { logout(); return; }
+        const data    = await res.json();
+        const user    = getUser();
+        const plan    = user?.plan || 'FREE';
+        const total   = data.length;
         const active  = data.filter(c => new Date(c.endDate) > new Date()).length;
         const expired = data.filter(c => new Date(c.endDate) <= new Date()).length;
         const maxCountdowns = plan === 'FREE' ? 3 : '∞';
         const pct = plan === 'FREE' ? Math.min(100, Math.round((total/3)*100)) : 0;
-
-        const fill = document.getElementById('quota-fill');
-        const text = document.getElementById('quota-text');
-        const sub  = document.getElementById('dash-subtitle');
-        const chip = document.getElementById('sidebar-plan-chip');
+        const fill       = document.getElementById('quota-fill');
+        const text       = document.getElementById('quota-text');
+        const sub        = document.getElementById('dash-subtitle');
+        const chip       = document.getElementById('sidebar-plan-chip');
         const upgradeBtn = document.getElementById('upgrade-btn');
-
-        if(fill) fill.style.width = pct + '%';
-        if(text) text.textContent = `${total} / ${maxCountdowns} countdowns`;
-        if(sub)  sub.textContent  = `${active} actif${active!==1?'s':''} · ${expired} expiré${expired!==1?'s':''}`;
-        if(chip) { chip.textContent = plan; chip.className = 'plan-chip plan-chip-' + plan.toLowerCase(); }
-        if(upgradeBtn) {
-            if(plan === 'FREE') { upgradeBtn.textContent = 'Passer à Pro ↗'; upgradeBtn.onclick = () => upgradePlan('pro_monthly'); upgradeBtn.style.display='block'; }
-            else if(plan === 'PRO') { upgradeBtn.textContent = 'Gérer mon abonnement'; upgradeBtn.onclick = openBillingPortal; upgradeBtn.style.display='block'; }
-            else { upgradeBtn.style.display='none'; }
+        if (fill) fill.style.width = pct + '%';
+        if (text) text.textContent = `${total} / ${maxCountdowns} countdowns`;
+        if (sub)  sub.textContent  = `${active} actif${active!==1?'s':''} · ${expired} expiré${expired!==1?'s':''}`;
+        if (chip) { chip.textContent = plan; chip.className = 'plan-chip plan-chip-' + plan.toLowerCase(); }
+        if (upgradeBtn) {
+            if (plan === 'FREE')      { upgradeBtn.textContent = 'Passer à Pro ↗'; upgradeBtn.onclick = () => upgradePlan('pro_monthly'); upgradeBtn.style.display = 'block'; }
+            else if (plan === 'PRO') { upgradeBtn.textContent = 'Gérer mon abonnement'; upgradeBtn.onclick = openBillingPortal; upgradeBtn.style.display = 'block'; }
+            else                      { upgradeBtn.style.display = 'none'; }
         }
-
         grid.innerHTML = '';
         data.forEach(cd => grid.appendChild(buildCard(cd)));
-        if(plan === 'FREE' && total < 3) {
+        if (plan === 'FREE' && total < 3) {
             const add = document.createElement('div');
             add.className = 'cd-card cd-card-add'; add.onclick = () => showPage('create');
             add.innerHTML = `<div class="cd-card-add-icon">+</div><div style="font-size:14px;font-weight:600">Nouveau countdown</div><div style="font-size:12.5px">${3-total} emplacement${3-total>1?'s':''} restant${3-total>1?'s':''}</div>`;
             grid.appendChild(add);
-        } else if(plan !== 'FREE') {
+        } else if (plan !== 'FREE') {
             const add = document.createElement('div');
             add.className = 'cd-card cd-card-add'; add.onclick = () => showPage('create');
             add.innerHTML = `<div class="cd-card-add-icon">+</div><div style="font-size:14px;font-weight:600">Nouveau countdown</div>`;
@@ -415,10 +614,10 @@ function buildCard(cd) {
     const mins  = pad(Math.max(0,Math.floor((diff%3600000)/60000)));
     const secs  = pad(Math.max(0,Math.floor((diff%60000)/1000)));
     const dateStr = new Date(cd.endDate).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
-    const imps = cd._count?.impressions ?? 0;
+    const imps    = cd._count?.impressions ?? 0;
     const card = document.createElement('div');
     card.className = 'cd-card';
-    if(!isActive) card.style.opacity = '0.65';
+    if (!isActive) card.style.opacity = '0.65';
     card.innerHTML = `
     <div class="cd-card-header">
       <div><div class="cd-card-name">${cd.name}</div><div class="cd-card-date">${isActive?'Expire le':'Expiré le'} ${dateStr}</div></div>
@@ -438,60 +637,17 @@ function buildCard(cd) {
     return card;
 }
 
+
 // ============================================================
-// PRICING — dynamique selon le plan
+// 16. PRICING — Page tarifs dynamique
 // ============================================================
 let billingYearly = false;
 
 const PRICING_DATA = {
-    free: {
-        monthly: { price: '0€', period: '/mois' },
-        yearly:  { price: '0€', period: '/mois' },
-    },
-    pro: {
-        monthly: { price: '9€',     period: '/mois' },
-        yearly:  { price: '6.58€',  period: '/mois (facturé 79€/an)' },
-    },
-    business: {
-        monthly: { price: '29€',    period: '/mois' },
-        yearly:  { price: '20.75€', period: '/mois (facturé 249€/an)' },
-    },
+    free:     { monthly:{ price:'0€', period:'/mois' }, yearly:{ price:'0€', period:'/mois' } },
+    pro:      { monthly:{ price:'9€', period:'/mois' }, yearly:{ price:'6.58€', period:'/mois (facturé 79€/an)' } },
+    business: { monthly:{ price:'29€', period:'/mois' }, yearly:{ price:'20.75€', period:'/mois (facturé 249€/an)' } },
 };
-
-const FAQ_GUEST = [
-    { q: 'Puis-je essayer gratuitement ?',                   a: 'Oui — le plan Free vous permet de créer jusqu\'à 3 countdowns sans carte bancaire.' },
-    { q: 'Les GIFs fonctionnent-ils dans tous les clients email ?', a: 'Gmail, Apple Mail, Yahoo, Outlook 2013+, iOS Mail et tous les grands ESP. Outlook 2007-2010 affiche la première frame statique.' },
-    { q: 'Que se passe-t-il quand un countdown expire ?',    a: 'Par défaut, le GIF affiche 00:00:00:00. Vous pouvez configurer un texte personnalisé ou masquer l\'image.' },
-    { q: 'Y a-t-il un engagement de durée ?',                a: 'Non, tous les plans sont sans engagement. Vous pouvez annuler à tout moment depuis votre espace de facturation.' },
-];
-
-const FAQ_FREE = [
-    { q: 'Comment passer au plan Pro ?',                     a: 'Cliquez sur "Passer à Pro" depuis votre dashboard ou depuis cette page. Le paiement est sécurisé via Stripe.' },
-    { q: 'Mes countdowns actuels seront-ils conservés ?',    a: 'Oui, tous vos countdowns existants sont conservés lors d\'un changement de plan.' },
-    { q: 'Les GIFs fonctionnent-ils dans tous les clients email ?', a: 'Gmail, Apple Mail, Yahoo, Outlook 2013+, iOS Mail et tous les grands ESP. Outlook 2007-2010 affiche la première frame statique.' },
-    { q: 'Y a-t-il un engagement de durée ?',                a: 'Non, vous pouvez annuler à tout moment. Le remboursement est au prorata si vous annulez en cours de mois.' },
-];
-
-const FAQ_PRO = [
-    { q: 'Comment gérer ma facturation ?',                   a: 'Cliquez sur "Gérer mon abonnement" pour accéder au portail Stripe — vous y trouverez vos factures et pouvez modifier votre moyen de paiement.' },
-    { q: 'Comment passer au plan Business ?',                a: 'Cliquez sur "Passer à Business" ci-dessus. Le changement est immédiat et le montant est ajusté au prorata.' },
-    { q: 'Comment annuler mon abonnement ?',                 a: 'Depuis le portail de facturation Stripe, cliquez sur "Annuler l\'abonnement". Vous conservez l\'accès Pro jusqu\'à la fin de la période payée.' },
-    { q: 'Que se passe-t-il à l\'expiration d\'un countdown ?', a: 'Vous pouvez configurer un texte personnalisé, masquer l\'image ou afficher 00:00:00:00.' },
-];
-
-const FAQ_BUSINESS = [
-    { q: 'Comment gérer ma facturation ?',                   a: 'Accédez au portail Stripe via "Gérer mon abonnement" pour consulter vos factures et gérer votre moyen de paiement.' },
-    { q: 'Comment accéder à l\'API ?',                       a: 'La documentation de l\'API est disponible dans votre dashboard sous "Paramètres → API". Votre clé API est générée automatiquement.' },
-    { q: 'Comment ajouter des membres à mon équipe ?',       a: 'Depuis "Paramètres → Équipe", invitez vos collaborateurs par email. Chaque membre dispose de ses propres accès.' },
-    { q: 'Puis-je obtenir une facturation entreprise ?',     a: 'Oui — contactez-nous à billing@chrono.mail pour recevoir des factures avec numéro de TVA et coordonnées entreprise.' },
-];
-
-function getFaqByPlan(plan) {
-    if (!isLoggedIn()) return FAQ_GUEST;
-    if (plan === 'PRO')      return FAQ_PRO;
-    if (plan === 'BUSINESS') return FAQ_BUSINESS;
-    return FAQ_FREE;
-}
 
 function renderPricing() {
     const user = getUser();
@@ -502,50 +658,32 @@ function renderPricing() {
 
 function renderPricingCards(plan) {
     const billing = billingYearly ? 'yearly' : 'monthly';
-
-    // Prix
     ['pro','business'].forEach(p => {
-        const priceEl  = document.getElementById(p + '-price');
-        const periodEl = document.getElementById(p + '-period');
-        if(priceEl)  priceEl.textContent  = PRICING_DATA[p][billing].price;
-        if(periodEl) periodEl.textContent = PRICING_DATA[p][billing].period;
+        const priceEl  = document.getElementById(p+'-price');
+        const periodEl = document.getElementById(p+'-period');
+        if (priceEl)  priceEl.textContent  = PRICING_DATA[p][billing].price;
+        if (periodEl) periodEl.textContent = PRICING_DATA[p][billing].period;
     });
-
-    // Boutons
     const freeCta     = document.getElementById('cta-free');
     const proCta      = document.getElementById('cta-pro');
     const businessCta = document.getElementById('cta-business');
-
-    if(!plan) {
-        // Non connecté
-        if(freeCta)     { freeCta.textContent = 'Commencer gratuitement'; freeCta.onclick = () => showPage('register'); freeCta.className = 'btn btn-ghost pricing-btn'; }
-        if(proCta)      { proCta.textContent  = 'Commencer avec Pro →';  proCta.onclick  = () => showPage('register'); proCta.className  = 'btn btn-primary pricing-btn'; }
-        if(businessCta) { businessCta.textContent = 'Commencer avec Business →'; businessCta.onclick = () => showPage('register'); businessCta.className = 'btn btn-ghost pricing-btn'; }
-    } else if(plan === 'FREE') {
-        if(freeCta)     { freeCta.textContent = '✓ Votre plan actuel'; freeCta.onclick = null; freeCta.className = 'btn btn-surface pricing-btn'; freeCta.style.cursor='default'; }
-        if(proCta)      { proCta.textContent  = 'Passer à Pro →'; proCta.onclick = () => handlePricingCta('pro'); proCta.className = 'btn btn-primary pricing-btn'; }
-        if(businessCta) { businessCta.textContent = 'Passer à Business →'; businessCta.onclick = () => handlePricingCta('business'); businessCta.className = 'btn btn-ghost pricing-btn'; }
-    } else if(plan === 'PRO') {
-        if(freeCta)     { freeCta.textContent = 'Rétrograder'; freeCta.onclick = openBillingPortal; freeCta.className = 'btn btn-ghost pricing-btn'; }
-        if(proCta)      { proCta.textContent  = '✓ Votre plan actuel'; proCta.onclick = null; proCta.className = 'btn btn-surface pricing-btn'; proCta.style.cursor='default'; }
-        if(businessCta) { businessCta.textContent = 'Passer à Business →'; businessCta.onclick = () => handlePricingCta('business'); businessCta.className = 'btn btn-ghost pricing-btn'; }
-    } else if(plan === 'BUSINESS') {
-        if(freeCta)     { freeCta.textContent = 'Rétrograder'; freeCta.onclick = openBillingPortal; freeCta.className = 'btn btn-ghost pricing-btn'; }
-        if(proCta)      { proCta.textContent  = 'Rétrograder'; proCta.onclick  = openBillingPortal; proCta.className  = 'btn btn-ghost pricing-btn'; }
-        if(businessCta) { businessCta.textContent = '✓ Votre plan actuel'; businessCta.onclick = null; businessCta.className = 'btn btn-surface pricing-btn'; businessCta.style.cursor='default'; }
+    if (!plan) {
+        if (freeCta)     { freeCta.textContent = 'Commencer gratuitement'; freeCta.onclick = () => showPage('register'); freeCta.className = 'btn btn-ghost pricing-btn'; }
+        if (proCta)      { proCta.textContent  = 'Commencer avec Pro →';  proCta.onclick  = () => showPage('register'); proCta.className  = 'btn btn-primary pricing-btn'; }
+        if (businessCta) { businessCta.textContent = 'Commencer avec Business →'; businessCta.onclick = () => showPage('register'); businessCta.className = 'btn btn-ghost pricing-btn'; }
+    } else if (plan === 'FREE') {
+        if (freeCta)     { freeCta.textContent = '✓ Votre plan actuel'; freeCta.onclick = null; freeCta.className = 'btn btn-surface pricing-btn'; freeCta.style.cursor='default'; }
+        if (proCta)      { proCta.textContent  = 'Passer à Pro →'; proCta.onclick = () => handlePricingCta('pro'); proCta.className = 'btn btn-primary pricing-btn'; }
+        if (businessCta) { businessCta.textContent = 'Passer à Business →'; businessCta.onclick = () => handlePricingCta('business'); businessCta.className = 'btn btn-ghost pricing-btn'; }
+    } else if (plan === 'PRO') {
+        if (freeCta)     { freeCta.textContent = 'Rétrograder'; freeCta.onclick = openBillingPortal; freeCta.className = 'btn btn-ghost pricing-btn'; }
+        if (proCta)      { proCta.textContent  = '✓ Votre plan actuel'; proCta.onclick = null; proCta.className = 'btn btn-surface pricing-btn'; proCta.style.cursor='default'; }
+        if (businessCta) { businessCta.textContent = 'Passer à Business →'; businessCta.onclick = () => handlePricingCta('business'); businessCta.className = 'btn btn-ghost pricing-btn'; }
+    } else if (plan === 'BUSINESS') {
+        if (freeCta)     { freeCta.textContent = 'Rétrograder'; freeCta.onclick = openBillingPortal; freeCta.className = 'btn btn-ghost pricing-btn'; }
+        if (proCta)      { proCta.textContent  = 'Rétrograder'; proCta.onclick  = openBillingPortal; proCta.className  = 'btn btn-ghost pricing-btn'; }
+        if (businessCta) { businessCta.textContent = '✓ Votre plan actuel'; businessCta.onclick = null; businessCta.className = 'btn btn-surface pricing-btn'; businessCta.style.cursor='default'; }
     }
-}
-
-function renderFaq(plan) {
-    const container = document.getElementById('faq-grid');
-    if(!container) return;
-    const faqs = getFaqByPlan(plan);
-    container.innerHTML = faqs.map(f => `
-    <div class="faq-item">
-      <div class="faq-q">${f.q}</div>
-      <div class="faq-a">${f.a}</div>
-    </div>
-  `).join('');
 }
 
 function toggleBilling() {
@@ -560,20 +698,65 @@ function toggleBilling() {
 }
 
 function handlePricingCta(plan) {
-    if(!isLoggedIn()) { showPage('register'); return; }
+    if (!isLoggedIn()) { showPage('register'); return; }
     const key = billingYearly ? `${plan}_yearly` : `${plan}_monthly`;
     upgradePlan(key);
 }
 
+
 // ============================================================
-// STRIPE
+// 17. FAQ — Questions fréquentes contextuelles par plan
+// ============================================================
+const FAQ_GUEST = [
+    { q:'Puis-je essayer gratuitement ?',                          a:"Oui — le plan Free vous permet de créer jusqu'à 3 countdowns sans carte bancaire." },
+    { q:'Les GIFs fonctionnent-ils dans tous les clients email ?', a:'Gmail, Apple Mail, Yahoo, Outlook 2013+, iOS Mail et tous les grands ESP. Outlook 2007-2010 affiche la première frame statique.' },
+    { q:"Que se passe-t-il quand un countdown expire ?",           a:"Par défaut, le GIF affiche 00:00:00:00. Vous pouvez configurer un texte personnalisé ou masquer l'image." },
+    { q:"Y a-t-il un engagement de durée ?",                       a:"Non, tous les plans sont sans engagement. Vous pouvez annuler à tout moment depuis votre espace de facturation." },
+];
+const FAQ_FREE = [
+    { q:'Comment passer au plan Pro ?',                  a:'Cliquez sur "Passer à Pro" depuis votre dashboard ou depuis cette page. Le paiement est sécurisé via Stripe.' },
+    { q:'Mes countdowns actuels seront-ils conservés ?', a:'Oui, tous vos countdowns existants sont conservés lors d\'un changement de plan.' },
+    { q:'Les GIFs fonctionnent-ils dans tous les clients email ?', a:'Gmail, Apple Mail, Yahoo, Outlook 2013+, iOS Mail et tous les grands ESP. Outlook 2007-2010 affiche la première frame statique.' },
+    { q:"Y a-t-il un engagement de durée ?",             a:"Non, vous pouvez annuler à tout moment. Le remboursement est au prorata si vous annulez en cours de mois." },
+];
+const FAQ_PRO = [
+    { q:'Comment gérer ma facturation ?',    a:'Cliquez sur "Gérer mon abonnement" pour accéder au portail Stripe — vous y trouverez vos factures et pouvez modifier votre moyen de paiement.' },
+    { q:'Comment passer au plan Business ?', a:'Cliquez sur "Passer à Business" ci-dessus. Le changement est immédiat et le montant est ajusté au prorata.' },
+    { q:"Comment annuler mon abonnement ?",  a:'Depuis le portail de facturation Stripe, cliquez sur "Annuler l\'abonnement". Vous conservez l\'accès Pro jusqu\'à la fin de la période payée.' },
+    { q:"Que se passe-t-il à l'expiration d'un countdown ?", a:"Vous pouvez configurer un texte personnalisé, masquer l'image ou rediriger vers une URL." },
+];
+const FAQ_BUSINESS = [
+    { q:'Comment gérer ma facturation ?',            a:'Accédez au portail Stripe via "Gérer mon abonnement" pour consulter vos factures et gérer votre moyen de paiement.' },
+    { q:"Comment accéder à l'API ?",                 a:'La documentation de l\'API est disponible dans votre dashboard sous "Paramètres → API". Votre clé API est générée automatiquement.' },
+    { q:'Comment ajouter des membres à mon équipe ?',a:'Depuis "Paramètres → Équipe", invitez vos collaborateurs par email. Chaque membre dispose de ses propres accès.' },
+    { q:'Puis-je obtenir une facturation entreprise ?', a:'Oui — contactez-nous à billing@chrono.mail pour recevoir des factures avec numéro de TVA et coordonnées entreprise.' },
+];
+
+function getFaqByPlan(plan) {
+    if (!isLoggedIn()) return FAQ_GUEST;
+    if (plan === 'PRO')      return FAQ_PRO;
+    if (plan === 'BUSINESS') return FAQ_BUSINESS;
+    return FAQ_FREE;
+}
+
+function renderFaq(plan) {
+    const container = document.getElementById('faq-grid');
+    if (!container) return;
+    container.innerHTML = getFaqByPlan(plan).map(f => `
+    <div class="faq-item"><div class="faq-q">${f.q}</div><div class="faq-a">${f.a}</div></div>
+  `).join('');
+}
+
+
+// ============================================================
+// 18. STRIPE — Checkout, portail, retours URL
 // ============================================================
 async function upgradePlan(priceKey) {
     try {
         showToast('⏳ Redirection vers le paiement...');
-        const res  = await authFetch('/stripe/checkout', { method:'POST', body: JSON.stringify({ priceKey }) });
+        const res  = await authFetch('/stripe/checkout', { method:'POST', body:JSON.stringify({ priceKey }) });
         const data = await res.json();
-        if(data.url) window.location.href = data.url;
+        if (data.url) window.location.href = data.url;
         else showToast('❌ ' + (data.error || 'Erreur'));
     } catch(err) { showToast('❌ Erreur réseau'); }
 }
@@ -582,29 +765,31 @@ async function openBillingPortal() {
     try {
         const res  = await authFetch('/stripe/portal', { method:'POST' });
         const data = await res.json();
-        if(data.url) window.location.href = data.url;
+        if (data.url) window.location.href = data.url;
         else showToast('❌ ' + (data.error || 'Erreur'));
     } catch(err) { showToast('❌ Erreur réseau'); }
 }
 
+// Retour Stripe Checkout
 (function handleCheckoutReturn() {
     const params = new URLSearchParams(window.location.search);
     const status = params.get('checkout');
-    if(status === 'success') {
+    if (status === 'success') {
         window.history.replaceState({}, document.title, '/');
         showToast('🎉 Abonnement activé !');
-        if(isLoggedIn()) showPage('dashboard');
-    } else if(status === 'cancelled') {
+        if (isLoggedIn()) showPage('dashboard');
+    } else if (status === 'cancelled') {
         window.history.replaceState({}, document.title, '/');
         showToast('Paiement annulé');
     }
 })();
 
+// Retour Google OAuth
 (function handleGoogleCallback() {
     const params = new URLSearchParams(window.location.search);
     const token  = params.get('token');
     const user   = params.get('user');
-    if(token && user) {
+    if (token && user) {
         try {
             saveAuth(token, JSON.parse(decodeURIComponent(user)));
             window.history.replaceState({}, document.title, '/');
@@ -614,8 +799,9 @@ async function openBillingPortal() {
     }
 })();
 
+
 // ============================================================
-// TOAST
+// 19. TOAST
 // ============================================================
 function showToast(msg) {
     const t = document.getElementById('toast');
@@ -624,7 +810,8 @@ function showToast(msg) {
     setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+
 // ============================================================
-// INIT
+// 20. INIT
 // ============================================================
 updateNavAuth();

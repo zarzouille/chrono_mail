@@ -285,200 +285,352 @@
 <!-- ============================================================
      CREATE PAGE
      ============================================================ -->
+<!-- ============================================================
+     PAGE CREATE — Remplace le bloc <div id="page-create">
+     dans frontend/public/index.html
+     ============================================================ -->
 <div id="page-create" class="page">
     <div class="main-content">
+
+        <!-- EN-TÊTE -->
         <div class="page-header">
             <div>
                 <div class="page-title">Créer un countdown</div>
-                <div class="page-subtitle">Configurez votre timer puis copiez le code dans votre email</div>
+                <div class="page-subtitle">Configurez votre timer et copiez le code dans votre email</div>
             </div>
-            <div style="display:flex;gap:10px">
-                <button class="btn btn-ghost" onclick="showPage('dashboard')">← Retour</button>
-                <button class="btn btn-success btn-lg" onclick="publishCountdown()" id="publish-btn">✓ Publier & obtenir le code</button>
+            <button class="btn btn-ghost" onclick="showPage('dashboard')">← Dashboard</button>
+        </div>
+
+        <!-- BARRE DE PROGRESSION LINÉAIRE -->
+        <div class="progress-bar-wrap" style="margin-bottom:20px">
+            <div class="progress-steps">
+                <div class="progress-step active" id="step-1" onclick="goToStep(1)">
+                    <div class="progress-step-num"><span>1</span></div>
+                    <div class="progress-step-label">Informations</div>
+                </div>
+                <div class="progress-line" id="line-1-2"></div>
+                <div class="progress-step" id="step-2" onclick="goToStep(2)">
+                    <div class="progress-step-num"><span>2</span></div>
+                    <div class="progress-step-label">Apparence</div>
+                </div>
+                <div class="progress-line" id="line-2-3"></div>
+                <div class="progress-step" id="step-3" onclick="goToStep(3)">
+                    <div class="progress-step-num"><span>3</span></div>
+                    <div class="progress-step-label">Expiration</div>
+                </div>
+                <div class="progress-line" id="line-3-4"></div>
+                <div class="progress-step" id="step-4" onclick="goToStep(4)">
+                    <div class="progress-step-num"><span>4</span></div>
+                    <div class="progress-step-label">Publication</div>
+                </div>
             </div>
         </div>
+
         <div class="create-layout">
+
+            <!-- ====================================================
+                 COLONNE GAUCHE — Formulaire en accordéons
+                 ==================================================== -->
             <div class="create-form-col">
 
-                <!-- INFORMATIONS -->
-                <div class="form-card">
-                    <div class="form-card-title">📋 Informations</div>
-                    <div class="form-group">
-                        <label class="form-label">Nom du countdown <span class="optional">(interne)</span></label>
-                        <input type="text" class="form-input" id="cd-name" value="Vente Flash Été 2026" oninput="updatePreview()">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Date et heure cible</label>
-                        <input type="datetime-local" class="form-input" id="cd-date" oninput="updatePreview()">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0">
-                        <label class="form-label">Timezone</label>
-                        <select class="form-input" id="cd-timezone">
-                            <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
-                            <option value="Europe/London">Europe/London (UTC+0)</option>
-                            <option value="America/New_York">America/New_York (UTC−5)</option>
-                            <option value="America/Los_Angeles">America/Los_Angeles (UTC−8)</option>
-                            <option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- APPARENCE -->
-                <div class="form-card">
-                    <div class="form-card-title">🎨 Apparence</div>
-
-                    <div class="form-group">
-                        <label class="form-label">Style de template</label>
-                        <div class="style-picker" id="style-picker">
-                            <div class="style-opt selected" data-style="rounded" onclick="pickStyle(this)">
-                                <div class="style-demo"><div class="style-demo-block style-demo-rounded">42</div></div>
-                                <span>Arrondi</span>
-                            </div>
-                            <div class="style-opt" data-style="flat" onclick="pickStyle(this)">
-                                <div class="style-demo"><div class="style-demo-block style-demo-flat">42</div></div>
-                                <span>Flat</span>
-                            </div>
-                            <div class="style-opt" data-style="bordered" onclick="pickStyle(this)">
-                                <div class="style-demo"><div class="style-demo-block style-demo-bordered">42</div></div>
-                                <span>Bordure</span>
+                <!-- ÉTAPE 1 — INFORMATIONS -->
+                <div class="form-card accordion-card active" id="accordion-1">
+                    <div class="accordion-header" onclick="toggleAccordion(1)">
+                        <div class="accordion-left">
+                            <div class="accordion-step-badge">1</div>
+                            <div>
+                                <div class="accordion-title">Informations</div>
+                                <div class="accordion-summary">Nom, date cible, timezone</div>
                             </div>
                         </div>
+                        <span class="accordion-chevron">▾</span>
                     </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Police</label>
-                        <div class="font-picker" id="font-picker">
-                            <div class="font-opt selected" data-font="monospace" onclick="pickFont(this)">
-                                <span class="font-demo" style="font-family:monospace">42</span>
-                                <span class="font-name">Mono</span>
-                            </div>
-                            <div class="font-opt" data-font="sans-serif" onclick="pickFont(this)">
-                                <span class="font-demo" style="font-family:sans-serif">42</span>
-                                <span class="font-name">Sans</span>
-                            </div>
-                            <div class="font-opt" data-font="serif" onclick="pickFont(this)">
-                                <span class="font-demo" style="font-family:serif">42</span>
-                                <span class="font-name">Serif</span>
-                            </div>
-                            <div class="font-opt" data-font="cursive" onclick="pickFont(this)">
-                                <span class="font-demo" style="font-family:cursive">42</span>
-                                <span class="font-name">Cursive</span>
-                            </div>
+                    <div class="accordion-body open" id="body-1">
+                        <div class="form-group">
+                            <label class="form-label">Nom du countdown <span class="optional">(usage interne)</span></label>
+                            <input type="text" class="form-input" id="cd-name" value="Vente Flash Été 2026" oninput="updatePreview()">
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="font-size-row">
-                            <label class="form-label" style="margin:0">Taille du texte</label>
-                            <span class="font-size-val" id="font-size-display">36px</span>
+                        <div class="form-group">
+                            <label class="form-label">Date et heure cible</label>
+                            <input type="datetime-local" class="form-input" id="cd-date" oninput="updatePreview()">
                         </div>
-                        <input type="range" class="form-range" id="cd-fontsize" min="20" max="56" value="36" step="2" oninput="updateFontSize(this.value)">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Couleur principale</label>
-                        <div class="color-swatches" id="color-picker">
-                            <div class="swatch selected" style="background:#2563eb" data-color="#2563eb" onclick="pickColor(this)"></div>
-                            <div class="swatch" style="background:#dc2626" data-color="#dc2626" onclick="pickColor(this)"></div>
-                            <div class="swatch" style="background:#f97316" data-color="#f97316" onclick="pickColor(this)"></div>
-                            <div class="swatch" style="background:#16a34a" data-color="#16a34a" onclick="pickColor(this)"></div>
-                            <div class="swatch" style="background:#7c3aed" data-color="#7c3aed" onclick="pickColor(this)"></div>
-                            <div class="swatch" style="background:#0891b2" data-color="#0891b2" onclick="pickColor(this)"></div>
-                            <div class="swatch" style="background:#1a1916" data-color="#1a1916" onclick="pickColor(this)"></div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label">Timezone</label>
+                            <select class="form-input" id="cd-timezone">
+                                <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
+                                <option value="Europe/London">Europe/London (UTC+0)</option>
+                                <option value="America/New_York">America/New_York (UTC−5)</option>
+                                <option value="America/Los_Angeles">America/Los_Angeles (UTC−8)</option>
+                                <option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</option>
+                            </select>
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Couleur de fond</label>
-                        <div class="color-swatches" id="bg-picker">
-                            <div class="swatch selected" style="background:#f8f7f4;border:1px solid #e2e0db" data-color="#ffffff" onclick="pickBg(this)"></div>
-                            <div class="swatch" style="background:#ffffff;border:1px solid #e2e0db" data-color="#ffffff" onclick="pickBg(this)"></div>
-                            <div class="swatch" style="background:#1e1e2e" data-color="#1e1e2e" onclick="pickBg(this)"></div>
-                            <div class="swatch" style="background:#0f172a" data-color="#0f172a" onclick="pickBg(this)"></div>
-                            <div class="swatch" style="background:#1a1916" data-color="#1a1916" onclick="pickBg(this)"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:0">
-                        <label class="form-label">Largeur du GIF (px)</label>
-                        <input type="number" class="form-input" id="cd-width" value="400" min="200" max="800">
-                    </div>
-                </div>
-
-                <!-- LABELS — Pro -->
-                <div class="form-card" id="card-labels">
-                    <div class="form-card-title">🏷️ Labels <span class="plan-gate-badge" id="badge-labels">Pro</span></div>
-                    <div id="labels-fields">
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                            <div class="form-group" style="margin-bottom:0">
-                                <label class="form-label">Jours</label>
-                                <input type="text" class="form-input" id="cd-label-days" value="JOURS" maxlength="10">
-                            </div>
-                            <div class="form-group" style="margin-bottom:0">
-                                <label class="form-label">Heures</label>
-                                <input type="text" class="form-input" id="cd-label-hours" value="HEURES" maxlength="10">
-                            </div>
-                            <div class="form-group" style="margin-bottom:0">
-                                <label class="form-label">Minutes</label>
-                                <input type="text" class="form-input" id="cd-label-minutes" value="MIN" maxlength="10">
-                            </div>
-                            <div class="form-group" style="margin-bottom:0">
-                                <label class="form-label">Secondes</label>
-                                <input type="text" class="form-input" id="cd-label-seconds" value="SEC" maxlength="10">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="plan-gate-overlay" id="overlay-labels" onclick="showPage('pricing')">
-                        <div class="plan-gate-msg">🔒 Disponible en <strong>Pro</strong> — Cliquez pour upgrader</div>
-                    </div>
-                </div>
-
-                <!-- POST-EXPIRATION -->
-                <div class="form-card">
-                    <div class="form-card-title">⏰ Après expiration</div>
-                    <div class="form-group" style="margin-bottom:0">
-                        <label class="form-label">Comportement</label>
-                        <select class="form-input" id="cd-expired" onchange="updateExpiredUI()">
-                            <option value="SHOW_ZEROS">Afficher 00:00:00:00</option>
-                            <option value="SHOW_TEXT">Afficher un texte</option>
-                            <option value="REDIRECT" id="opt-redirect">Rediriger vers une URL <span>— Pro</span></option>
-                        </select>
-                    </div>
-                    <div id="expired-text-row" style="display:none;margin-top:12px">
-                        <label class="form-label">Texte à afficher</label>
-                        <input type="text" class="form-input" id="cd-expired-text" value="Offre terminée" placeholder="Offre terminée">
-                    </div>
-                    <div id="expired-redirect-row" style="display:none;margin-top:12px;position:relative">
-                        <label class="form-label">URL de redirection <span class="plan-gate-badge">Pro</span></label>
-                        <input type="url" class="form-input" id="cd-expired-redirect" placeholder="https://votresite.com/nouvelle-offre">
-                        <div class="plan-gate-overlay" id="overlay-redirect" onclick="showPage('pricing')" style="border-radius:var(--radius)">
-                            <div class="plan-gate-msg">🔒 <strong>Pro</strong></div>
+                        <div class="accordion-nav-row">
+                            <button class="btn btn-primary btn-sm" onclick="goToStep(2)">Suivant →</button>
                         </div>
                     </div>
                 </div>
 
-            </div>
+                <!-- ÉTAPE 2 — APPARENCE -->
+                <div class="form-card accordion-card" id="accordion-2">
+                    <div class="accordion-header" onclick="toggleAccordion(2)">
+                        <div class="accordion-left">
+                            <div class="accordion-step-badge">2</div>
+                            <div>
+                                <div class="accordion-title">Apparence</div>
+                                <div class="accordion-summary">Style, police, couleurs, taille</div>
+                            </div>
+                        </div>
+                        <span class="accordion-chevron">▾</span>
+                    </div>
+                    <div class="accordion-body" id="body-2">
 
-            <!-- PREVIEW PANEL -->
+                        <!-- Style -->
+                        <div class="form-group">
+                            <label class="form-label">Style</label>
+                            <div class="style-picker" id="style-picker">
+                                <div class="style-opt selected" data-style="rounded" onclick="pickStyle(this)">
+                                    <div class="style-demo"><div class="style-demo-block style-demo-rounded">42</div></div>
+                                    <span>Arrondi</span>
+                                </div>
+                                <div class="style-opt" data-style="flat" onclick="pickStyle(this)">
+                                    <div class="style-demo"><div class="style-demo-block style-demo-flat">42</div></div>
+                                    <span>Flat</span>
+                                </div>
+                                <div class="style-opt" data-style="bordered" onclick="pickStyle(this)">
+                                    <div class="style-demo"><div class="style-demo-block style-demo-bordered">42</div></div>
+                                    <span>Bordure</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Police -->
+                        <div class="form-group">
+                            <label class="form-label">Police</label>
+                            <div class="font-picker" id="font-picker">
+                                <div class="font-opt selected" data-font="monospace" onclick="pickFont(this)">
+                                    <span class="font-demo" style="font-family:monospace">42</span>
+                                    <span class="font-name">Mono</span>
+                                </div>
+                                <div class="font-opt" data-font="sans-serif" onclick="pickFont(this)">
+                                    <span class="font-demo" style="font-family:sans-serif">42</span>
+                                    <span class="font-name">Sans</span>
+                                </div>
+                                <div class="font-opt" data-font="serif" onclick="pickFont(this)">
+                                    <span class="font-demo" style="font-family:serif">42</span>
+                                    <span class="font-name">Serif</span>
+                                </div>
+                                <div class="font-opt" data-font="cursive" onclick="pickFont(this)">
+                                    <span class="font-demo" style="font-family:cursive">42</span>
+                                    <span class="font-name">Cursive</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Taille -->
+                        <div class="form-group">
+                            <div class="font-size-row">
+                                <label class="form-label" style="margin:0">Taille du texte</label>
+                                <span class="font-size-val" id="font-size-display">36px</span>
+                            </div>
+                            <input type="range" class="form-range" id="cd-fontsize" min="20" max="50" value="36" step="2" oninput="updateFontSize(this.value)">
+                        </div>
+
+                        <!-- Couleur principale -->
+                        <div class="form-group">
+                            <label class="form-label">Couleur principale</label>
+                            <div class="color-picker-row">
+                                <div class="color-swatches" id="color-picker">
+                                    <div class="swatch selected" style="background:#2563eb" data-color="#2563eb" onclick="pickColor(this)"></div>
+                                    <div class="swatch" style="background:#dc2626" data-color="#dc2626" onclick="pickColor(this)"></div>
+                                    <div class="swatch" style="background:#f97316" data-color="#f97316" onclick="pickColor(this)"></div>
+                                    <div class="swatch" style="background:#16a34a" data-color="#16a34a" onclick="pickColor(this)"></div>
+                                    <div class="swatch" style="background:#7c3aed" data-color="#7c3aed" onclick="pickColor(this)"></div>
+                                    <div class="swatch" style="background:#0891b2" data-color="#0891b2" onclick="pickColor(this)"></div>
+                                    <div class="swatch" style="background:#1a1916" data-color="#1a1916" onclick="pickColor(this)"></div>
+                                </div>
+                                <input type="color" class="color-input-native" id="color-custom" value="#2563eb" oninput="pickColorCustom(this.value)" title="Couleur personnalisée">
+                                <span class="color-custom-label">Personnalisé</span>
+                            </div>
+                        </div>
+
+                        <!-- Couleur de fond -->
+                        <div class="form-group">
+                            <label class="form-label">Couleur de fond</label>
+                            <div class="color-picker-row">
+                                <div class="color-swatches" id="bg-picker">
+                                    <div class="swatch selected" style="background:#f8f7f4;border:1.5px solid #d0cec8" data-color="#f8f7f4" onclick="pickBg(this)"></div>
+                                    <div class="swatch" style="background:#ffffff;border:1.5px solid #d0cec8" data-color="#ffffff" onclick="pickBg(this)"></div>
+                                    <div class="swatch" style="background:#1e1e2e" data-color="#1e1e2e" onclick="pickBg(this)"></div>
+                                    <div class="swatch" style="background:#0f172a" data-color="#0f172a" onclick="pickBg(this)"></div>
+                                    <div class="swatch" style="background:#1a1916" data-color="#1a1916" onclick="pickBg(this)"></div>
+                                </div>
+                                <input type="color" class="color-input-native" id="bg-custom" value="#f8f7f4" oninput="pickBgCustom(this.value)" title="Fond personnalisé">
+                                <span class="color-custom-label">Personnalisé</span>
+                            </div>
+                        </div>
+
+                        <!-- Largeur -->
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label">Largeur du GIF <span class="optional">(px)</span></label>
+                            <input type="number" class="form-input" id="cd-width" value="400" min="200" max="800">
+                        </div>
+
+                        <div class="accordion-nav-row">
+                            <button class="btn btn-ghost btn-sm" onclick="goToStep(1)">← Retour</button>
+                            <button class="btn btn-primary btn-sm" onclick="goToStep(3)">Suivant →</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 3 — EXPIRATION -->
+                <div class="form-card accordion-card" id="accordion-3">
+                    <div class="accordion-header" onclick="toggleAccordion(3)">
+                        <div class="accordion-left">
+                            <div class="accordion-step-badge">3</div>
+                            <div>
+                                <div class="accordion-title">Expiration</div>
+                                <div class="accordion-summary">Labels et comportement après expiration</div>
+                            </div>
+                        </div>
+                        <span class="accordion-chevron">▾</span>
+                    </div>
+                    <div class="accordion-body" id="body-3">
+
+                        <!-- Labels — Pro -->
+                        <div style="position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-bottom:16px;background:var(--bg)">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                                <span style="font-size:13px;font-weight:600;color:var(--text2)">Labels personnalisés</span>
+                                <span class="plan-gate-badge" id="badge-labels">Pro</span>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                                <div class="form-group" style="margin-bottom:0">
+                                    <label class="form-label">Jours</label>
+                                    <input type="text" class="form-input" id="cd-label-days" value="JOURS" maxlength="10" oninput="updatePreview()">
+                                </div>
+                                <div class="form-group" style="margin-bottom:0">
+                                    <label class="form-label">Heures</label>
+                                    <input type="text" class="form-input" id="cd-label-hours" value="HEURES" maxlength="10" oninput="updatePreview()">
+                                </div>
+                                <div class="form-group" style="margin-bottom:0">
+                                    <label class="form-label">Minutes</label>
+                                    <input type="text" class="form-input" id="cd-label-minutes" value="MIN" maxlength="10" oninput="updatePreview()">
+                                </div>
+                                <div class="form-group" style="margin-bottom:0">
+                                    <label class="form-label">Secondes</label>
+                                    <input type="text" class="form-input" id="cd-label-seconds" value="SEC" maxlength="10" oninput="updatePreview()">
+                                </div>
+                            </div>
+                            <div class="plan-gate-overlay" id="overlay-labels" onclick="showPage('pricing')">
+                                <div class="plan-gate-msg">🔒 Disponible en <strong>Pro</strong> — Cliquez pour upgrader</div>
+                            </div>
+                        </div>
+
+                        <!-- Comportement -->
+                        <div class="form-group">
+                            <label class="form-label">Comportement après expiration</label>
+                            <select class="form-input" id="cd-expired" onchange="updateExpiredUI()">
+                                <option value="SHOW_ZEROS">Afficher 00:00:00:00</option>
+                                <option value="SHOW_TEXT">Afficher un texte</option>
+                                <option value="REDIRECT" id="opt-redirect">Rediriger vers une URL — Pro</option>
+                            </select>
+                        </div>
+                        <div id="expired-text-row" style="display:none" class="form-group">
+                            <label class="form-label">Texte à afficher</label>
+                            <input type="text" class="form-input" id="cd-expired-text" value="Offre terminée" placeholder="Offre terminée">
+                        </div>
+                        <div id="expired-redirect-row" style="display:none;position:relative" class="form-group">
+                            <label class="form-label">URL de redirection <span class="plan-gate-badge">Pro</span></label>
+                            <input type="url" class="form-input" id="cd-expired-redirect" placeholder="https://votresite.com/nouvelle-offre">
+                            <div class="plan-gate-overlay" id="overlay-redirect" onclick="showPage('pricing')">
+                                <div class="plan-gate-msg">🔒 <strong>Pro</strong></div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-nav-row">
+                            <button class="btn btn-ghost btn-sm" onclick="goToStep(2)">← Retour</button>
+                            <button class="btn btn-primary btn-sm" onclick="goToStep(4)">Suivant →</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 4 — PUBLICATION -->
+                <div class="form-card accordion-card" id="accordion-4">
+                    <div class="accordion-header" onclick="toggleAccordion(4)">
+                        <div class="accordion-left">
+                            <div class="accordion-step-badge">4</div>
+                            <div>
+                                <div class="accordion-title">Publication</div>
+                                <div class="accordion-summary">Générer le GIF et obtenir le code</div>
+                            </div>
+                        </div>
+                        <span class="accordion-chevron">▾</span>
+                    </div>
+                    <div class="accordion-body" id="body-4">
+                        <p style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:16px">
+                            Votre countdown sera généré et hébergé sur chrono.mail. Copiez ensuite le code HTML dans votre outil d'emailing.
+                        </p>
+                        <button class="btn btn-success" style="width:100%;justify-content:center;font-size:15px;padding:12px" onclick="publishCountdown()" id="publish-btn-2">
+                            ✓ Publier & obtenir le code
+                        </button>
+                        <div class="accordion-nav-row" style="justify-content:flex-start">
+                            <button class="btn btn-ghost btn-sm" onclick="goToStep(3)">← Retour</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /create-form-col -->
+
+            <!-- ====================================================
+                 COLONNE DROITE — Preview sticky
+                 ==================================================== -->
             <div class="preview-panel">
                 <div class="panel-card">
+
+                    <!-- Header preview -->
                     <div class="panel-header">
                         <div class="panel-header-title">Preview</div>
-                        <div class="live-badge" style="font-size:10px;padding:2px 8px"><div class="live-badge-dot"></div>Temps réel</div>
-                    </div>
-                    <div class="gif-preview-box" id="gif-preview-box">
-                        <div class="gif-preview-inner" id="gif-preview-inner">
-                            <div class="gif-unit"><div class="gif-num" id="prev-days">04</div><div class="gif-label" id="prev-label-days">JOURS</div></div>
-                            <div class="gif-sep">:</div>
-                            <div class="gif-unit"><div class="gif-num" id="prev-hours">18</div><div class="gif-label" id="prev-label-hours">HEURES</div></div>
-                            <div class="gif-sep">:</div>
-                            <div class="gif-unit"><div class="gif-num" id="prev-mins">33</div><div class="gif-label" id="prev-label-mins">MIN</div></div>
-                            <div class="gif-sep">:</div>
-                            <div class="gif-unit"><div class="gif-num" id="prev-secs">00</div><div class="gif-label" id="prev-label-secs">SEC</div></div>
+                        <div class="live-badge" style="font-size:10px;padding:2px 8px">
+                            <div class="live-badge-dot"></div>Temps réel
                         </div>
                     </div>
-                    <div class="preview-warning">⚠️ Aperçu indicatif — le rendu GIF final peut légèrement varier</div>
 
+                    <!-- Timer CSS temps réel -->
+                    <div class="gif-preview-box" id="gif-preview-box">
+                        <div class="gif-preview-inner" id="gif-preview-inner">
+                            <div class="gif-unit">
+                                <div class="gif-num" id="prev-days">04</div>
+                                <div class="gif-label" id="prev-label-days">JOURS</div>
+                            </div>
+                            <div class="gif-sep">:</div>
+                            <div class="gif-unit">
+                                <div class="gif-num" id="prev-hours">18</div>
+                                <div class="gif-label" id="prev-label-hours">HEURES</div>
+                            </div>
+                            <div class="gif-sep">:</div>
+                            <div class="gif-unit">
+                                <div class="gif-num" id="prev-mins">33</div>
+                                <div class="gif-label" id="prev-label-mins">MIN</div>
+                            </div>
+                            <div class="gif-sep">:</div>
+                            <div class="gif-unit">
+                                <div class="gif-num" id="prev-secs">00</div>
+                                <div class="gif-label" id="prev-label-secs">SEC</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bouton aperçu GIF réel -->
+                    <div class="real-gif-section">
+                        <button class="btn btn-ghost" id="preview-gif-btn" onclick="previewRealGif()">
+                            👁 Aperçu GIF réel
+                        </button>
+                        <div id="real-gif-box" style="display:none">
+                            <img id="real-gif-img" src="" alt="Aperçu GIF">
+                            <div class="real-gif-caption">← Rendu exact dans l'email</div>
+                        </div>
+                    </div>
+
+                    <!-- Code à intégrer (apparaît après publication) -->
                     <div class="code-section" id="code-section" style="display:none">
                         <div class="code-section-title">Code à intégrer</div>
                         <div class="code-tabs-row">
@@ -487,9 +639,9 @@
                             <button class="code-tab-btn" onclick="switchCodeTab('klaviyo',this)">Klaviyo</button>
                             <button class="code-tab-btn" onclick="switchCodeTab('mailchimp',this)">Mailchimp</button>
                         </div>
-                        <div id="code-minimal" class="code-panel active"><div class="code-block" id="code-minimal-content"></div></div>
-                        <div id="code-standard" class="code-panel"><div class="code-block" id="code-standard-content"></div></div>
-                        <div id="code-klaviyo" class="code-panel"><div class="code-block" id="code-klaviyo-content"></div></div>
+                        <div id="code-minimal"   class="code-panel active"><div class="code-block" id="code-minimal-content"></div></div>
+                        <div id="code-standard"  class="code-panel"><div class="code-block" id="code-standard-content"></div></div>
+                        <div id="code-klaviyo"   class="code-panel"><div class="code-block" id="code-klaviyo-content"></div></div>
                         <div id="code-mailchimp" class="code-panel"><div class="code-block" id="code-mailchimp-content"></div></div>
                         <div class="copy-row">
                             <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="copyCurrentCode()">📋 Copier le code</button>
@@ -501,6 +653,7 @@
                         </div>
                     </div>
 
+                    <!-- Compatibilité email clients -->
                     <div class="compat-section">
                         <div class="compat-title">Compatibilité</div>
                         <span style="color:var(--green)">✓</span> Gmail · Apple Mail · iOS Mail<br>
@@ -508,9 +661,11 @@
                         <span style="color:var(--green)">✓</span> Klaviyo · Mailchimp · Brevo<br>
                         <span style="color:var(--orange)">⚠</span> Outlook 2007–10 → 1ère frame statique
                     </div>
+
                 </div>
-            </div>
-        </div>
+            </div><!-- /preview-panel -->
+
+        </div><!-- /create-layout -->
     </div>
 </div>
 
