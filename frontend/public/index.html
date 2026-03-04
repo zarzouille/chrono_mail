@@ -292,7 +292,6 @@
 <div id="page-create" class="page">
     <div class="main-content">
 
-        <!-- EN-TÊTE -->
         <div class="page-header">
             <div>
                 <div class="page-title">Créer un countdown</div>
@@ -301,7 +300,7 @@
             <button class="btn btn-ghost" onclick="showPage('dashboard')">← Dashboard</button>
         </div>
 
-        <!-- BARRE DE PROGRESSION LINÉAIRE -->
+        <!-- BARRE DE PROGRESSION -->
         <div class="progress-bar-wrap" style="margin-bottom:20px">
             <div class="progress-steps">
                 <div class="progress-step active" id="step-1" onclick="goToStep(1)">
@@ -328,9 +327,7 @@
 
         <div class="create-layout">
 
-            <!-- ====================================================
-                 COLONNE GAUCHE — Formulaire en accordéons
-                 ==================================================== -->
+            <!-- COLONNE GAUCHE -->
             <div class="create-form-col">
 
                 <!-- ÉTAPE 1 — INFORMATIONS -->
@@ -348,15 +345,15 @@
                     <div class="accordion-body open" id="body-1">
                         <div class="form-group">
                             <label class="form-label">Nom du countdown <span class="optional">(usage interne)</span></label>
-                            <input type="text" class="form-input" id="cd-name" value="Vente Flash Été 2026" oninput="updatePreview()">
+                            <input type="text" class="form-input" id="cd-name" value="Vente Flash Été 2026" oninput="schedulePreview()">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Date et heure cible</label>
-                            <input type="datetime-local" class="form-input" id="cd-date" oninput="updatePreview()">
+                            <input type="datetime-local" class="form-input" id="cd-date" oninput="schedulePreview()">
                         </div>
                         <div class="form-group" style="margin-bottom:0">
                             <label class="form-label">Timezone</label>
-                            <select class="form-input" id="cd-timezone">
+                            <select class="form-input" id="cd-timezone" onchange="schedulePreview()">
                                 <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
                                 <option value="Europe/London">Europe/London (UTC+0)</option>
                                 <option value="America/New_York">America/New_York (UTC−5)</option>
@@ -377,12 +374,60 @@
                             <div class="accordion-step-badge">2</div>
                             <div>
                                 <div class="accordion-title">Apparence</div>
-                                <div class="accordion-summary">Style, police, couleurs, taille</div>
+                                <div class="accordion-summary">Orientation, style, police, couleurs</div>
                             </div>
                         </div>
                         <span class="accordion-chevron">▾</span>
                     </div>
                     <div class="accordion-body" id="body-2">
+
+                        <!-- Orientation -->
+                        <div class="form-group">
+                            <label class="form-label">Orientation</label>
+                            <div class="orientation-picker" id="orientation-picker">
+                                <div class="orient-opt selected" data-orient="horizontal" onclick="pickOrientation(this)">
+                                    <div class="orient-demo orient-demo-h">
+                                        <div class="orient-block"></div>
+                                        <div class="orient-block"></div>
+                                        <div class="orient-block"></div>
+                                        <div class="orient-block"></div>
+                                    </div>
+                                    <span>Horizontal</span>
+                                </div>
+                                <div class="orient-opt" data-orient="vertical" onclick="pickOrientation(this)">
+                                    <div class="orient-demo orient-demo-v">
+                                        <div class="orient-block"></div>
+                                        <div class="orient-block"></div>
+                                        <div class="orient-block"></div>
+                                        <div class="orient-block"></div>
+                                    </div>
+                                    <span>Vertical</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Unités affichées -->
+                        <div class="form-group">
+                            <label class="form-label">Unités affichées</label>
+                            <div class="units-picker">
+                                <label class="unit-toggle">
+                                    <input type="checkbox" id="unit-days" checked onchange="schedulePreview()">
+                                    <span class="unit-toggle-label">Jours</span>
+                                </label>
+                                <label class="unit-toggle">
+                                    <input type="checkbox" id="unit-hours" checked onchange="schedulePreview()">
+                                    <span class="unit-toggle-label">Heures</span>
+                                </label>
+                                <label class="unit-toggle">
+                                    <input type="checkbox" id="unit-minutes" checked onchange="schedulePreview()">
+                                    <span class="unit-toggle-label">Minutes</span>
+                                </label>
+                                <label class="unit-toggle">
+                                    <input type="checkbox" id="unit-seconds" checked onchange="schedulePreview()">
+                                    <span class="unit-toggle-label">Secondes</span>
+                                </label>
+                            </div>
+                        </div>
 
                         <!-- Style -->
                         <div class="form-group">
@@ -472,7 +517,7 @@
                         <!-- Largeur -->
                         <div class="form-group" style="margin-bottom:0">
                             <label class="form-label">Largeur du GIF <span class="optional">(px)</span></label>
-                            <input type="number" class="form-input" id="cd-width" value="400" min="200" max="800">
+                            <input type="number" class="form-input" id="cd-width" value="400" min="200" max="800" oninput="schedulePreview()">
                         </div>
 
                         <div class="accordion-nav-row">
@@ -496,28 +541,28 @@
                     </div>
                     <div class="accordion-body" id="body-3">
 
-                        <!-- Labels — Pro -->
+                        <!-- Labels Pro -->
                         <div style="position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-bottom:16px;background:var(--bg)">
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
                                 <span style="font-size:13px;font-weight:600;color:var(--text2)">Labels personnalisés</span>
-                                <span class="plan-gate-badge" id="badge-labels">Pro</span>
+                                <span class="plan-gate-badge">Pro</span>
                             </div>
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                                 <div class="form-group" style="margin-bottom:0">
                                     <label class="form-label">Jours</label>
-                                    <input type="text" class="form-input" id="cd-label-days" value="JOURS" maxlength="10" oninput="updatePreview()">
+                                    <input type="text" class="form-input" id="cd-label-days" value="JOURS" maxlength="10" oninput="schedulePreview()">
                                 </div>
                                 <div class="form-group" style="margin-bottom:0">
                                     <label class="form-label">Heures</label>
-                                    <input type="text" class="form-input" id="cd-label-hours" value="HEURES" maxlength="10" oninput="updatePreview()">
+                                    <input type="text" class="form-input" id="cd-label-hours" value="HEURES" maxlength="10" oninput="schedulePreview()">
                                 </div>
                                 <div class="form-group" style="margin-bottom:0">
                                     <label class="form-label">Minutes</label>
-                                    <input type="text" class="form-input" id="cd-label-minutes" value="MIN" maxlength="10" oninput="updatePreview()">
+                                    <input type="text" class="form-input" id="cd-label-minutes" value="MIN" maxlength="10" oninput="schedulePreview()">
                                 </div>
                                 <div class="form-group" style="margin-bottom:0">
                                     <label class="form-label">Secondes</label>
-                                    <input type="text" class="form-input" id="cd-label-seconds" value="SEC" maxlength="10" oninput="updatePreview()">
+                                    <input type="text" class="form-input" id="cd-label-seconds" value="SEC" maxlength="10" oninput="schedulePreview()">
                                 </div>
                             </div>
                             <div class="plan-gate-overlay" id="overlay-labels" onclick="showPage('pricing')">
@@ -560,14 +605,14 @@
                             <div class="accordion-step-badge">4</div>
                             <div>
                                 <div class="accordion-title">Publication</div>
-                                <div class="accordion-summary">Générer le GIF et obtenir le code</div>
+                                <div class="accordion-summary">Générer et obtenir le code</div>
                             </div>
                         </div>
                         <span class="accordion-chevron">▾</span>
                     </div>
                     <div class="accordion-body" id="body-4">
                         <p style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:16px">
-                            Votre countdown sera généré et hébergé sur chrono.mail. Copiez ensuite le code HTML dans votre outil d'emailing.
+                            Votre countdown sera hébergé sur chrono.mail. Copiez ensuite le code HTML dans votre outil d'emailing.
                         </p>
                         <button class="btn btn-success" style="width:100%;justify-content:center;font-size:15px;padding:12px" onclick="publishCountdown()" id="publish-btn-2">
                             ✓ Publier & obtenir le code
@@ -580,57 +625,30 @@
 
             </div><!-- /create-form-col -->
 
-            <!-- ====================================================
-                 COLONNE DROITE — Preview sticky
-                 ==================================================== -->
+            <!-- COLONNE DROITE — Preview GIF live -->
             <div class="preview-panel">
                 <div class="panel-card">
 
-                    <!-- Header preview -->
                     <div class="panel-header">
                         <div class="panel-header-title">Preview</div>
-                        <div class="live-badge" style="font-size:10px;padding:2px 8px">
-                            <div class="live-badge-dot"></div>Temps réel
+                        <div id="preview-status-badge" class="live-badge" style="font-size:10px;padding:2px 8px">
+                            <div class="live-badge-dot"></div>En attente
                         </div>
                     </div>
 
-                    <!-- Timer CSS temps réel -->
-                    <div class="gif-preview-box" id="gif-preview-box">
-                        <div class="gif-preview-inner" id="gif-preview-inner">
-                            <div class="gif-unit">
-                                <div class="gif-num" id="prev-days">04</div>
-                                <div class="gif-label" id="prev-label-days">JOURS</div>
-                            </div>
-                            <div class="gif-sep">:</div>
-                            <div class="gif-unit">
-                                <div class="gif-num" id="prev-hours">18</div>
-                                <div class="gif-label" id="prev-label-hours">HEURES</div>
-                            </div>
-                            <div class="gif-sep">:</div>
-                            <div class="gif-unit">
-                                <div class="gif-num" id="prev-mins">33</div>
-                                <div class="gif-label" id="prev-label-mins">MIN</div>
-                            </div>
-                            <div class="gif-sep">:</div>
-                            <div class="gif-unit">
-                                <div class="gif-num" id="prev-secs">00</div>
-                                <div class="gif-label" id="prev-label-secs">SEC</div>
-                            </div>
+                    <!-- GIF preview — rendu exact dans l'email -->
+                    <div class="gif-preview-box" id="gif-preview-box" style="min-height:130px;position:relative">
+                        <div id="gif-preview-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted2)">
+                            <div style="font-size:28px">⏱</div>
+                            <div style="font-size:12px;font-weight:600">Choisissez une date pour voir l'aperçu</div>
+                        </div>
+                        <img id="gif-preview-img" src="" alt="Preview GIF" style="display:none;max-width:100%;border-radius:var(--radius-s)">
+                        <div id="gif-preview-loader" style="display:none;position:absolute;inset:0;background:rgba(248,247,244,0.85);display:none;align-items:center;justify-content:center;font-size:12px;color:var(--muted);gap:6px">
+                            <div class="gif-loader-spinner"></div> Génération...
                         </div>
                     </div>
 
-                    <!-- Bouton aperçu GIF réel -->
-                    <div class="real-gif-section">
-                        <button class="btn btn-ghost" id="preview-gif-btn" onclick="previewRealGif()">
-                            👁 Aperçu GIF réel
-                        </button>
-                        <div id="real-gif-box" style="display:none">
-                            <img id="real-gif-img" src="" alt="Aperçu GIF">
-                            <div class="real-gif-caption">← Rendu exact dans l'email</div>
-                        </div>
-                    </div>
-
-                    <!-- Code à intégrer (apparaît après publication) -->
+                    <!-- Code (après publication) -->
                     <div class="code-section" id="code-section" style="display:none">
                         <div class="code-section-title">Code à intégrer</div>
                         <div class="code-tabs-row">
@@ -653,7 +671,6 @@
                         </div>
                     </div>
 
-                    <!-- Compatibilité email clients -->
                     <div class="compat-section">
                         <div class="compat-title">Compatibilité</div>
                         <span style="color:var(--green)">✓</span> Gmail · Apple Mail · iOS Mail<br>
@@ -663,9 +680,9 @@
                     </div>
 
                 </div>
-            </div><!-- /preview-panel -->
+            </div>
 
-        </div><!-- /create-layout -->
+        </div>
     </div>
 </div>
 

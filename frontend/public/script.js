@@ -7,9 +7,9 @@
  *   3.  API AUTH      — Login / Register
  *   4.  FETCH AUTH    — Wrapper fetch authentifié
  *   5.  HERO TIMER    — Timer animé landing page
- *   6.  PREVIEW       — Timer CSS temps réel
- *   7.  ACCORDÉONS    — Étapes de création + progression
- *   8.  APPARENCE     — Couleur, police, style, taille
+ //   6.  PREVIEW GIF LIVE — Debounce 500ms, orientation, unités
+ //   7.  ACCORDÉONS — Étapes de création + progression
+ //   8.  APPARENCE — Couleur, police, style, taille, orientation
  *   9.  COLOR PICKER  — Input natif + swatches
  *  10.  POST-EXPIRATION — UI comportement après expiration
  *  11.  PLAN GATES    — Verrouillage options par plan
@@ -153,244 +153,241 @@ updateHeroTimer();
 
 
 // ============================================================
-// 6. PREVIEW — Timer CSS temps réel
 // ============================================================
-let previewTarget  = new Date(Date.now() + 4*86400000 + 18*3600000 + 33*60000);
-let currentColor   = '#2563eb';
-let currentBg      = '#f8f7f4';
-let currentFont    = 'monospace';
-let currentStyle   = 'rounded';
-let currentFontSize = 36;
-let activeCodeTab  = 'minimal';
-let currentGifUrl  = '';
+// VARIABLES D'ÉTAT — Page Create
+// ============================================================
+let currentColor       = '#2563eb';
+let currentBg          = '#f8f7f4';
+let currentFont        = 'monospace';
+let currentStyle       = 'rounded';
+let currentOrientation = 'horizontal';
+let currentFontSize    = 36;
+let activeCodeTab      = 'minimal';
+let currentGifUrl      = '';
+let previewDebounce    = null;  // timer debounce 500ms
 
-// Pré-remplit la date à J+7
+// Pré-remplit la date à J+7 à l'init
 setTimeout(() => {
     const el = document.getElementById('cd-date');
-    if (el) el.value = new Date(Date.now() + 86400000*7).toISOString().slice(0,16);
+    if (el && !el.value) el.value = new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16);
 }, 0);
-
-/** Synchronise la preview avec la date et les labels saisis */
-function updatePreview() {
-    const el = document.getElementById('cd-date');
-    if (el && el.value) previewTarget = new Date(el.value);
-    const plan = getUser()?.plan || 'FREE';
-    if (plan !== 'FREE') {
-        const map = { days:'prev-label-days', hours:'prev-label-hours', minutes:'prev-label-mins', seconds:'prev-label-secs' };
-        const defaults = { days:'JOURS', hours:'HEURES', minutes:'MIN', seconds:'SEC' };
-        Object.entries(map).forEach(([key, id]) => {
-            const inp = document.getElementById('cd-label-' + key);
-            const out = document.getElementById(id);
-            if(inp && out) out.textContent = inp.value || defaults[key];
-        });
-    }
-}
-
-function updatePreviewTimer() {
-    const diff = previewTarget - Date.now();
-    const pad  = n => String(n).padStart(2,'0');
-    const vals = diff > 0 ? [Math.floor(diff/86400000), Math.floor((diff%86400000)/3600000), Math.floor((diff%3600000)/60000), Math.floor((diff%60000)/1000)] : [0,0,0,0];
-    ['days','hours','mins','secs'].forEach((k,i) => { const el = document.getElementById('prev-'+k); if(el) el.textContent = pad(vals[i]); });
-}
-setInterval(updatePreviewTimer, 1000);
 
 
 // ============================================================
-// 7. ACCORDÉONS — Étapes de création + barre de progression
+// PREVIEW GIF LIVE — Debounce 500ms
+// Construit l'URL /gif?... avec tous les paramètres actuels
+// et l'affecte à l'<img> preview — aucun bouton nécessaire.
+// ============================================================
+
+/**
+ * Planifie un rafraîchissement du GIF preview dans 500ms.
+ * Tout appel supplémentaire repart de zéro (debounce).
+ */
+function schedulePreview() {
+    clearTimeout(previewDebounce);
+    previewDebounce = setTimeout(refreshPreview, 500);
+}
+
+/**
+ * Construit l'URL /gif avec tous les paramètres et met à jour
+ * l'<img> de preview. Affiche un spinner pendant le chargement.
+ */
+function refreshPreview() {
+    const endDate = document.getElementById('cd-date')?.value;
+    if (!endDate) return; // pas de date → on n'appelle pas le serveur
+
+    const width    = document.getElementById('cd-width')?.value || 400;
+    const showUnits = getShowUnits();
+    if (!showUnits) return; // aucune unité cochée → rien à afficher
+
+    const params = new URLSearchParams({
+        endDate,
+        bgColor:     currentBg,
+        textColor:   currentColor,
+        fontSize:    currentFontSize,
+        width,
+        fontFamily:  currentFont,
+        style:       currentStyle,
+        orientation: currentOrientation,
+        showUnits,
+        labelDays:    document.getElementById('cd-label-days')?.value    || 'JOURS',
+        labelHours:   document.getElementById('cd-label-hours')?.value   || 'HEURES',
+        labelMinutes: document.getElementById('cd-label-minutes')?.value || 'MIN',
+        labelSeconds: document.getElementById('cd-label-seconds')?.value || 'SEC',
+        _t: Date.now(), // cache-busting
+    });
+
+    const url        = '/gif?' + params.toString();
+    const img        = document.getElementById('gif-preview-img');
+    const loader     = document.getElementById('gif-preview-loader');
+    const placeholder = document.getElementById('gif-preview-placeholder');
+    const badge      = document.getElementById('preview-status-badge');
+
+    // Affiche le spinner
+    if (loader)     { loader.style.display     = 'flex'; }
+    if (placeholder){ placeholder.style.display = 'none'; }
+    if (badge)      { badge.innerHTML = '<div class="live-badge-dot" style="background:var(--orange)"></div>Chargement'; badge.style.color = 'var(--orange)'; badge.style.background = 'var(--orange-l)'; badge.style.border = '1px solid #fed7aa'; }
+
+    const newImg = new Image();
+    newImg.onload = () => {
+        if (img) { img.src = url; img.style.display = 'block'; }
+        if (loader) loader.style.display = 'none';
+        if (badge)  { badge.innerHTML = '<div class="live-badge-dot"></div>Live'; badge.style.color = ''; badge.style.background = ''; badge.style.border = ''; }
+    };
+    newImg.onerror = () => {
+        if (loader) loader.style.display = 'none';
+        if (badge)  { badge.innerHTML = '⚠ Erreur'; badge.style.color = 'var(--red)'; }
+    };
+    newImg.src = url;
+}
+
+/**
+ * Retourne la chaîne showUnits depuis les checkboxes,
+ * ex: "hours,minutes,seconds" si Jours est décoché.
+ * Retourne null si aucune unité n'est cochée.
+ */
+function getShowUnits() {
+    const map = [
+        { id: 'unit-days',    key: 'days'    },
+        { id: 'unit-hours',   key: 'hours'   },
+        { id: 'unit-minutes', key: 'minutes' },
+        { id: 'unit-seconds', key: 'seconds' },
+    ];
+    const active = map.filter(u => document.getElementById(u.id)?.checked).map(u => u.key);
+    return active.length ? active.join(',') : null;
+}
+
+
+// ============================================================
+// ACCORDÉONS — Étapes de création + barre de progression
 // ============================================================
 let currentStep = 1;
 
-/**
- * Navigue vers une étape : ferme toutes, ouvre la cible,
- * met à jour la barre de progression et scroll vers elle.
- */
 function goToStep(step) {
-    [1,2,3,4].forEach(i => {
-        document.getElementById('body-'+i)?.classList.remove('open');
-        document.getElementById('accordion-'+i)?.classList.remove('active');
+    [1, 2, 3, 4].forEach(i => {
+        document.getElementById('body-' + i)?.classList.remove('open');
+        document.getElementById('accordion-' + i)?.classList.remove('active');
     });
-    document.getElementById('body-'+step)?.classList.add('open');
-    document.getElementById('accordion-'+step)?.classList.add('active');
+    document.getElementById('body-' + step)?.classList.add('open');
+    document.getElementById('accordion-' + step)?.classList.add('active');
     currentStep = step;
     updateProgressBar(step);
-    document.getElementById('accordion-'+step)?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    document.getElementById('accordion-' + step)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-/** Toggle manuel — ferme si ouvert, ouvre sinon */
 function toggleAccordion(step) {
-    const body   = document.getElementById('body-'+step);
+    const body   = document.getElementById('body-' + step);
     const isOpen = body?.classList.contains('open');
     if (isOpen) {
         body.classList.remove('open');
-        document.getElementById('accordion-'+step)?.classList.remove('active');
+        document.getElementById('accordion-' + step)?.classList.remove('active');
     } else {
         goToStep(step);
     }
 }
 
-/**
- * Met à jour la barre de progression :
- * done (vert) pour les étapes passées, active (bleu) pour l'étape en cours.
- */
 function updateProgressBar(activeStep) {
-    [1,2,3,4].forEach(i => {
-        const el = document.getElementById('step-'+i);
+    [1, 2, 3, 4].forEach(i => {
+        const el = document.getElementById('step-' + i);
         if (!el) return;
-        el.classList.remove('active','done');
-        if (i < activeStep)       el.classList.add('done');
+        el.classList.remove('active', 'done');
+        if (i < activeStep)        el.classList.add('done');
         else if (i === activeStep) el.classList.add('active');
     });
-    [1,2,3].forEach(i => {
-        const line = document.getElementById('line-'+i+'-'+(i+1));
+    [1, 2, 3].forEach(i => {
+        const line = document.getElementById('line-' + i + '-' + (i + 1));
         if (!line) return;
-        line.classList.remove('done','active');
-        if (i < activeStep)       line.classList.add('done');
+        line.classList.remove('done', 'active');
+        if (i < activeStep)        line.classList.add('done');
         else if (i === activeStep) line.classList.add('active');
     });
 }
 
 
 // ============================================================
-// 8. APPARENCE — Couleur, police, style, taille
+// ORIENTATION
 // ============================================================
+function pickOrientation(el) {
+    document.querySelectorAll('.orient-opt').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    currentOrientation = el.dataset.orient;
+    schedulePreview();
+}
 
-/** Sélectionne une couleur principale via swatch */
+
+// ============================================================
+// STYLE
+// ============================================================
+function pickStyle(el) {
+    document.querySelectorAll('#style-picker .style-opt').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    currentStyle = el.dataset.style;
+    schedulePreview();
+}
+
+
+// ============================================================
+// POLICE
+// ============================================================
+function pickFont(el) {
+    document.querySelectorAll('#font-picker .font-opt').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    currentFont = el.dataset.font;
+    schedulePreview();
+}
+
+
+// ============================================================
+// TAILLE
+// ============================================================
+function updateFontSize(val) {
+    currentFontSize = parseInt(val);
+    document.getElementById('font-size-display').textContent = val + 'px';
+    schedulePreview();
+}
+
+
+// ============================================================
+// COULEUR PRINCIPALE — swatches + input natif
+// ============================================================
 function pickColor(el) {
     document.querySelectorAll('#color-picker .swatch').forEach(e => e.classList.remove('selected'));
     el.classList.add('selected');
     currentColor = el.dataset.color;
-    // Sync avec l'input natif
     const inp = document.getElementById('color-custom');
     if (inp) inp.value = currentColor;
-    applyPreviewStyle();
-    applyPreviewColors();
+    schedulePreview();
 }
 
-/** Sélectionne une couleur de fond via swatch */
+function pickColorCustom(value) {
+    currentColor = value;
+    document.querySelectorAll('#color-picker .swatch').forEach(e => e.classList.remove('selected'));
+    schedulePreview();
+}
+
+
+// ============================================================
+// COULEUR DE FOND — swatches + input natif
+// ============================================================
 function pickBg(el) {
     document.querySelectorAll('#bg-picker .swatch').forEach(e => e.classList.remove('selected'));
     el.classList.add('selected');
     currentBg = el.dataset.color;
     const inp = document.getElementById('bg-custom');
     if (inp) inp.value = currentBg;
-    const box = document.getElementById('gif-preview-box');
-    if (box) box.style.background = currentBg;
-    applyPreviewColors();
+    schedulePreview();
 }
 
-/** Sélectionne une police */
-function pickFont(el) {
-    document.querySelectorAll('#font-picker .font-opt').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected');
-    currentFont = el.dataset.font;
-    document.querySelectorAll('.gif-num').forEach(e => e.style.fontFamily = currentFont);
-    // Réapplique style et couleurs pour ne pas perdre les bordures
-    applyPreviewStyle();
-    applyPreviewColors();
-}
-
-/** Sélectionne un style de template */
-function pickStyle(el) {
-    document.querySelectorAll('#style-picker .style-opt').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected');
-    currentStyle = el.dataset.style;
-    applyPreviewStyle();
-}
-
-/** Met à jour la taille de police et scale la preview si nécessaire */
-function updateFontSize(val) {
-    currentFontSize = parseInt(val);
-    document.getElementById('font-size-display').textContent = val + 'px';
-    document.querySelectorAll('.gif-num').forEach(e => e.style.fontSize = val + 'px');
-    // Scale la preview pour éviter tout débordement
-    const inner = document.getElementById('gif-preview-inner');
-    const box   = document.getElementById('gif-preview-box');
-    if (!inner || !box) return;
-    inner.style.transform = 'scale(1)';
-    requestAnimationFrame(() => {
-        const availableW = box.clientWidth  - 40;
-        const availableH = box.clientHeight - 40;
-        const scale = Math.min(1, availableW / inner.scrollWidth, availableH / inner.scrollHeight);
-        inner.style.transform = 'scale(' + scale + ')';
-    });
-}
-
-/**
- * Applique le style visuel (rounded/flat/bordered) sur les blocs.
- * Remet toujours les propriétés à zéro avant d'appliquer pour éviter
- * les résidus d'un style précédent.
- */
-function applyPreviewStyle() {
-    const hex = currentColor.replace('#','');
-    const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
-    document.querySelectorAll('.gif-num').forEach(el => {
-        // Reset complet
-        el.style.border = '';
-        el.style.background = '';
-        el.style.borderRadius = '';
-        if (currentStyle === 'flat') {
-            el.style.borderRadius = '0';
-            el.style.background   = `rgba(${r},${g},${b},0.1)`;
-            el.style.border       = `1px solid rgba(${r},${g},${b},0.25)`;
-        } else if (currentStyle === 'bordered') {
-            el.style.borderRadius = '4px';
-            el.style.border       = `2px solid ${currentColor}`;
-            el.style.background   = 'transparent';
-        } else {
-            // rounded (défaut)
-            el.style.borderRadius = '10px';
-            el.style.background   = `rgba(${r},${g},${b},0.1)`;
-            el.style.border       = `1px solid rgba(${r},${g},${b},0.25)`;
-        }
-        el.style.color = currentColor;
-    });
-    document.querySelectorAll('.gif-sep').forEach(el => el.style.color = currentColor);
-}
-
-/** Applique la couleur principale sur les blocs et séparateurs */
-function applyPreviewColors() {
-    const hex = currentColor.replace('#','');
-    const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
-    document.querySelectorAll('.gif-num').forEach(el => {
-        el.style.color = currentColor;
-        if (currentStyle !== 'bordered') {
-            el.style.background = `rgba(${r},${g},${b},0.1)`;
-            el.style.border     = `1px solid rgba(${r},${g},${b},0.25)`;
-        } else {
-            el.style.background = 'transparent';
-            el.style.border     = `2px solid ${currentColor}`;
-        }
-    });
-    document.querySelectorAll('.gif-sep').forEach(el => el.style.color = currentColor);
-}
-
-
-// ============================================================
-// 9. COLOR PICKER — Input natif couleur personnalisée
-// ============================================================
-
-/** Applique une couleur principale depuis l'input natif */
-function pickColorCustom(value) {
-    currentColor = value;
-    document.querySelectorAll('#color-picker .swatch').forEach(e => e.classList.remove('selected'));
-    applyPreviewStyle();
-    applyPreviewColors();
-}
-
-/** Applique une couleur de fond depuis l'input natif */
 function pickBgCustom(value) {
     currentBg = value;
     document.querySelectorAll('#bg-picker .swatch').forEach(e => e.classList.remove('selected'));
-    const box = document.getElementById('gif-preview-box');
-    if (box) box.style.background = currentBg;
+    schedulePreview();
 }
 
 
 // ============================================================
-// 10. POST-EXPIRATION UI
+// POST-EXPIRATION UI
 // ============================================================
-
-/** Affiche/masque les champs texte et redirect selon le select */
 function updateExpiredUI() {
     const val         = document.getElementById('cd-expired')?.value;
     const textRow     = document.getElementById('expired-text-row');
@@ -401,134 +398,96 @@ function updateExpiredUI() {
 
 
 // ============================================================
-// 11. PLAN GATES — Verrouillage des options selon le plan
+// PLAN GATES
 // ============================================================
-
-/** Active ou désactive les overlays de verrouillage selon le plan */
 function applyPlanGates() {
     const plan            = getUser()?.plan || 'FREE';
     const overlayLabels   = document.getElementById('overlay-labels');
     const overlayRedirect = document.getElementById('overlay-redirect');
     const optRedirect     = document.getElementById('opt-redirect');
-    if (plan === 'FREE') {
-        if (overlayLabels)   overlayLabels.style.display   = 'flex';
-        if (overlayRedirect) overlayRedirect.style.display = 'flex';
-        if (optRedirect)     optRedirect.disabled = true;
-    } else {
-        if (overlayLabels)   overlayLabels.style.display   = 'none';
-        if (overlayRedirect) overlayRedirect.style.display = 'none';
-        if (optRedirect)     optRedirect.disabled = false;
-    }
+    const isPro           = plan !== 'FREE';
+    if (overlayLabels)   overlayLabels.style.display   = isPro ? 'none' : 'flex';
+    if (overlayRedirect) overlayRedirect.style.display = isPro ? 'none' : 'flex';
+    if (optRedirect)     optRedirect.disabled           = !isPro;
 }
 
 
 // ============================================================
-// 12. APERÇU GIF RÉEL
-//     Appelle /gif?... côté serveur avec les paramètres actuels
-//     et affiche le vrai rendu — ce que l'utilisateur recevra.
-// ============================================================
-async function previewRealGif() {
-    const btn  = document.getElementById('preview-gif-btn');
-    const box  = document.getElementById('real-gif-box');
-    const img  = document.getElementById('real-gif-img');
-    const endDate = document.getElementById('cd-date')?.value;
-    const width   = document.getElementById('cd-width')?.value || 400;
-    if (!endDate) { showToast('⚠️ Choisissez d\'abord une date'); return; }
-    btn.textContent = '⏳ Génération...';
-    btn.disabled    = true;
-    if (box) box.style.display = 'none';
-    const params = new URLSearchParams({
-        endDate, width,
-        bgColor:    currentBg,
-        textColor:  currentColor,
-        fontSize:   currentFontSize,
-        fontFamily: currentFont,
-        style:      currentStyle,
-    });
-    const url = '/gif?' + params.toString() + '&_t=' + Date.now();
-    try {
-        await new Promise((resolve, reject) => {
-            const t = new Image();
-            t.onload  = resolve;
-            t.onerror = reject;
-            t.src     = url;
-        });
-        if (img) img.src = url;
-        if (box) box.style.display = 'block';
-        showToast('👁 Aperçu GIF généré !');
-    } catch (err) {
-        showToast('❌ Erreur lors de la génération');
-    } finally {
-        btn.textContent = '👁 Aperçu GIF réel';
-        btn.disabled    = false;
-    }
-}
-
-
-// ============================================================
-// 13. PUBLICATION — Envoi du countdown à l'API
+// PUBLICATION
 // ============================================================
 async function publishCountdown() {
-    const btn             = document.getElementById('publish-btn');
-    const btn2            = document.getElementById('publish-btn-2');
-    const name            = document.getElementById('cd-name')?.value || 'Mon countdown';
-    const endDate         = document.getElementById('cd-date')?.value;
-    const width           = document.getElementById('cd-width')?.value || 400;
-    const timezone        = document.getElementById('cd-timezone')?.value || 'Europe/Paris';
-    const expiredBehavior = document.getElementById('cd-expired')?.value || 'SHOW_ZEROS';
-    const expiredText     = document.getElementById('cd-expired-text')?.value || 'Offre terminée';
-    const expiredRedirect = document.getElementById('cd-expired-redirect')?.value || null;
-    const labelDays       = document.getElementById('cd-label-days')?.value || 'JOURS';
-    const labelHours      = document.getElementById('cd-label-hours')?.value || 'HEURES';
-    const labelMinutes    = document.getElementById('cd-label-minutes')?.value || 'MIN';
-    const labelSeconds    = document.getElementById('cd-label-seconds')?.value || 'SEC';
+    const btn2    = document.getElementById('publish-btn-2');
+    const endDate = document.getElementById('cd-date')?.value;
     if (!endDate) { showToast('⚠️ Veuillez choisir une date'); return; }
-    [btn, btn2].forEach(b => { if(b) { b.textContent = '⏳ Génération...'; b.disabled = true; } });
+
+    const showUnits = getShowUnits();
+    if (!showUnits) { showToast('⚠️ Cochez au moins une unité'); return; }
+
+    if (btn2) { btn2.textContent = '⏳ Génération...'; btn2.disabled = true; }
+
     try {
         const res = await authFetch('/countdown', {
             method: 'POST',
             body: JSON.stringify({
-                name, endDate, timezone,
-                bgColor: currentBg, textColor: currentColor,
-                fontSize: currentFontSize, width: parseInt(width),
-                fontFamily: currentFont, style: currentStyle,
-                labelDays, labelHours, labelMinutes, labelSeconds,
-                expiredBehavior, expiredText,
-                expiredRedirect: expiredRedirect || undefined,
-            })
+                name:             document.getElementById('cd-name')?.value || 'Mon countdown',
+                endDate,
+                timezone:         document.getElementById('cd-timezone')?.value || 'Europe/Paris',
+                bgColor:          currentBg,
+                textColor:        currentColor,
+                fontSize:         currentFontSize,
+                width:            parseInt(document.getElementById('cd-width')?.value) || 400,
+                fontFamily:       currentFont,
+                style:            currentStyle,
+                orientation:      currentOrientation,
+                showUnits,
+                labelDays:        document.getElementById('cd-label-days')?.value    || 'JOURS',
+                labelHours:       document.getElementById('cd-label-hours')?.value   || 'HEURES',
+                labelMinutes:     document.getElementById('cd-label-minutes')?.value || 'MIN',
+                labelSeconds:     document.getElementById('cd-label-seconds')?.value || 'SEC',
+                expiredBehavior:  document.getElementById('cd-expired')?.value       || 'SHOW_ZEROS',
+                expiredText:      document.getElementById('cd-expired-text')?.value  || 'Offre terminée',
+                expiredRedirect:  document.getElementById('cd-expired-redirect')?.value || undefined,
+            }),
         });
+
         const data = await res.json();
         if (!res.ok) { showToast('❌ ' + (data.message || data.error || 'Erreur')); return; }
+
         currentGifUrl = data.gifUrl;
         displayCode(data.gifUrl);
+
+        // Met à jour la preview avec le vrai GIF publié
+        const img = document.getElementById('gif-preview-img');
+        if (img) { img.src = data.gifUrl + '?_t=' + Date.now(); img.style.display = 'block'; }
+
         showToast('🚀 Countdown publié !');
-        // Marque l'étape 4 comme done
-        document.getElementById('accordion-4')?.classList.add('done');
-        updateProgressBar(5); // 5 = toutes done
-    } catch(err) { showToast('❌ Erreur réseau'); }
-    finally {
-        const label = '✓ Publier & obtenir le code';
-        [btn, btn2].forEach(b => { if(b) { b.textContent = label; b.disabled = false; } });
+        updateProgressBar(5);
+
+    } catch (err) {
+        showToast('❌ Erreur réseau');
+    } finally {
+        if (btn2) { btn2.textContent = '✓ Publier & obtenir le code'; btn2.disabled = false; }
     }
 }
 
 
 // ============================================================
-// 14. CODE SNIPPETS — Génération et copie des snippets HTML
-//     4 onglets : Minimal, Standard, Klaviyo, Mailchimp
+// CODE SNIPPETS
 // ============================================================
 function displayCode(gifUrl) {
     const section    = document.getElementById('code-section');
     const urlDisplay = document.getElementById('gif-url-display');
     if (section)    section.style.display = 'block';
     if (urlDisplay) urlDisplay.textContent = gifUrl;
+
     const w = document.getElementById('cd-width')?.value || 400;
     window._codeSnippets = {
         minimal:   `<img src="${gifUrl}" alt="Offre expire dans..." width="${w}" border="0" style="display:block" />`,
-        standard:  `<img src="${gifUrl}" border="0" style="display:block;max-width:100%" alt="Timer — chrono.mail" title="Timer — chrono.mail" width="${w}" />`,
-        klaviyo:   `<img src="${gifUrl}" border="0" style="display:block;max-width:100%" alt="{% if first_name %}{{ first_name }}, votre offre expire dans...{% else %}Offre expire dans...{% endif %}" width="${w}" />`,
-        mailchimp: `<img src="${gifUrl}" border="0" style="display:block;max-width:100%" alt="*|FNAME|*, votre offre expire dans..." width="${w}" />`,
+        standard:  `<img src="${gifUrl}" border="0" style="display:block;max-width:100%" alt="Timer — chrono.mail" width="${w}" />`,
+        klaviyo:   `<img src="${gifUrl}" border="0" style="display:block;max-width:100%" alt="{% if first_name %}{{ first_name }}, offre expire bientôt{% else %}Offre expire bientôt{% endif %}" width="${w}" />`,
+        mailchimp: `<img src="${gifUrl}" border="0" style="display:block;max-width:100%" alt="*|FNAME|*, votre offre expire bientôt" width="${w}" />`,
     };
+
     document.getElementById('code-minimal-content').textContent   = window._codeSnippets.minimal;
     document.getElementById('code-standard-content').textContent  = window._codeSnippets.standard;
     document.getElementById('code-klaviyo-content').textContent   = window._codeSnippets.klaviyo;
@@ -540,7 +499,7 @@ function switchCodeTab(name, btn) {
     document.querySelectorAll('.code-tab-btn').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('.code-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('code-'+name).classList.add('active');
+    document.getElementById('code-' + name).classList.add('active');
 }
 
 function copyCurrentCode() {
@@ -554,8 +513,6 @@ function copyUrl() {
     navigator.clipboard.writeText(currentGifUrl).then(() => showToast('🔗 URL copiée !'));
 }
 
-
-// ============================================================
 // 15. DASHBOARD — Chargement et rendu des countdowns
 // ============================================================
 async function loadDashboard() {

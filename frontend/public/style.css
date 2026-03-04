@@ -353,3 +353,33 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .pricing-btn { width:100%; justify-content:center; margin:20px 0; }
 .plan-chip-pro { background:#eff4ff; color:var(--accent); border:1px solid #c7d7fd; }
 .plan-chip-business { background:#fdf4ff; color:#7c3aed; border:1px solid #e9d5ff; }
+
+/* ============================================================
+   ORIENTATION PICKER
+   ============================================================ */
+.orientation-picker { display:flex; gap:10px; }
+.orient-opt { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px 8px; border:1.5px solid var(--border); border-radius:var(--radius); cursor:pointer; transition:all .15s; background:var(--surface); font-size:12px; font-weight:600; color:var(--muted); }
+.orient-opt:hover { border-color:var(--accent); color:var(--text); }
+.orient-opt.selected { border-color:var(--accent); background:var(--accent-l); color:var(--accent); }
+.orient-demo { display:flex; gap:3px; align-items:center; }
+.orient-demo-v { flex-direction:column; }
+.orient-block { background:currentColor; opacity:0.5; border-radius:3px; }
+.orient-demo-h .orient-block { width:14px; height:18px; }
+.orient-demo-v .orient-block { width:32px; height:8px; }
+.orient-opt.selected .orient-block { opacity:1; }
+
+/* ============================================================
+   UNITS PICKER — Checkboxes unités affichées
+   ============================================================ */
+.units-picker { display:flex; gap:8px; flex-wrap:wrap; }
+.unit-toggle { display:flex; align-items:center; gap:0; cursor:pointer; }
+.unit-toggle input[type=checkbox] { display:none; }
+.unit-toggle-label { padding:6px 14px; border:1.5px solid var(--border); border-radius:var(--radius); font-size:12px; font-weight:600; color:var(--muted); background:var(--surface); cursor:pointer; transition:all .15s; user-select:none; }
+.unit-toggle-label:hover { border-color:var(--accent); color:var(--text); }
+.unit-toggle input:checked + .unit-toggle-label { border-color:var(--accent); background:var(--accent-l); color:var(--accent); }
+
+/* ============================================================
+   GIF PREVIEW — Spinner de chargement
+   ============================================================ */
+.gif-loader-spinner { width:16px; height:16px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
+@keyframes spin { to { transform:rotate(360deg); } }

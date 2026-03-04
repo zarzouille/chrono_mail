@@ -39,9 +39,13 @@ model Countdown {
   fontSize  Int    @default(36)
   width     Int    @default(400)
 
-  // Apparence avancée (Free)
-  fontFamily String @default("monospace")
-  style      String @default("rounded")
+  // Apparence (Free)
+  fontFamily  String @default("monospace")
+  style       String @default("rounded")
+  orientation String @default("horizontal")
+
+  // Unités affichées — ex: "days,hours,minutes,seconds"
+  showUnits String @default("days,hours,minutes,seconds")
 
   // Labels personnalisés (Pro)
   labelDays    String @default("JOURS")
