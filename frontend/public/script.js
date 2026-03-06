@@ -341,47 +341,55 @@ function pickFont(el) {
 // TAILLE
 // ============================================================
 function updateFontSize(val) {
-    currentFontSize = parseInt(val);
-    document.getElementById('font-size-display').textContent = val + 'px';
+    currentFontSize = Math.min(50, parseInt(val));
+    document.getElementById('font-size-display').textContent = currentFontSize + 'px';
+    // Force le slider à ne pas dépasser 50
+    const slider = document.getElementById('cd-fontsize');
+    if (slider && parseInt(slider.value) > 50) slider.value = 50;
     schedulePreview();
 }
 
 
 // ============================================================
-// COULEUR PRINCIPALE — swatches + input natif
+// COULEUR PRINCIPALE — input natif pleine largeur
+// Synchronise la prévisualisation hex + preview GIF live
 // ============================================================
-function pickColor(el) {
-    document.querySelectorAll('#color-picker .swatch').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected');
-    currentColor = el.dataset.color;
-    const inp = document.getElementById('color-custom');
-    if (inp) inp.value = currentColor;
-    schedulePreview();
-}
-
-function pickColorCustom(value) {
+function pickColorMain(value) {
     currentColor = value;
-    document.querySelectorAll('#color-picker .swatch').forEach(e => e.classList.remove('selected'));
+    // Met à jour la pastille et le texte hex
+    const preview = document.getElementById('color-main-preview');
+    const hex     = document.getElementById('color-main-hex');
+    if (preview) preview.style.background = value;
+    if (hex)     hex.textContent = value;
     schedulePreview();
 }
 
+// Alias conservé pour compatibilité avec d'éventuels anciens appels
+function pickColorCustom(value) { pickColorMain(value); }
+function pickColor(el)          { pickColorMain(el?.dataset?.color || currentColor); }
+
 
 // ============================================================
-// COULEUR DE FOND — swatches + input natif
+// COULEUR DE FOND — input natif pleine largeur
 // ============================================================
-function pickBg(el) {
-    document.querySelectorAll('#bg-picker .swatch').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected');
-    currentBg = el.dataset.color;
-    const inp = document.getElementById('bg-custom');
-    if (inp) inp.value = currentBg;
-    schedulePreview();
-}
-
-function pickBgCustom(value) {
+function pickBgMain(value) {
     currentBg = value;
-    document.querySelectorAll('#bg-picker .swatch').forEach(e => e.classList.remove('selected'));
+    const preview = document.getElementById('color-bg-preview');
+    const hex     = document.getElementById('color-bg-hex');
+    if (preview) { preview.style.background = value; preview.style.border = isLightColor(value) ? '1px solid var(--border2)' : 'none'; }
+    if (hex)     hex.textContent = value;
     schedulePreview();
+}
+
+// Alias
+function pickBgCustom(value) { pickBgMain(value); }
+function pickBg(el)          { pickBgMain(el?.dataset?.color || currentBg); }
+
+/** Détermine si une couleur hex est claire (pour ajouter une bordure sur fond blanc) */
+function isLightColor(hex) {
+    const h = hex.replace('#','');
+    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 200;
 }
 
 
@@ -394,6 +402,55 @@ function updateExpiredUI() {
     const redirectRow = document.getElementById('expired-redirect-row');
     if (textRow)     textRow.style.display     = val === 'SHOW_TEXT' ? 'block' : 'none';
     if (redirectRow) redirectRow.style.display = val === 'REDIRECT'  ? 'block' : 'none';
+}
+
+
+// ============================================================
+// MODALE UPGRADE — Ouverture contextuelle selon la feature
+// ============================================================
+
+/** Contenu contextuel selon la feature verrouillée */
+const UPGRADE_MODAL_CONTENT = {
+    labels: {
+        title:    'Labels personnalisés',
+        subtitle: 'Disponible à partir du plan Pro',
+        desc:     'Personnalisez les textes sous chaque chiffre : "JOURS", "HEURES", "MIN", "SEC" ou n'importe quel libellé dans votre langue.',
+    },
+    redirect: {
+        title:    'Redirection après expiration',
+        subtitle: 'Disponible à partir du plan Pro',
+        desc:     'Redirigez automatiquement vos lecteurs vers une nouvelle page (nouvelle offre, page d'accueil…) dès que le countdown atteint zéro.',
+},
+};
+
+/**
+ * Ouvre la modale upgrade avec le contenu contextuel de la feature.
+ * @param {string} feature — 'labels' | 'redirect'
+ */
+function openUpgradeModal(feature) {
+    const content = UPGRADE_MODAL_CONTENT[feature] || UPGRADE_MODAL_CONTENT.labels;
+    document.getElementById('upgrade-modal-title').textContent    = content.title;
+    document.getElementById('upgrade-modal-subtitle').textContent = content.subtitle;
+    document.getElementById('upgrade-modal-desc').textContent     = content.desc;
+    const overlay = document.getElementById('upgrade-modal-overlay');
+    if (overlay) { overlay.style.display = 'flex'; setTimeout(() => overlay.classList.add('open'), 10); }
+    document.body.style.overflow = 'hidden';
+}
+
+/** Ferme la modale (clic sur overlay ou bouton "Plus tard") */
+function closeUpgradeModal(event) {
+    // Si clic sur overlay, ferme seulement si clic en dehors de la modale
+    if (event && event.target !== document.getElementById('upgrade-modal-overlay')) return;
+    const overlay = document.getElementById('upgrade-modal-overlay');
+    if (overlay) { overlay.classList.remove('open'); overlay.style.display = 'none'; }
+    document.body.style.overflow = '';
+}
+
+/** Bouton "Passer à Pro" dans la modale */
+function handleUpgradeFromModal() {
+    closeUpgradeModal();
+    if (isLoggedIn()) upgradePlan('pro_monthly');
+    else showPage('register');
 }
 
 
@@ -772,3 +829,8 @@ function showToast(msg) {
 // 20. INIT
 // ============================================================
 updateNavAuth();
+
+// Ferme la modale upgrade avec la touche Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeUpgradeModal();
+});

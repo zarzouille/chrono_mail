@@ -383,3 +383,39 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
    ============================================================ */
 .gif-loader-spinner { width:16px; height:16px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
 @keyframes spin { to { transform:rotate(360deg); } }
+
+/* ============================================================
+   COLOR FIELD — Input natif pleine largeur
+   ============================================================ */
+.color-field-row { display:flex; align-items:center; gap:10px; }
+.color-field-input { width:52px; height:40px; padding:2px 3px; border:1.5px solid var(--border); border-radius:var(--radius); background:var(--surface); cursor:pointer; transition:border-color .15s; flex-shrink:0; }
+.color-field-input:hover { border-color:var(--accent); }
+.color-field-preview { width:28px; height:28px; border-radius:var(--radius-s); flex-shrink:0; box-shadow:var(--shadow-xs); }
+.color-field-hex { font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--text2); font-weight:600; letter-spacing:0.5px; }
+
+/* ============================================================
+   MODALE UPGRADE
+   ============================================================ */
+#upgrade-modal-overlay { display:none; }
+#upgrade-modal-overlay.open { display:flex !important; }
+
+.upgrade-modal { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-xl); width:100%; max-width:420px; box-shadow:var(--shadow-l); overflow:hidden; animation:modal-in .2s cubic-bezier(.34,1.56,.64,1); }
+@keyframes modal-in { from { opacity:0; transform:scale(0.92) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+.upgrade-modal-header { display:flex; align-items:center; gap:14px; padding:20px 22px 16px; border-bottom:1px solid var(--border); }
+.upgrade-modal-icon { width:40px; height:40px; background:linear-gradient(135deg,#2563eb,#7c3aed); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; font-size:18px; color:white; flex-shrink:0; }
+.upgrade-modal-title { font-size:16px; font-weight:800; color:var(--text); letter-spacing:-0.3px; }
+.upgrade-modal-subtitle { font-size:13px; color:var(--muted); margin-top:2px; }
+.upgrade-modal-close { margin-left:auto; background:none; border:none; cursor:pointer; color:var(--muted2); font-size:16px; padding:4px; border-radius:var(--radius-s); transition:all .12s; line-height:1; flex-shrink:0; }
+.upgrade-modal-close:hover { background:var(--surface2); color:var(--text); }
+
+.upgrade-modal-body { padding:18px 22px; }
+.upgrade-modal-feature-desc { font-size:14px; color:var(--text2); line-height:1.6; margin-bottom:14px; padding:12px 14px; background:var(--accent-l); border-radius:var(--radius); border:1px solid rgba(37,99,235,0.15); }
+.upgrade-modal-list-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); margin-bottom:10px; }
+.upgrade-modal-list { list-style:none; display:flex; flex-direction:column; gap:7px; margin-bottom:16px; }
+.upgrade-modal-list li { font-size:14px; color:var(--text2); display:flex; align-items:center; gap:8px; }
+.upgrade-modal-list li::before { content:''; display:none; }
+.upgrade-modal-price { font-size:13px; color:var(--muted); padding-top:14px; border-top:1px solid var(--border); }
+.upgrade-modal-price strong { color:var(--text); }
+
+.upgrade-modal-footer { display:flex; gap:10px; padding:14px 22px 20px; }
