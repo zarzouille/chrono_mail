@@ -223,22 +223,27 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 /* ============================================================
    STYLE PICKER
    ============================================================ */
-.style-picker { display:flex; flex-direction:column; gap:6px; }
-.style-row { display:flex; gap:8px; }
-.style-opt { display:flex; align-items:center; gap:8px; cursor:pointer; padding:7px 10px; border-radius:var(--radius); border:1.5px solid var(--border); flex:1; font-size:12px; font-weight:600; color:var(--muted); transition:all .15s; background:var(--surface); }
-.style-opt:hover { border-color:var(--accent); color:var(--text); }
-.style-opt.selected { border-color:var(--accent); color:var(--accent); background:var(--accent-l); }
-.style-opt-wide { flex:1; }
+.style-picker { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.style-tier-divider { grid-column:1/-1; display:flex; align-items:center; gap:8px; font-size:10px; font-weight:700; letter-spacing:.06em; color:var(--muted); margin:2px 0; }
+.style-tier-divider::before,.style-tier-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.style-opt { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px; cursor:pointer; padding:14px 8px 10px; border-radius:var(--radius); border:1.5px solid var(--border); font-size:11px; font-weight:600; color:var(--muted); transition:all .15s; background:var(--surface); text-align:center; }
+.style-opt:hover { border-color:var(--accent); color:var(--text); background:#f5f7ff; }
+.style-opt.selected { border-color:var(--accent); color:var(--accent); background:var(--accent-l); box-shadow:0 0 0 3px var(--accent-l); }
+.style-opt-neon { grid-column:1/-1; flex-direction:row; justify-content:flex-start; gap:14px; padding:12px 16px; background:#09090f; border-color:#1a1a2e; color:#8b8ba8; }
+.style-opt-neon:hover { border-color:#00e5ff; color:#00e5ff; background:#0a0a15; }
+.style-opt-neon.selected { border-color:#00e5ff; color:#00e5ff; background:#080814; box-shadow:0 0 0 3px rgba(0,229,255,0.12); }
+.style-opt-neon .style-opt-info { display:flex; flex-direction:column; align-items:flex-start; gap:3px; }
+.style-opt-neon .style-opt-name { font-size:13px; font-weight:700; }
+.style-opt-neon .style-opt-desc { font-size:11px; opacity:.65; }
 .style-demo { flex-shrink:0; }
-.style-demo-block { width:32px; height:26px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:monospace; color:var(--accent); background:rgba(37,99,235,0.1); }
-.style-demo-rounded { border-radius:6px; }
+.style-demo-block { width:48px; height:40px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; font-family:monospace; color:var(--accent); background:rgba(37,99,235,0.1); }
+.style-demo-rounded { border-radius:8px; }
 .style-demo-flat { border-radius:0; }
 .style-demo-bordered { background:transparent; border:2px solid var(--accent); border-radius:2px; }
-/* Nouveaux styles Pro/Business */
-.style-demo-glass { border-radius:6px; background:rgba(100,130,255,0.18); border:1.5px solid rgba(100,130,255,0.4); color:#5b7fff; }
-.style-demo-dark-pill { border-radius:14px; background:var(--accent); color:#fff; border:none; }
-.style-demo-circular { border-radius:50%; width:28px; height:28px; border:1.5px solid var(--accent); background:rgba(37,99,235,0.1); }
-.style-demo-neon { border-radius:6px; background:#0f0f1a; border:1.5px solid #00e5ff; color:#00e5ff; text-shadow:0 0 6px #00e5ff; box-shadow:0 0 6px rgba(0,229,255,0.35),inset 0 0 6px rgba(0,229,255,0.08); }
+.style-demo-glass { border-radius:8px; background:rgba(100,130,255,0.18); border:1.5px solid rgba(100,130,255,0.45); color:#5b7fff; }
+.style-demo-dark-pill { border-radius:20px; background:var(--accent); color:#fff; border:none; }
+.style-demo-circular { border-radius:50%; width:42px; height:42px; border:1.5px solid var(--accent); background:rgba(37,99,235,0.1); }
+.style-demo-neon { border-radius:8px; background:#0a0a14; border:1.5px solid #00e5ff; color:#00e5ff; text-shadow:0 0 8px #00e5ff; box-shadow:0 0 10px rgba(0,229,255,0.45),inset 0 0 8px rgba(0,229,255,0.1); }
 
 /* ============================================================
    FONT PICKER
@@ -260,7 +265,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 /* ============================================================
    PLAN GATES
    ============================================================ */
-.plan-gate-badge { background:var(--accent); color:white; font-size:10px; font-weight:700; padding:2px 7px; border-radius:100px; margin-left:6px; vertical-align:middle; }
+.plan-gate-badge { position:absolute; top:6px; right:6px; background:var(--accent); color:white; font-size:9px; font-weight:700; padding:2px 7px; border-radius:100px; line-height:1.5; }
 .plan-gate-overlay { position:absolute; inset:0; background:rgba(248,247,244,0.88); backdrop-filter:blur(2px); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:10; border-radius:inherit; }
 .plan-gate-msg { font-size:13px; font-weight:600; color:var(--text2); text-align:center; }
 

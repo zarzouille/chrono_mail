@@ -433,45 +433,44 @@
                         <div class="form-group">
                             <label class="form-label">Style</label>
                             <div class="style-picker" id="style-picker">
-                                <!-- Ligne 1 : styles Free -->
-                                <div class="style-row">
-                                    <div class="style-opt selected" data-style="rounded" onclick="pickStyle(this)">
-                                        <div class="style-demo"><div class="style-demo-block style-demo-rounded">42</div></div>
-                                        <span>Arrondi</span>
-                                    </div>
-                                    <div class="style-opt" data-style="flat" onclick="pickStyle(this)">
-                                        <div class="style-demo"><div class="style-demo-block style-demo-flat">42</div></div>
-                                        <span>Flat</span>
-                                    </div>
-                                    <div class="style-opt" data-style="bordered" onclick="pickStyle(this)">
-                                        <div class="style-demo"><div class="style-demo-block style-demo-bordered">42</div></div>
-                                        <span>Bordure</span>
-                                    </div>
+                                <!-- Free -->
+                                <div class="style-opt selected" data-style="rounded" onclick="pickStyle(this)">
+                                    <div class="style-demo"><div class="style-demo-block style-demo-rounded">42</div></div>
+                                    <span>Arrondi</span>
                                 </div>
-                                <!-- Ligne 2 : styles Pro -->
-                                <div class="style-row">
-                                    <div class="style-opt" data-style="glass" data-plan="pro" onclick="pickStyle(this)">
-                                        <div class="style-demo"><div class="style-demo-block style-demo-glass">42</div></div>
-                                        <span>Verre</span>
-                                        <span class="plan-gate-badge">Pro</span>
-                                    </div>
-                                    <div class="style-opt" data-style="dark-pill" data-plan="pro" onclick="pickStyle(this)">
-                                        <div class="style-demo"><div class="style-demo-block style-demo-dark-pill">42</div></div>
-                                        <span>Pill</span>
-                                        <span class="plan-gate-badge">Pro</span>
-                                    </div>
-                                    <div class="style-opt" data-style="circular" data-plan="pro" onclick="pickStyle(this)">
-                                        <div class="style-demo"><div class="style-demo-block style-demo-circular">42</div></div>
-                                        <span>Cercle</span>
-                                        <span class="plan-gate-badge">Pro</span>
-                                    </div>
+                                <div class="style-opt" data-style="flat" onclick="pickStyle(this)">
+                                    <div class="style-demo"><div class="style-demo-block style-demo-flat">42</div></div>
+                                    <span>Flat</span>
                                 </div>
-                                <!-- Ligne 3 : style Business -->
-                                <div class="style-row">
-                                    <div class="style-opt style-opt-wide" data-style="neon" data-plan="business" onclick="pickStyle(this)">
-                                        <div class="style-demo"><div class="style-demo-block style-demo-neon">42</div></div>
-                                        <span>Neon</span>
-                                        <span class="plan-gate-badge" style="background:#7c3aed">Business</span>
+                                <div class="style-opt" data-style="bordered" onclick="pickStyle(this)">
+                                    <div class="style-demo"><div class="style-demo-block style-demo-bordered">42</div></div>
+                                    <span>Bordure</span>
+                                </div>
+                                <!-- Pro -->
+                                <div class="style-tier-divider">Pro</div>
+                                <div class="style-opt" data-style="glass" data-plan="pro" onclick="pickStyle(this)">
+                                    <span class="plan-gate-badge">Pro</span>
+                                    <div class="style-demo"><div class="style-demo-block style-demo-glass">42</div></div>
+                                    <span>Verre</span>
+                                </div>
+                                <div class="style-opt" data-style="dark-pill" data-plan="pro" onclick="pickStyle(this)">
+                                    <span class="plan-gate-badge">Pro</span>
+                                    <div class="style-demo"><div class="style-demo-block style-demo-dark-pill">42</div></div>
+                                    <span>Pill</span>
+                                </div>
+                                <div class="style-opt" data-style="circular" data-plan="pro" onclick="pickStyle(this)">
+                                    <span class="plan-gate-badge">Pro</span>
+                                    <div class="style-demo"><div class="style-demo-block style-demo-circular">42</div></div>
+                                    <span>Cercle</span>
+                                </div>
+                                <!-- Business -->
+                                <div class="style-tier-divider">Business</div>
+                                <div class="style-opt style-opt-neon" data-style="neon" data-plan="business" onclick="pickStyle(this)">
+                                    <span class="plan-gate-badge" style="background:#7c3aed; top:50%; transform:translateY(-50%); right:12px;">Business</span>
+                                    <div class="style-demo"><div class="style-demo-block style-demo-neon">42</div></div>
+                                    <div class="style-opt-info">
+                                        <span class="style-opt-name">Neon</span>
+                                        <span class="style-opt-desc">Effet lumineux futuriste</span>
                                     </div>
                                 </div>
                             </div>
