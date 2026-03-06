@@ -294,8 +294,8 @@
 
         <div class="page-header">
             <div>
-                <div class="page-title">Créer un countdown</div>
-                <div class="page-subtitle">Configurez votre timer et copiez le code dans votre email</div>
+                <div class="page-title" id="create-page-title">Créer un countdown</div>
+                <div class="page-subtitle" id="create-page-subtitle">Configurez votre timer et copiez le code dans votre email</div>
             </div>
             <button class="btn btn-ghost" onclick="showPage('dashboard')">← Dashboard</button>
         </div>
@@ -433,17 +433,46 @@
                         <div class="form-group">
                             <label class="form-label">Style</label>
                             <div class="style-picker" id="style-picker">
-                                <div class="style-opt selected" data-style="rounded" onclick="pickStyle(this)">
-                                    <div class="style-demo"><div class="style-demo-block style-demo-rounded">42</div></div>
-                                    <span>Arrondi</span>
+                                <!-- Ligne 1 : styles Free -->
+                                <div class="style-row">
+                                    <div class="style-opt selected" data-style="rounded" onclick="pickStyle(this)">
+                                        <div class="style-demo"><div class="style-demo-block style-demo-rounded">42</div></div>
+                                        <span>Arrondi</span>
+                                    </div>
+                                    <div class="style-opt" data-style="flat" onclick="pickStyle(this)">
+                                        <div class="style-demo"><div class="style-demo-block style-demo-flat">42</div></div>
+                                        <span>Flat</span>
+                                    </div>
+                                    <div class="style-opt" data-style="bordered" onclick="pickStyle(this)">
+                                        <div class="style-demo"><div class="style-demo-block style-demo-bordered">42</div></div>
+                                        <span>Bordure</span>
+                                    </div>
                                 </div>
-                                <div class="style-opt" data-style="flat" onclick="pickStyle(this)">
-                                    <div class="style-demo"><div class="style-demo-block style-demo-flat">42</div></div>
-                                    <span>Flat</span>
+                                <!-- Ligne 2 : styles Pro -->
+                                <div class="style-row">
+                                    <div class="style-opt" data-style="glass" data-plan="pro" onclick="pickStyle(this)">
+                                        <div class="style-demo"><div class="style-demo-block style-demo-glass">42</div></div>
+                                        <span>Verre</span>
+                                        <span class="plan-gate-badge">Pro</span>
+                                    </div>
+                                    <div class="style-opt" data-style="dark-pill" data-plan="pro" onclick="pickStyle(this)">
+                                        <div class="style-demo"><div class="style-demo-block style-demo-dark-pill">42</div></div>
+                                        <span>Pill</span>
+                                        <span class="plan-gate-badge">Pro</span>
+                                    </div>
+                                    <div class="style-opt" data-style="circular" data-plan="pro" onclick="pickStyle(this)">
+                                        <div class="style-demo"><div class="style-demo-block style-demo-circular">42</div></div>
+                                        <span>Cercle</span>
+                                        <span class="plan-gate-badge">Pro</span>
+                                    </div>
                                 </div>
-                                <div class="style-opt" data-style="bordered" onclick="pickStyle(this)">
-                                    <div class="style-demo"><div class="style-demo-block style-demo-bordered">42</div></div>
-                                    <span>Bordure</span>
+                                <!-- Ligne 3 : style Business -->
+                                <div class="style-row">
+                                    <div class="style-opt style-opt-wide" data-style="neon" data-plan="business" onclick="pickStyle(this)">
+                                        <div class="style-demo"><div class="style-demo-block style-demo-neon">42</div></div>
+                                        <span>Neon</span>
+                                        <span class="plan-gate-badge" style="background:#7c3aed">Business</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

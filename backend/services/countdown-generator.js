@@ -11,7 +11,7 @@ const GIFEncoder = require('gif-encoder-2');
  * @param {number} width        - Largeur en px
  * @param {object} options      - Options avancées
  *   @param {string}  options.fontFamily       - monospace|serif|sans-serif|cursive
- *   @param {string}  options.style            - rounded|flat|bordered
+ *   @param {string}  options.style            - rounded|flat|bordered|glass|dark-pill|circular|neon
  *   @param {string}  options.orientation      - horizontal|vertical
  *   @param {string}  options.showUnits        - ex: "days,hours,minutes,seconds"
  *   @param {string}  options.labelDays
@@ -54,9 +54,9 @@ async function generateCountdownGif(
     const fSizeSm  = Math.round(fSize * 0.32);
     const FRAMES   = 10;
     const isVert   = orientation === 'vertical';
+    const isCircular = style === 'circular';
 
     // Unités actives dans l'ordre
-    const allUnits = ['days', 'hours', 'minutes', 'seconds'];
     const active   = new Set(showUnits.split(',').map(s => s.trim()));
     const unitDefs = [
         { key: 'days',    label: labelDays    },
@@ -71,7 +71,7 @@ async function generateCountdownGif(
     let canvasW, canvasH;
     if (isVert) {
         canvasW = W;
-        canvasH = Math.round(W * 1.0 * unitCount / 4); // hauteur proportionnelle
+        canvasH = Math.round(W * 1.0 * unitCount / 4);
     } else {
         canvasW = W;
         canvasH = Math.round(W * 0.28);
@@ -120,6 +120,20 @@ async function generateCountdownGif(
         return `rgba(${r},${g},${b},${alpha})`;
     }
 
+    // ── Rayon selon le style ─────────────────────────────────────
+    function getRadius(bW, bH) {
+        switch (style) {
+            case 'rounded':   return Math.round(bW * 0.1);
+            case 'glass':     return Math.round(bW * 0.1);
+            case 'neon':      return Math.round(bW * 0.1);
+            case 'bordered':  return 4;
+            case 'dark-pill': return Math.round(bH / 2);
+            case 'circular':  return Math.round(Math.min(bW, bH) / 2);
+            case 'flat':
+            default:          return 0;
+        }
+    }
+
     // ── Dessin d'une frame ───────────────────────────────────────
     function drawFrame(timeLeft) {
         const { expired } = timeLeft;
@@ -162,22 +176,42 @@ async function generateCountdownGif(
     // ── Layout HORIZONTAL ────────────────────────────────────────
     function drawHorizontal(vals) {
         const gap    = Math.round(canvasW * 0.025);
-        const blockW = Math.round((canvasW - gap * (unitCount + 1)) / unitCount);
-        const blockH = Math.round(canvasH * 0.74);
+        let blockW, blockH, startX;
+
+        if (isCircular) {
+            // Blocs carrés → cercles parfaits
+            blockH   = Math.round(canvasH * 0.74);
+            blockW   = blockH;
+            const totalW = unitCount * blockW + (unitCount - 1) * gap;
+            startX   = Math.round((canvasW - totalW) / 2);
+        } else {
+            blockW   = Math.round((canvasW - gap * (unitCount + 1)) / unitCount);
+            blockH   = Math.round(canvasH * 0.74);
+            startX   = gap;
+        }
+
         const blockY = Math.round((canvasH - blockH) / 2);
-        const r      = style === 'rounded' ? Math.round(blockW * 0.1) : style === 'bordered' ? 4 : 0;
+        const r      = getRadius(blockW, blockH);
 
         unitDefs.forEach(({ key, label }, i) => {
-            const x = gap + i * (blockW + gap);
+            const x = isCircular
+                ? startX + i * (blockW + gap)
+                : gap + i * (blockW + gap);
             drawBlock(x, blockY, blockW, blockH, r, vals[key], label);
 
-            // Séparateur
-            if (i < unitDefs.length - 1) {
-                ctx.fillStyle    = hexToRgba(textColor, 0.5);
+            // Séparateur (pas pour circular ni dark-pill)
+            if (i < unitDefs.length - 1 && !isCircular && style !== 'dark-pill') {
+                const sepColor = style === 'neon'
+                    ? hexToRgba(textColor, 0.7)
+                    : hexToRgba(textColor, 0.5);
+                ctx.save();
+                if (style === 'neon') { ctx.shadowColor = textColor; ctx.shadowBlur = 6; }
+                ctx.fillStyle    = sepColor;
                 ctx.font         = `bold ${Math.round(fSize * 0.7)}px ${fontFamily}`;
                 ctx.textBaseline = 'middle';
                 ctx.textAlign    = 'center';
                 ctx.fillText(':', x + blockW + gap / 2, blockY + blockH * 0.42);
+                ctx.restore();
             }
         });
     }
@@ -186,9 +220,11 @@ async function generateCountdownGif(
     function drawVertical(vals) {
         const gap    = Math.round(canvasH * 0.025 / unitCount);
         const blockH = Math.round((canvasH - gap * (unitCount + 1)) / unitCount);
-        const blockW = Math.round(canvasW * 0.82);
+        const blockW = isCircular
+            ? blockH  // carré pour cercle parfait
+            : Math.round(canvasW * 0.82);
         const blockX = Math.round((canvasW - blockW) / 2);
-        const r      = style === 'rounded' ? Math.round(blockH * 0.15) : style === 'bordered' ? 4 : 0;
+        const r      = getRadius(blockW, blockH);
 
         unitDefs.forEach(({ key, label }, i) => {
             const y = gap + i * (blockH + gap);
@@ -198,14 +234,59 @@ async function generateCountdownGif(
 
     // ── Dessin d'un bloc (commun horizontal/vertical) ────────────
     function drawBlock(x, y, bW, bH, r, value, label) {
+
         if (style === 'bordered') {
-            // Bordure seule, fond transparent
             ctx.strokeStyle = textColor;
             ctx.lineWidth   = 2;
             roundRect(ctx, x, y, bW, bH, r);
             ctx.stroke();
+
+        } else if (style === 'glass') {
+            // Verre : fond blanc semi-transparent + bordure blanche
+            ctx.fillStyle = hexToRgba('#ffffff', 0.15);
+            roundRect(ctx, x, y, bW, bH, r);
+            ctx.fill();
+            ctx.strokeStyle = hexToRgba('#ffffff', 0.4);
+            ctx.lineWidth   = 1.5;
+            roundRect(ctx, x, y, bW, bH, r);
+            ctx.stroke();
+
+        } else if (style === 'dark-pill') {
+            // Pill sombre : fond = textColor, texte = bgColor
+            ctx.fillStyle = hexToRgba(textColor, 0.9);
+            roundRect(ctx, x, y, bW, bH, r);
+            ctx.fill();
+
+        } else if (style === 'circular') {
+            // Cercle parfait
+            const cx  = x + bW / 2;
+            const cy  = y + bH / 2;
+            const rad = Math.min(bW, bH) / 2 - 1;
+            ctx.beginPath();
+            ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+            ctx.fillStyle = hexToRgba(textColor, 0.1);
+            ctx.fill();
+            ctx.strokeStyle = textColor;
+            ctx.lineWidth   = 1.5;
+            ctx.stroke();
+
+        } else if (style === 'neon') {
+            // Neon : bordure lumineuse avec shadowBlur
+            ctx.save();
+            ctx.shadowColor = textColor;
+            ctx.shadowBlur  = 14;
+            ctx.strokeStyle = textColor;
+            ctx.lineWidth   = 2;
+            roundRect(ctx, x, y, bW, bH, r);
+            ctx.stroke();
+            ctx.restore();
+            // Léger fond semi-transparent
+            ctx.fillStyle = hexToRgba(textColor, 0.05);
+            roundRect(ctx, x, y, bW, bH, r);
+            ctx.fill();
+
         } else {
-            // Fond teinté
+            // rounded / flat — fond teinté + bordure légère
             ctx.fillStyle = hexToRgba(textColor, 0.1);
             roundRect(ctx, x, y, bW, bH, r);
             ctx.fill();
@@ -215,18 +296,36 @@ async function generateCountdownGif(
             ctx.stroke();
         }
 
+        // ── Couleurs du texte selon le style ──
+        const valueColor = style === 'dark-pill' ? bgColor : textColor;
+        const labelColor = style === 'dark-pill'
+            ? hexToRgba(bgColor, 0.7)
+            : hexToRgba(textColor, 0.6);
+
         // Valeur numérique
-        ctx.fillStyle    = textColor;
+        ctx.save();
+        if (style === 'neon') { ctx.shadowColor = textColor; ctx.shadowBlur = 10; }
+        ctx.fillStyle    = valueColor;
         ctx.font         = `bold ${fSize}px ${fontFamily}`;
         ctx.textAlign    = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(value, x + bW / 2, y + bH * 0.42);
+        if (style === 'circular') {
+            ctx.fillText(value, x + bW / 2, y + bH / 2 - fSizeSm * 0.6);
+        } else {
+            ctx.fillText(value, x + bW / 2, y + bH * 0.42);
+        }
+        ctx.restore();
 
         // Label
-        ctx.fillStyle    = hexToRgba(textColor, 0.6);
+        ctx.fillStyle    = labelColor;
         ctx.font         = `bold ${fSizeSm}px sans-serif`;
+        ctx.textAlign    = 'center';
         ctx.textBaseline = 'top';
-        ctx.fillText(label, x + bW / 2, y + bH * 0.68);
+        if (style === 'circular') {
+            ctx.fillText(label, x + bW / 2, y + bH / 2 + fSize * 0.28);
+        } else {
+            ctx.fillText(label, x + bW / 2, y + bH * 0.68);
+        }
     }
 
     // ── Génération des frames ────────────────────────────────────
