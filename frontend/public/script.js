@@ -414,13 +414,13 @@ const UPGRADE_MODAL_CONTENT = {
     labels: {
         title:    'Labels personnalisés',
         subtitle: 'Disponible à partir du plan Pro',
-        desc:     'Personnalisez les textes sous chaque chiffre : "JOURS", "HEURES", "MIN", "SEC" ou n'importe quel libellé dans votre langue.',
+        desc:     'Personnalisez les textes sous chaque chiffre : "JOURS", "HEURES", "MIN", "SEC" ou n\'importe quel libellé dans votre langue.',
     },
     redirect: {
         title:    'Redirection après expiration',
         subtitle: 'Disponible à partir du plan Pro',
-        desc:     'Redirigez automatiquement vos lecteurs vers une nouvelle page (nouvelle offre, page d'accueil…) dès que le countdown atteint zéro.',
-},
+        desc:     'Redirigez automatiquement vos lecteurs vers une nouvelle page (nouvelle offre, page d\'accueil…) dès que le countdown atteint zéro.',
+    },
 };
 
 /**
