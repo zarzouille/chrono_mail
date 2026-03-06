@@ -294,8 +294,8 @@
 
         <div class="page-header">
             <div>
-                <div class="page-title" id="create-page-title">Créer un countdown</div>
-                <div class="page-subtitle" id="create-page-subtitle">Configurez votre timer et copiez le code dans votre email</div>
+                <div class="page-title">Créer un countdown</div>
+                <div class="page-subtitle">Configurez votre timer et copiez le code dans votre email</div>
             </div>
             <button class="btn btn-ghost" onclick="showPage('dashboard')">← Dashboard</button>
         </div>
@@ -432,46 +432,48 @@
                         <!-- Style -->
                         <div class="form-group">
                             <label class="form-label">Style</label>
-                            <div class="style-picker" id="style-picker">
-                                <!-- Free -->
-                                <div class="style-opt selected" data-style="rounded" onclick="pickStyle(this)">
-                                    <div class="style-demo"><div class="style-demo-block style-demo-rounded">42</div></div>
+
+                            <div class="style-section-label">Gratuit</div>
+                            <div class="style-picker style-picker-b" id="style-picker">
+                                <div class="style-opt-b selected" data-style="rounded" onclick="pickStyle(this)">
+                                    <div class="style-demo-b style-demo-rounded">42</div>
                                     <span>Arrondi</span>
                                 </div>
-                                <div class="style-opt" data-style="flat" onclick="pickStyle(this)">
-                                    <div class="style-demo"><div class="style-demo-block style-demo-flat">42</div></div>
+                                <div class="style-opt-b" data-style="flat" onclick="pickStyle(this)">
+                                    <div class="style-demo-b style-demo-flat">42</div>
                                     <span>Flat</span>
                                 </div>
-                                <div class="style-opt" data-style="bordered" onclick="pickStyle(this)">
-                                    <div class="style-demo"><div class="style-demo-block style-demo-bordered">42</div></div>
+                                <div class="style-opt-b" data-style="bordered" onclick="pickStyle(this)">
+                                    <div class="style-demo-b style-demo-bordered">42</div>
                                     <span>Bordure</span>
                                 </div>
-                                <!-- Pro -->
-                                <div class="style-tier-divider">Pro</div>
-                                <div class="style-opt" data-style="glass" data-plan="pro" onclick="pickStyle(this)">
-                                    <span class="plan-gate-badge">Pro</span>
-                                    <div class="style-demo"><div class="style-demo-block style-demo-glass">42</div></div>
+                            </div>
+
+                            <div class="style-section-label" style="margin-top:14px">Pro</div>
+                            <div class="style-picker style-picker-b">
+                                <div class="style-opt-b style-opt-b-locked" data-style="glass" onclick="pickStyleGated(this,'glass')" data-plan="pro">
+                                    <span class="style-badge-plan badge-pro-s">Pro</span>
+                                    <div class="style-demo-b style-demo-glass">42</div>
                                     <span>Verre</span>
                                 </div>
-                                <div class="style-opt" data-style="dark-pill" data-plan="pro" onclick="pickStyle(this)">
-                                    <span class="plan-gate-badge">Pro</span>
-                                    <div class="style-demo"><div class="style-demo-block style-demo-dark-pill">42</div></div>
+                                <div class="style-opt-b style-opt-b-locked" data-style="pill" onclick="pickStyleGated(this,'pill')" data-plan="pro">
+                                    <span class="style-badge-plan badge-pro-s">Pro</span>
+                                    <div class="style-demo-b style-demo-pill">42</div>
                                     <span>Pill</span>
                                 </div>
-                                <div class="style-opt" data-style="circular" data-plan="pro" onclick="pickStyle(this)">
-                                    <span class="plan-gate-badge">Pro</span>
-                                    <div class="style-demo"><div class="style-demo-block style-demo-circular">42</div></div>
+                                <div class="style-opt-b style-opt-b-locked" data-style="circle" onclick="pickStyleGated(this,'circle')" data-plan="pro">
+                                    <span class="style-badge-plan badge-pro-s">Pro</span>
+                                    <div class="style-demo-b style-demo-circle">42</div>
                                     <span>Cercle</span>
                                 </div>
-                                <!-- Business -->
-                                <div class="style-tier-divider">Business</div>
-                                <div class="style-opt style-opt-neon" data-style="neon" data-plan="business" onclick="pickStyle(this)">
-                                    <span class="plan-gate-badge" style="background:#7c3aed; top:50%; transform:translateY(-50%); right:12px;">Business</span>
-                                    <div class="style-demo"><div class="style-demo-block style-demo-neon">42</div></div>
-                                    <div class="style-opt-info">
-                                        <span class="style-opt-name">Neon</span>
-                                        <span class="style-opt-desc">Effet lumineux futuriste</span>
-                                    </div>
+                            </div>
+
+                            <div class="style-section-label" style="margin-top:14px">Business</div>
+                            <div class="style-picker style-picker-b">
+                                <div class="style-opt-b style-opt-b-locked" data-style="neon" onclick="pickStyleGated(this,'neon')" data-plan="business">
+                                    <span class="style-badge-plan badge-biz-s">Business</span>
+                                    <div class="style-demo-b style-demo-neon">42</div>
+                                    <span>Neon</span>
                                 </div>
                             </div>
                         </div>

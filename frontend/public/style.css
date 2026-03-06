@@ -223,27 +223,15 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 /* ============================================================
    STYLE PICKER
    ============================================================ */
-.style-picker { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.style-tier-divider { grid-column:1/-1; display:flex; align-items:center; gap:8px; font-size:10px; font-weight:700; letter-spacing:.06em; color:var(--muted); margin:2px 0; }
-.style-tier-divider::before,.style-tier-divider::after { content:''; flex:1; height:1px; background:var(--border); }
-.style-opt { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px; cursor:pointer; padding:14px 8px 10px; border-radius:var(--radius); border:1.5px solid var(--border); font-size:11px; font-weight:600; color:var(--muted); transition:all .15s; background:var(--surface); text-align:center; }
-.style-opt:hover { border-color:var(--accent); color:var(--text); background:#f5f7ff; }
-.style-opt.selected { border-color:var(--accent); color:var(--accent); background:var(--accent-l); box-shadow:0 0 0 3px var(--accent-l); }
-.style-opt-neon { grid-column:1/-1; flex-direction:row; justify-content:flex-start; gap:14px; padding:12px 16px; background:#09090f; border-color:#1a1a2e; color:#8b8ba8; }
-.style-opt-neon:hover { border-color:#00e5ff; color:#00e5ff; background:#0a0a15; }
-.style-opt-neon.selected { border-color:#00e5ff; color:#00e5ff; background:#080814; box-shadow:0 0 0 3px rgba(0,229,255,0.12); }
-.style-opt-neon .style-opt-info { display:flex; flex-direction:column; align-items:flex-start; gap:3px; }
-.style-opt-neon .style-opt-name { font-size:13px; font-weight:700; }
-.style-opt-neon .style-opt-desc { font-size:11px; opacity:.65; }
+.style-picker { display:flex; gap:8px; }
+.style-opt { display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px 12px; border-radius:var(--radius); border:1.5px solid var(--border); flex:1; font-size:12px; font-weight:600; color:var(--muted); transition:all .15s; background:var(--surface); }
+.style-opt:hover { border-color:var(--accent); color:var(--text); }
+.style-opt.selected { border-color:var(--accent); color:var(--accent); background:var(--accent-l); }
 .style-demo { flex-shrink:0; }
-.style-demo-block { width:48px; height:40px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; font-family:monospace; color:var(--accent); background:rgba(37,99,235,0.1); }
-.style-demo-rounded { border-radius:8px; }
+.style-demo-block { width:32px; height:26px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:monospace; color:var(--accent); background:rgba(37,99,235,0.1); }
+.style-demo-rounded { border-radius:6px; }
 .style-demo-flat { border-radius:0; }
 .style-demo-bordered { background:transparent; border:2px solid var(--accent); border-radius:2px; }
-.style-demo-glass { border-radius:8px; background:rgba(100,130,255,0.18); border:1.5px solid rgba(100,130,255,0.45); color:#5b7fff; }
-.style-demo-dark-pill { border-radius:20px; background:var(--accent); color:#fff; border:none; }
-.style-demo-circular { border-radius:50%; width:42px; height:42px; border:1.5px solid var(--accent); background:rgba(37,99,235,0.1); }
-.style-demo-neon { border-radius:8px; background:#0a0a14; border:1.5px solid #00e5ff; color:#00e5ff; text-shadow:0 0 8px #00e5ff; box-shadow:0 0 10px rgba(0,229,255,0.45),inset 0 0 8px rgba(0,229,255,0.1); }
 
 /* ============================================================
    FONT PICKER
@@ -265,7 +253,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 /* ============================================================
    PLAN GATES
    ============================================================ */
-.plan-gate-badge { position:absolute; top:6px; right:6px; background:var(--accent); color:white; font-size:9px; font-weight:700; padding:2px 7px; border-radius:100px; line-height:1.5; }
+.plan-gate-badge { background:var(--accent); color:white; font-size:10px; font-weight:700; padding:2px 7px; border-radius:100px; margin-left:6px; vertical-align:middle; }
 .plan-gate-overlay { position:absolute; inset:0; background:rgba(248,247,244,0.88); backdrop-filter:blur(2px); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:10; border-radius:inherit; }
 .plan-gate-msg { font-size:13px; font-weight:600; color:var(--text2); text-align:center; }
 
@@ -310,14 +298,6 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .url-value { font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--accent); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .compat-section { padding:12px 16px; border-top:1px solid var(--border); font-size:12px; color:var(--muted); line-height:2; }
 .compat-title { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px; }
-
-/* ============================================================
-   CARD ACTIONS — Boutons Modifier / Supprimer dans les cards
-   ============================================================ */
-.cd-card-actions { display:flex; gap:8px; padding-top:10px; border-top:1px solid var(--border); margin-top:4px; }
-.cd-action-btn { flex:1; padding:5px 10px; border-radius:var(--radius-s); border:1px solid var(--border); background:var(--surface); color:var(--muted); font-size:12px; font-weight:600; cursor:pointer; transition:all .12s; font-family:'Plus Jakarta Sans',sans-serif; text-align:center; }
-.cd-action-btn:hover { border-color:var(--border2); color:var(--text2); background:var(--surface2); }
-.cd-action-btn.danger:hover { border-color:#fca5a5; color:var(--red); background:#fef2f2; }
 
 /* TOAST */
 .toast { position:fixed; bottom:28px; right:28px; background:var(--text); color:var(--bg); border-radius:var(--radius-l); padding:12px 18px; font-size:13.5px; font-weight:600; display:flex; align-items:center; gap:8px; z-index:999; transform:translateY(80px); opacity:0; transition:all .3s cubic-bezier(.34,1.56,.64,1); box-shadow:var(--shadow-l); pointer-events:none; }
@@ -439,3 +419,137 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .upgrade-modal-price strong { color:var(--text); }
 
 .upgrade-modal-footer { display:flex; gap:10px; padding:14px 22px 20px; }
+
+/* ============================================================
+   STYLE PICKER — Option B (cards verticales + sections)
+   ============================================================ */
+.style-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+
+.style-picker-b {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.style-opt-b {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 12px 8px 10px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all .15s;
+    background: var(--surface);
+    position: relative;
+}
+.style-opt-b:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37,99,235,0.1);
+}
+.style-opt-b.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-l);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+.style-opt-b-locked {
+    opacity: 0.65;
+}
+.style-opt-b-locked:hover {
+    opacity: 1;
+}
+
+/* Grande démo CSS dans chaque card */
+.style-demo-b {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    width: 52px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.style-demo-rounded {
+    background: rgba(37,99,235,0.1);
+    border: 1px solid rgba(37,99,235,0.25);
+    border-radius: 8px;
+}
+.style-demo-flat {
+    background: rgba(37,99,235,0.1);
+    border: 1px solid rgba(37,99,235,0.25);
+    border-radius: 0;
+}
+.style-demo-bordered {
+    background: transparent;
+    border: 2px solid var(--accent);
+    border-radius: 3px;
+}
+.style-demo-glass {
+    background: linear-gradient(135deg, rgba(37,99,235,0.55), rgba(124,58,237,0.55));
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 8px;
+    color: white;
+}
+.style-demo-pill {
+    background: var(--accent);
+    border-radius: 100px;
+    color: white;
+    border: none;
+    width: 60px;
+}
+.style-demo-circle {
+    background: rgba(37,99,235,0.08);
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+}
+.style-demo-neon {
+    background: #0f0f1a;
+    color: #a855f7;
+    text-shadow: 0 0 8px #a855f7, 0 0 16px #a855f7;
+    border: 1px solid rgba(168,85,247,0.5);
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(168,85,247,0.2) inset;
+}
+
+/* Badges plan dans les cards style */
+.style-badge-plan {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 100px;
+    line-height: 1.6;
+}
+.badge-pro-s {
+    background: #eff4ff;
+    color: #2563eb;
+    border: 1px solid #c7d7fd;
+}
+.badge-biz-s {
+    background: #fdf4ff;
+    color: #7c3aed;
+    border: 1px solid #e9d5ff;
+}

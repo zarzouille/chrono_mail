@@ -1,29 +1,6 @@
 const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const GIFEncoder = require('gif-encoder-2');
 
-/**
- * Génère un GIF animé de countdown.
- *
- * @param {string} endDate      - Date cible ISO 8601
- * @param {string} bgColor      - Couleur de fond hex
- * @param {string} textColor    - Couleur texte hex
- * @param {number} fontSize     - Taille de police
- * @param {number} width        - Largeur en px
- * @param {object} options      - Options avancées
- *   @param {string}  options.fontFamily       - monospace|serif|sans-serif|cursive
- *   @param {string}  options.style            - rounded|flat|bordered|glass|dark-pill|circular|neon
- *   @param {string}  options.orientation      - horizontal|vertical
- *   @param {string}  options.showUnits        - ex: "days,hours,minutes,seconds"
- *   @param {string}  options.labelDays
- *   @param {string}  options.labelHours
- *   @param {string}  options.labelMinutes
- *   @param {string}  options.labelSeconds
- *   @param {string}  options.expiredBehavior  - SHOW_ZEROS|SHOW_TEXT|HIDE
- *   @param {string}  options.expiredText
- *   @param {string}  options.bgImageUrl
- *   @param {boolean} options.perpetual
- *   @param {number}  options.perpetualSeconds
- */
 async function generateCountdownGif(
     endDate,
     bgColor   = '#ffffff',
@@ -48,15 +25,12 @@ async function generateCountdownGif(
         perpetualSeconds = 86400,
     } = options;
 
-    // ── Paramètres normalisés ────────────────────────────────────
-    const W        = Math.max(200, Math.min(800, parseInt(width) || 400));
-    const fSize    = Math.max(16, Math.min(60, parseInt(fontSize) || 36));
-    const fSizeSm  = Math.round(fSize * 0.32);
-    const FRAMES   = 10;
-    const isVert   = orientation === 'vertical';
-    const isCircular = style === 'circular';
+    const W       = Math.max(200, Math.min(800, parseInt(width) || 400));
+    const fSize   = Math.max(16, Math.min(50, parseInt(fontSize) || 36));
+    const fSizeSm = Math.round(fSize * 0.30);
+    const FRAMES  = 10;
+    const isVert  = orientation === 'vertical';
 
-    // Unités actives dans l'ordre
     const active   = new Set(showUnits.split(',').map(s => s.trim()));
     const unitDefs = [
         { key: 'days',    label: labelDays    },
@@ -64,20 +38,13 @@ async function generateCountdownGif(
         { key: 'minutes', label: labelMinutes },
         { key: 'seconds', label: labelSeconds },
     ].filter(u => active.has(u.key));
-
     const unitCount = unitDefs.length || 1;
 
-    // ── Dimensions selon orientation ────────────────────────────
-    let canvasW, canvasH;
-    if (isVert) {
-        canvasW = W;
-        canvasH = Math.round(W * 1.0 * unitCount / 4);
-    } else {
-        canvasW = W;
-        canvasH = Math.round(W * 0.28);
-    }
+    const canvasW = W;
+    const canvasH = isVert
+        ? Math.round(W * 0.95 * unitCount / 4)
+        : Math.round(W * 0.28);
 
-    // ── Calcul du temps restant ──────────────────────────────────
     const target = perpetual
         ? Date.now() + perpetualSeconds * 1000
         : new Date(endDate).getTime();
@@ -96,7 +63,6 @@ async function generateCountdownGif(
 
     const pad = n => String(n).padStart(2, '0');
 
-    // ── Canvas + encodeur ────────────────────────────────────────
     const canvas  = createCanvas(canvasW, canvasH);
     const ctx     = canvas.getContext('2d');
     const encoder = new GIFEncoder(canvasW, canvasH, 'neuquant', true);
@@ -105,51 +71,46 @@ async function generateCountdownGif(
     encoder.setQuality(10);
     encoder.start();
 
-    // ── Image de fond optionnelle (Pro) ─────────────────────────
     let bgImage = null;
     if (bgImageUrl) {
-        try { bgImage = await loadImage(bgImageUrl); } catch(e) { /* ignore */ }
+        try { bgImage = await loadImage(bgImageUrl); } catch(e) {}
     }
 
-    // ── Couleur RGBA helper ──────────────────────────────────────
-    function hexToRgba(hex, alpha = 1) {
+    function hexToRgb(hex) {
         const h = hex.replace('#', '');
-        const r = parseInt(h.slice(0,2),16);
-        const g = parseInt(h.slice(2,4),16);
-        const b = parseInt(h.slice(4,6),16);
+        return { r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16) };
+    }
+    function rgba(hex, alpha) {
+        const { r, g, b } = hexToRgb(hex);
         return `rgba(${r},${g},${b},${alpha})`;
     }
-
-    // ── Rayon selon le style ─────────────────────────────────────
-    function getRadius(bW, bH) {
-        switch (style) {
-            case 'rounded':   return Math.round(bW * 0.1);
-            case 'glass':     return Math.round(bW * 0.1);
-            case 'neon':      return Math.round(bW * 0.1);
-            case 'bordered':  return 4;
-            case 'dark-pill': return Math.round(bH / 2);
-            case 'circular':  return Math.round(Math.min(bW, bH) / 2);
-            case 'flat':
-            default:          return 0;
-        }
+    function darkenHex(hex, amount = 0.3) {
+        const { r, g, b } = hexToRgb(hex);
+        return `rgb(${Math.round(r*(1-amount))},${Math.round(g*(1-amount))},${Math.round(b*(1-amount))})`;
     }
 
-    // ── Dessin d'une frame ───────────────────────────────────────
     function drawFrame(timeLeft) {
         const { expired } = timeLeft;
 
-        // Fond
-        if (bgImage) {
+        if (style === 'neon') {
+            ctx.fillStyle = '#0f0f1a';
+            ctx.fillRect(0, 0, canvasW, canvasH);
+        } else if (style === 'glass') {
+            const grad = ctx.createLinearGradient(0, 0, canvasW, canvasH);
+            grad.addColorStop(0, rgba(textColor, 0.85));
+            grad.addColorStop(1, darkenHex(textColor, 0.35));
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvasW, canvasH);
+        } else if (bgImage) {
             ctx.drawImage(bgImage, 0, 0, canvasW, canvasH);
         } else {
             ctx.fillStyle = bgColor;
             ctx.fillRect(0, 0, canvasW, canvasH);
         }
 
-        // Texte expiré
         if (expired && expiredBehavior !== 'SHOW_ZEROS') {
             if (expiredBehavior === 'SHOW_TEXT') {
-                ctx.fillStyle    = textColor;
+                ctx.fillStyle    = style === 'neon' ? textColor : textColor;
                 ctx.font         = `bold ${Math.round(fSize * 0.65)}px ${fontFamily}`;
                 ctx.textAlign    = 'center';
                 ctx.textBaseline = 'middle';
@@ -158,7 +119,6 @@ async function generateCountdownGif(
             return;
         }
 
-        // Valeurs à afficher
         const vals = {
             days:    pad(timeLeft.days),
             hours:   pad(timeLeft.hours),
@@ -166,169 +126,162 @@ async function generateCountdownGif(
             seconds: pad(timeLeft.seconds),
         };
 
-        if (isVert) {
-            drawVertical(vals);
-        } else {
-            drawHorizontal(vals);
-        }
+        if (isVert) drawVertical(vals);
+        else        drawHorizontal(vals);
     }
 
-    // ── Layout HORIZONTAL ────────────────────────────────────────
     function drawHorizontal(vals) {
         const gap    = Math.round(canvasW * 0.025);
-        let blockW, blockH, startX;
-
-        if (isCircular) {
-            // Blocs carrés → cercles parfaits
-            blockH   = Math.round(canvasH * 0.74);
-            blockW   = blockH;
-            const totalW = unitCount * blockW + (unitCount - 1) * gap;
-            startX   = Math.round((canvasW - totalW) / 2);
-        } else {
-            blockW   = Math.round((canvasW - gap * (unitCount + 1)) / unitCount);
-            blockH   = Math.round(canvasH * 0.74);
-            startX   = gap;
-        }
-
+        const blockW = Math.round((canvasW - gap * (unitCount + 1)) / unitCount);
+        const blockH = Math.round(canvasH * 0.74);
         const blockY = Math.round((canvasH - blockH) / 2);
-        const r      = getRadius(blockW, blockH);
 
         unitDefs.forEach(({ key, label }, i) => {
-            const x = isCircular
-                ? startX + i * (blockW + gap)
-                : gap + i * (blockW + gap);
-            drawBlock(x, blockY, blockW, blockH, r, vals[key], label);
+            const x = gap + i * (blockW + gap);
+            drawBlock(x, blockY, blockW, blockH, vals[key], label);
 
-            // Séparateur (pas pour circular ni dark-pill)
-            if (i < unitDefs.length - 1 && !isCircular && style !== 'dark-pill') {
-                const sepColor = style === 'neon'
-                    ? hexToRgba(textColor, 0.7)
-                    : hexToRgba(textColor, 0.5);
-                ctx.save();
-                if (style === 'neon') { ctx.shadowColor = textColor; ctx.shadowBlur = 6; }
-                ctx.fillStyle    = sepColor;
-                ctx.font         = `bold ${Math.round(fSize * 0.7)}px ${fontFamily}`;
+            if (i < unitDefs.length - 1 && !['pill','circle'].includes(style)) {
+                ctx.fillStyle    = style === 'neon' ? rgba(textColor, 0.7) : style === 'glass' ? 'rgba(255,255,255,0.6)' : rgba(textColor, 0.4);
+                ctx.font         = `bold ${Math.round(fSize * 0.65)}px ${fontFamily}`;
                 ctx.textBaseline = 'middle';
                 ctx.textAlign    = 'center';
+                if (style === 'neon') { ctx.shadowColor = textColor; ctx.shadowBlur = 8; }
                 ctx.fillText(':', x + blockW + gap / 2, blockY + blockH * 0.42);
-                ctx.restore();
+                ctx.shadowBlur = 0;
             }
         });
     }
 
-    // ── Layout VERTICAL ──────────────────────────────────────────
     function drawVertical(vals) {
-        const gap    = Math.round(canvasH * 0.025 / unitCount);
+        const gap    = Math.round(canvasH * 0.03);
         const blockH = Math.round((canvasH - gap * (unitCount + 1)) / unitCount);
-        const blockW = isCircular
-            ? blockH  // carré pour cercle parfait
-            : Math.round(canvasW * 0.82);
+        const blockW = Math.round(canvasW * 0.80);
         const blockX = Math.round((canvasW - blockW) / 2);
-        const r      = getRadius(blockW, blockH);
 
         unitDefs.forEach(({ key, label }, i) => {
             const y = gap + i * (blockH + gap);
-            drawBlock(blockX, y, blockW, blockH, r, vals[key], label);
+            drawBlock(blockX, y, blockW, blockH, vals[key], label);
         });
     }
 
-    // ── Dessin d'un bloc (commun horizontal/vertical) ────────────
-    function drawBlock(x, y, bW, bH, r, value, label) {
-
-        if (style === 'bordered') {
-            ctx.strokeStyle = textColor;
-            ctx.lineWidth   = 2;
-            roundRect(ctx, x, y, bW, bH, r);
-            ctx.stroke();
-
-        } else if (style === 'glass') {
-            // Verre : fond blanc semi-transparent + bordure blanche
-            ctx.fillStyle = hexToRgba('#ffffff', 0.15);
-            roundRect(ctx, x, y, bW, bH, r);
-            ctx.fill();
-            ctx.strokeStyle = hexToRgba('#ffffff', 0.4);
-            ctx.lineWidth   = 1.5;
-            roundRect(ctx, x, y, bW, bH, r);
-            ctx.stroke();
-
-        } else if (style === 'dark-pill') {
-            // Pill sombre : fond = textColor, texte = bgColor
-            ctx.fillStyle = hexToRgba(textColor, 0.9);
-            roundRect(ctx, x, y, bW, bH, r);
-            ctx.fill();
-
-        } else if (style === 'circular') {
-            // Cercle parfait
-            const cx  = x + bW / 2;
-            const cy  = y + bH / 2;
-            const rad = Math.min(bW, bH) / 2 - 1;
-            ctx.beginPath();
-            ctx.arc(cx, cy, rad, 0, Math.PI * 2);
-            ctx.fillStyle = hexToRgba(textColor, 0.1);
-            ctx.fill();
-            ctx.strokeStyle = textColor;
-            ctx.lineWidth   = 1.5;
-            ctx.stroke();
-
-        } else if (style === 'neon') {
-            // Neon : bordure lumineuse avec shadowBlur
-            ctx.save();
-            ctx.shadowColor = textColor;
-            ctx.shadowBlur  = 14;
-            ctx.strokeStyle = textColor;
-            ctx.lineWidth   = 2;
-            roundRect(ctx, x, y, bW, bH, r);
-            ctx.stroke();
-            ctx.restore();
-            // Léger fond semi-transparent
-            ctx.fillStyle = hexToRgba(textColor, 0.05);
-            roundRect(ctx, x, y, bW, bH, r);
-            ctx.fill();
-
-        } else {
-            // rounded / flat — fond teinté + bordure légère
-            ctx.fillStyle = hexToRgba(textColor, 0.1);
-            roundRect(ctx, x, y, bW, bH, r);
-            ctx.fill();
-            ctx.strokeStyle = hexToRgba(textColor, 0.2);
-            ctx.lineWidth   = 1;
-            roundRect(ctx, x, y, bW, bH, r);
-            ctx.stroke();
-        }
-
-        // ── Couleurs du texte selon le style ──
-        const valueColor = style === 'dark-pill' ? bgColor : textColor;
-        const labelColor = style === 'dark-pill'
-            ? hexToRgba(bgColor, 0.7)
-            : hexToRgba(textColor, 0.6);
-
-        // Valeur numérique
-        ctx.save();
-        if (style === 'neon') { ctx.shadowColor = textColor; ctx.shadowBlur = 10; }
-        ctx.fillStyle    = valueColor;
-        ctx.font         = `bold ${fSize}px ${fontFamily}`;
-        ctx.textAlign    = 'center';
-        ctx.textBaseline = 'middle';
-        if (style === 'circular') {
-            ctx.fillText(value, x + bW / 2, y + bH / 2 - fSizeSm * 0.6);
-        } else {
-            ctx.fillText(value, x + bW / 2, y + bH * 0.42);
-        }
-        ctx.restore();
-
-        // Label
-        ctx.fillStyle    = labelColor;
-        ctx.font         = `bold ${fSizeSm}px sans-serif`;
-        ctx.textAlign    = 'center';
-        ctx.textBaseline = 'top';
-        if (style === 'circular') {
-            ctx.fillText(label, x + bW / 2, y + bH / 2 + fSize * 0.28);
-        } else {
-            ctx.fillText(label, x + bW / 2, y + bH * 0.68);
+    function drawBlock(x, y, bW, bH, value, label) {
+        switch (style) {
+            case 'flat':     drawBlockFlat(x, y, bW, bH, value, label);     break;
+            case 'bordered': drawBlockBordered(x, y, bW, bH, value, label); break;
+            case 'glass':    drawBlockGlass(x, y, bW, bH, value, label);    break;
+            case 'pill':     drawBlockPill(x, y, bW, bH, value, label);     break;
+            case 'circle':   drawBlockCircle(x, y, bW, bH, value, label);   break;
+            case 'neon':     drawBlockNeon(x, y, bW, bH, value, label);     break;
+            default:         drawBlockRounded(x, y, bW, bH, value, label);  break;
         }
     }
 
-    // ── Génération des frames ────────────────────────────────────
+    function drawBlockRounded(x, y, bW, bH, value, label) {
+        const r = Math.round(Math.min(bW, bH) * 0.12);
+        ctx.fillStyle = rgba(textColor, 0.1);
+        roundRect(ctx, x, y, bW, bH, r); ctx.fill();
+        ctx.strokeStyle = rgba(textColor, 0.2); ctx.lineWidth = 1;
+        roundRect(ctx, x, y, bW, bH, r); ctx.stroke();
+        drawValue(x, y, bW, bH, value, textColor);
+        drawLabel(x, y, bW, bH, label, rgba(textColor, 0.55));
+    }
+
+    function drawBlockFlat(x, y, bW, bH, value, label) {
+        ctx.fillStyle = rgba(textColor, 0.1);
+        ctx.fillRect(x, y, bW, bH);
+        ctx.strokeStyle = rgba(textColor, 0.2); ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, bW, bH);
+        drawValue(x, y, bW, bH, value, textColor);
+        drawLabel(x, y, bW, bH, label, rgba(textColor, 0.55));
+    }
+
+    function drawBlockBordered(x, y, bW, bH, value, label) {
+        ctx.strokeStyle = textColor; ctx.lineWidth = 2;
+        roundRect(ctx, x, y, bW, bH, 4); ctx.stroke();
+        drawValue(x, y, bW, bH, value, textColor);
+        drawLabel(x, y, bW, bH, label, rgba(textColor, 0.55));
+    }
+
+    function drawBlockGlass(x, y, bW, bH, value, label) {
+        const r = Math.round(Math.min(bW, bH) * 0.14);
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        roundRect(ctx, x, y, bW, bH, r); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.5;
+        roundRect(ctx, x, y, bW, bH, r); ctx.stroke();
+        const gradReflect = ctx.createLinearGradient(x, y, x, y + bH * 0.4);
+        gradReflect.addColorStop(0, 'rgba(255,255,255,0.18)');
+        gradReflect.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = gradReflect;
+        roundRect(ctx, x, y, bW, bH * 0.4, r); ctx.fill();
+        drawValue(x, y, bW, bH, value, '#ffffff');
+        drawLabel(x, y, bW, bH, label, 'rgba(255,255,255,0.75)');
+    }
+
+    function drawBlockPill(x, y, bW, bH, value, label) {
+        const r = bH / 2;
+        ctx.fillStyle = textColor;
+        roundRect(ctx, x, y, bW, bH, r); ctx.fill();
+        const gradReflet = ctx.createLinearGradient(x, y, x, y + bH * 0.5);
+        gradReflet.addColorStop(0, 'rgba(255,255,255,0.2)');
+        gradReflet.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = gradReflet;
+        roundRect(ctx, x, y, bW, bH * 0.5, r); ctx.fill();
+        drawValue(x, y, bW, bH, value, '#ffffff');
+        drawLabel(x, y, bW, bH, label, 'rgba(255,255,255,0.7)');
+    }
+
+    function drawBlockCircle(x, y, bW, bH, value, label) {
+        const cx     = x + bW / 2;
+        const cy     = y + bH * 0.42;
+        const radius = Math.min(bW, bH * 0.84) / 2;
+        ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(textColor, 0.1); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = textColor; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = textColor;
+        ctx.font = `bold ${fSize}px ${fontFamily}`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(value, cx, cy);
+        ctx.fillStyle = rgba(textColor, 0.55);
+        ctx.font = `bold ${fSizeSm}px sans-serif`;
+        ctx.textBaseline = 'top';
+        ctx.fillText(label, cx, y + bH * 0.86);
+    }
+
+    function drawBlockNeon(x, y, bW, bH, value, label) {
+        const r = Math.round(Math.min(bW, bH) * 0.1);
+        ctx.fillStyle = 'rgba(15,15,26,0.9)';
+        roundRect(ctx, x, y, bW, bH, r); ctx.fill();
+        ctx.strokeStyle = textColor; ctx.lineWidth = 1.5;
+        ctx.shadowColor = textColor; ctx.shadowBlur = 8;
+        roundRect(ctx, x, y, bW, bH, r); ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = textColor;
+        ctx.font = `bold ${fSize}px ${fontFamily}`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.shadowColor = textColor; ctx.shadowBlur = 12;
+        ctx.fillText(value, x + bW / 2, y + bH * 0.42);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = rgba(textColor, 0.55);
+        ctx.font = `bold ${fSizeSm}px sans-serif`;
+        ctx.textBaseline = 'top';
+        ctx.fillText(label, x + bW / 2, y + bH * 0.70);
+    }
+
+    function drawValue(x, y, bW, bH, value, color) {
+        ctx.fillStyle = color;
+        ctx.font = `bold ${fSize}px ${fontFamily}`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(value, x + bW / 2, y + bH * 0.42);
+    }
+
+    function drawLabel(x, y, bW, bH, label, color) {
+        ctx.fillStyle = color;
+        ctx.font = `bold ${fSizeSm}px sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(label, x + bW / 2, y + bH * 0.70);
+    }
+
     for (let i = 0; i < FRAMES; i++) {
         drawFrame(getTimeLeft(i));
         encoder.addFrame(ctx.getImageData(0, 0, canvasW, canvasH).data);
@@ -338,8 +291,8 @@ async function generateCountdownGif(
     return encoder.out.getData();
 }
 
-// ── Rectangle arrondi ────────────────────────────────────────────
 function roundRect(ctx, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.lineTo(x + w - r, y);
