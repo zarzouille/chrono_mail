@@ -75,7 +75,7 @@ function showPage(name) {
     window.scrollTo(0, 0);
     if (name === 'dashboard') loadDashboard();
     if (name === 'pricing')   renderPricing();
-    if (name === 'create')    { applyPlanGates(); updateExpiredUI(); goToStep(1); }
+    if (name === 'create')    { resetCreateForm(); applyPlanGates(); updateExpiredUI(); goToStep(1); }
 }
 
 
@@ -165,6 +165,7 @@ let currentFontSize    = 36;
 let activeCodeTab      = 'minimal';
 let currentGifUrl      = '';
 let previewDebounce    = null;  // timer debounce 500ms
+let editingCountdownId = null;  // null = création, string = édition
 
 // Pré-remplit la date à J+7 à l'init
 setTimeout(() => {
@@ -319,6 +320,16 @@ function pickOrientation(el) {
 // STYLE
 // ============================================================
 function pickStyle(el) {
+    const requiredPlan = el.dataset.plan; // 'pro' | 'business' | undefined
+    const userPlan     = getUser()?.plan || 'FREE';
+    if (requiredPlan === 'pro' && userPlan === 'FREE') {
+        openUpgradeModal('style_pro');
+        return;
+    }
+    if (requiredPlan === 'business' && userPlan !== 'BUSINESS') {
+        openUpgradeModal('style_business');
+        return;
+    }
     document.querySelectorAll('#style-picker .style-opt').forEach(e => e.classList.remove('selected'));
     el.classList.add('selected');
     currentStyle = el.dataset.style;
@@ -421,6 +432,16 @@ const UPGRADE_MODAL_CONTENT = {
         subtitle: 'Disponible à partir du plan Pro',
         desc:     'Redirigez automatiquement vos lecteurs vers une nouvelle page (nouvelle offre, page d\'accueil…) dès que le countdown atteint zéro.',
     },
+    style_pro: {
+        title:    'Styles avancés',
+        subtitle: 'Disponible à partir du plan Pro',
+        desc:     'Accédez aux styles Glassmorphism, Pill sombre et Circulaire pour des timers plus visuels et modernes dans vos emails.',
+    },
+    style_business: {
+        title:    'Style Neon',
+        subtitle: 'Disponible sur le plan Business',
+        desc:     'Ajoutez une lueur néon à votre timer pour un rendu saisissant dans les emails dark mode et les campagnes haut de gamme.',
+    },
 };
 
 /**
@@ -470,6 +491,204 @@ function applyPlanGates() {
 
 
 // ============================================================
+// RESET FORMULAIRE — Remet le formulaire à l'état initial
+// Appelé à chaque ouverture de la page create
+// ============================================================
+function resetCreateForm() {
+    editingCountdownId = null;
+
+    // Réinitialise l'état interne
+    currentColor       = '#2563eb';
+    currentBg          = '#f8f7f4';
+    currentFont        = 'monospace';
+    currentStyle       = 'rounded';
+    currentOrientation = 'horizontal';
+    currentFontSize    = 36;
+    currentGifUrl      = '';
+
+    // Champs de base
+    const nameEl = document.getElementById('cd-name');
+    if (nameEl) nameEl.value = '';
+    const dateEl = document.getElementById('cd-date');
+    if (dateEl) dateEl.value = new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16);
+    const tzEl = document.getElementById('cd-timezone');
+    if (tzEl) tzEl.value = 'Europe/Paris';
+    const widthEl = document.getElementById('cd-width');
+    if (widthEl) widthEl.value = 400;
+
+    // Taille police
+    const slider = document.getElementById('cd-fontsize');
+    if (slider) slider.value = 36;
+    const sizeDisplay = document.getElementById('font-size-display');
+    if (sizeDisplay) sizeDisplay.textContent = '36px';
+
+    // Couleurs
+    pickColorMain('#2563eb');
+    pickBgMain('#f8f7f4');
+
+    // Style picker
+    document.querySelectorAll('#style-picker .style-opt').forEach(e => e.classList.remove('selected'));
+    document.querySelector('#style-picker .style-opt[data-style="rounded"]')?.classList.add('selected');
+
+    // Police
+    document.querySelectorAll('#font-picker .font-opt').forEach(e => e.classList.remove('selected'));
+    document.querySelector('#font-picker .font-opt[data-font="monospace"]')?.classList.add('selected');
+
+    // Orientation
+    document.querySelectorAll('.orient-opt').forEach(e => e.classList.remove('selected'));
+    document.querySelector('.orient-opt[data-orient="horizontal"]')?.classList.add('selected');
+
+    // Unités — tout coché
+    ['unit-days', 'unit-hours', 'unit-minutes', 'unit-seconds'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = true;
+    });
+
+    // Labels
+    const defaults = { 'cd-label-days':'JOURS', 'cd-label-hours':'HEURES', 'cd-label-minutes':'MIN', 'cd-label-seconds':'SEC' };
+    Object.entries(defaults).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    });
+
+    // Post-expiration
+    const expiredEl = document.getElementById('cd-expired');
+    if (expiredEl) expiredEl.value = 'SHOW_ZEROS';
+    const expiredTextEl = document.getElementById('cd-expired-text');
+    if (expiredTextEl) expiredTextEl.value = '';
+    const expiredRedirectEl = document.getElementById('cd-expired-redirect');
+    if (expiredRedirectEl) expiredRedirectEl.value = '';
+
+    // Titre et bouton
+    const title = document.getElementById('create-page-title');
+    if (title) title.textContent = 'Créer un countdown';
+    const subtitle = document.getElementById('create-page-subtitle');
+    if (subtitle) subtitle.textContent = 'Configurez votre timer et copiez le code dans votre email';
+    const btn = document.getElementById('publish-btn-2');
+    if (btn) { btn.textContent = '✓ Publier & obtenir le code'; btn.disabled = false; }
+
+    // Section code
+    const codeSection = document.getElementById('code-section');
+    if (codeSection) codeSection.style.display = 'none';
+
+    // Preview
+    const img = document.getElementById('gif-preview-img');
+    if (img) img.src = '';
+    const loader = document.getElementById('gif-preview-loader');
+    if (loader) loader.style.display = 'none';
+}
+
+
+// ============================================================
+// ÉDITION D'UN COUNTDOWN EXISTANT
+// ============================================================
+
+/**
+ * Pré-remplit le formulaire de création avec les données
+ * d'un countdown existant et bascule en mode édition.
+ */
+function editCountdown(cd) {
+    editingCountdownId = cd.id;
+
+    // État interne
+    currentColor       = cd.textColor;
+    currentBg          = cd.bgColor;
+    currentFont        = cd.fontFamily;
+    currentStyle       = cd.style;
+    currentOrientation = cd.orientation;
+    currentFontSize    = cd.fontSize;
+    currentGifUrl      = '';
+
+    // Champs de base
+    const nameEl = document.getElementById('cd-name');
+    if (nameEl) nameEl.value = cd.name;
+    const dateEl = document.getElementById('cd-date');
+    if (dateEl) dateEl.value = new Date(cd.endDate).toISOString().slice(0, 16);
+    const tzEl = document.getElementById('cd-timezone');
+    if (tzEl) tzEl.value = cd.timezone || 'Europe/Paris';
+    const widthEl = document.getElementById('cd-width');
+    if (widthEl) widthEl.value = cd.width;
+
+    // Taille police
+    const slider = document.getElementById('cd-fontsize');
+    if (slider) slider.value = cd.fontSize;
+    const sizeDisplay = document.getElementById('font-size-display');
+    if (sizeDisplay) sizeDisplay.textContent = cd.fontSize + 'px';
+
+    // Couleurs
+    pickColorMain(cd.textColor);
+    pickBgMain(cd.bgColor);
+
+    // Style picker
+    document.querySelectorAll('#style-picker .style-opt').forEach(e => e.classList.remove('selected'));
+    document.querySelector(`#style-picker .style-opt[data-style="${cd.style}"]`)?.classList.add('selected');
+
+    // Police
+    document.querySelectorAll('#font-picker .font-opt').forEach(e => e.classList.remove('selected'));
+    document.querySelector(`#font-picker .font-opt[data-font="${cd.fontFamily}"]`)?.classList.add('selected');
+
+    // Orientation
+    document.querySelectorAll('.orient-opt').forEach(e => e.classList.remove('selected'));
+    document.querySelector(`.orient-opt[data-orient="${cd.orientation}"]`)?.classList.add('selected');
+
+    // Unités
+    const units = (cd.showUnits || 'days,hours,minutes,seconds').split(',');
+    [['unit-days','days'],['unit-hours','hours'],['unit-minutes','minutes'],['unit-seconds','seconds']].forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = units.includes(key);
+    });
+
+    // Labels
+    document.getElementById('cd-label-days').value    = cd.labelDays    || 'JOURS';
+    document.getElementById('cd-label-hours').value   = cd.labelHours   || 'HEURES';
+    document.getElementById('cd-label-minutes').value = cd.labelMinutes || 'MIN';
+    document.getElementById('cd-label-seconds').value = cd.labelSeconds || 'SEC';
+
+    // Post-expiration
+    const expiredEl = document.getElementById('cd-expired');
+    if (expiredEl) expiredEl.value = cd.expiredBehavior || 'SHOW_ZEROS';
+    const expiredTextEl = document.getElementById('cd-expired-text');
+    if (expiredTextEl) expiredTextEl.value = cd.expiredText || '';
+    const expiredRedirectEl = document.getElementById('cd-expired-redirect');
+    if (expiredRedirectEl) expiredRedirectEl.value = cd.expiredRedirect || '';
+
+    // Titre et bouton
+    const title = document.getElementById('create-page-title');
+    if (title) title.textContent = 'Modifier le countdown';
+    const subtitle = document.getElementById('create-page-subtitle');
+    if (subtitle) subtitle.textContent = 'Modifiez les paramètres et enregistrez';
+    const btn = document.getElementById('publish-btn-2');
+    if (btn) btn.textContent = '✓ Enregistrer les modifications';
+
+    // Section code
+    const codeSection = document.getElementById('code-section');
+    if (codeSection) codeSection.style.display = 'none';
+
+    // Affiche la page (sans resetCreateForm puisqu'on vient de tout remplir)
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-create').classList.add('active');
+    window.scrollTo(0, 0);
+    applyPlanGates();
+    updateExpiredUI();
+    goToStep(1);
+    schedulePreview();
+}
+
+/**
+ * Supprime un countdown après confirmation.
+ */
+async function deleteCountdown(id) {
+    if (!confirm('Supprimer ce countdown définitivement ?')) return;
+    try {
+        const res = await authFetch(`/countdown/${id}`, { method: 'DELETE' });
+        if (!res.ok) { showToast('❌ Erreur lors de la suppression'); return; }
+        showToast('🗑 Countdown supprimé');
+        loadDashboard();
+    } catch { showToast('❌ Erreur réseau'); }
+}
+
+
+// ============================================================
 // PUBLICATION
 // ============================================================
 async function publishCountdown() {
@@ -480,32 +699,34 @@ async function publishCountdown() {
     const showUnits = getShowUnits();
     if (!showUnits) { showToast('⚠️ Cochez au moins une unité'); return; }
 
-    if (btn2) { btn2.textContent = '⏳ Génération...'; btn2.disabled = true; }
+    const isEditing = !!editingCountdownId;
+    if (btn2) { btn2.textContent = isEditing ? '⏳ Enregistrement...' : '⏳ Génération...'; btn2.disabled = true; }
+
+    const payload = {
+        name:             document.getElementById('cd-name')?.value || 'Mon countdown',
+        endDate,
+        timezone:         document.getElementById('cd-timezone')?.value || 'Europe/Paris',
+        bgColor:          currentBg,
+        textColor:        currentColor,
+        fontSize:         currentFontSize,
+        width:            parseInt(document.getElementById('cd-width')?.value) || 400,
+        fontFamily:       currentFont,
+        style:            currentStyle,
+        orientation:      currentOrientation,
+        showUnits,
+        labelDays:        document.getElementById('cd-label-days')?.value    || 'JOURS',
+        labelHours:       document.getElementById('cd-label-hours')?.value   || 'HEURES',
+        labelMinutes:     document.getElementById('cd-label-minutes')?.value || 'MIN',
+        labelSeconds:     document.getElementById('cd-label-seconds')?.value || 'SEC',
+        expiredBehavior:  document.getElementById('cd-expired')?.value       || 'SHOW_ZEROS',
+        expiredText:      document.getElementById('cd-expired-text')?.value  || 'Offre terminée',
+        expiredRedirect:  document.getElementById('cd-expired-redirect')?.value || undefined,
+    };
 
     try {
-        const res = await authFetch('/countdown', {
-            method: 'POST',
-            body: JSON.stringify({
-                name:             document.getElementById('cd-name')?.value || 'Mon countdown',
-                endDate,
-                timezone:         document.getElementById('cd-timezone')?.value || 'Europe/Paris',
-                bgColor:          currentBg,
-                textColor:        currentColor,
-                fontSize:         currentFontSize,
-                width:            parseInt(document.getElementById('cd-width')?.value) || 400,
-                fontFamily:       currentFont,
-                style:            currentStyle,
-                orientation:      currentOrientation,
-                showUnits,
-                labelDays:        document.getElementById('cd-label-days')?.value    || 'JOURS',
-                labelHours:       document.getElementById('cd-label-hours')?.value   || 'HEURES',
-                labelMinutes:     document.getElementById('cd-label-minutes')?.value || 'MIN',
-                labelSeconds:     document.getElementById('cd-label-seconds')?.value || 'SEC',
-                expiredBehavior:  document.getElementById('cd-expired')?.value       || 'SHOW_ZEROS',
-                expiredText:      document.getElementById('cd-expired-text')?.value  || 'Offre terminée',
-                expiredRedirect:  document.getElementById('cd-expired-redirect')?.value || undefined,
-            }),
-        });
+        const url    = isEditing ? `/countdown/${editingCountdownId}` : '/countdown';
+        const method = isEditing ? 'PUT' : 'POST';
+        const res    = await authFetch(url, { method, body: JSON.stringify(payload) });
 
         const data = await res.json();
         if (!res.ok) { showToast('❌ ' + (data.message || data.error || 'Erreur')); return; }
@@ -513,12 +734,13 @@ async function publishCountdown() {
         currentGifUrl = data.gifUrl;
         displayCode(data.gifUrl);
 
-        // Met à jour la preview avec le vrai GIF publié
+        // Met à jour la preview avec le vrai GIF
         const img = document.getElementById('gif-preview-img');
         if (img) { img.src = data.gifUrl + '?_t=' + Date.now(); img.style.display = 'block'; }
 
-        showToast('🚀 Countdown publié !');
+        showToast(isEditing ? '✓ Countdown mis à jour !' : '🚀 Countdown publié !');
         updateProgressBar(5);
+        editingCountdownId = null;
 
     } catch (err) {
         showToast('❌ Erreur réseau');
@@ -647,7 +869,22 @@ function buildCard(cd) {
       <div class="cd-stat"><strong>${imps}</strong>impressions</div>
       <div class="cd-stat"><strong>${cd.width}px</strong>largeur</div>
       <div class="cd-stat"><strong><a href="/gif/${cd.id}" target="_blank" style="color:var(--accent);text-decoration:none">Voir GIF →</a></strong></div>
+    </div>
+    <div class="cd-card-actions">
+      <button class="cd-action-btn" data-cd-id="${cd.id}">✏ Modifier</button>
+      <button class="cd-action-btn danger" data-del-id="${cd.id}">Supprimer</button>
     </div>`;
+
+    // Listeners via data-attributes pour éviter JSON inline
+    card.querySelector('[data-cd-id]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        editCountdown(cd);
+    });
+    card.querySelector('[data-del-id]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteCountdown(cd.id);
+    });
+
     return card;
 }
 

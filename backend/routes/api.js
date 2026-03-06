@@ -118,6 +118,63 @@ router.get('/countdowns', requireAuth, async (req, res) => {
     }
 });
 
+// ── Modifier un countdown ──────────────────────────────────────
+router.put('/countdown/:id', requireAuth, async (req, res) => {
+    try {
+        const plan = req.user.plan;
+        const cd = await prisma.countdown.findUnique({ where: { id: req.params.id } });
+        if (!cd) return res.status(404).json({ error: 'Countdown introuvable' });
+        if (cd.userId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' });
+
+        const {
+            name, endDate, bgColor, textColor, fontSize, width, timezone,
+            fontFamily, style, orientation, showUnits,
+            labelDays, labelHours, labelMinutes, labelSeconds,
+            expiredBehavior, expiredText, expiredRedirect,
+        } = req.body;
+
+        // Plan gates identiques à la création
+        const finalLabels = plan === 'FREE'
+            ? { labelDays: 'JOURS', labelHours: 'HEURES', labelMinutes: 'MIN', labelSeconds: 'SEC' }
+            : { labelDays, labelHours, labelMinutes, labelSeconds };
+
+        const finalExpiredRedirect = plan === 'FREE' ? null : (expiredRedirect || null);
+        const finalExpiredBehavior = plan === 'FREE' && expiredBehavior === 'REDIRECT'
+            ? 'SHOW_ZEROS'
+            : (expiredBehavior || cd.expiredBehavior);
+
+        const updated = await prisma.countdown.update({
+            where: { id: req.params.id },
+            data: {
+                ...(name      !== undefined && { name }),
+                ...(endDate   !== undefined && { endDate: new Date(endDate) }),
+                ...(bgColor   !== undefined && { bgColor }),
+                ...(textColor !== undefined && { textColor }),
+                ...(fontSize  !== undefined && { fontSize: parseInt(fontSize) }),
+                ...(width     !== undefined && { width: parseInt(width) }),
+                ...(timezone  !== undefined && { timezone }),
+                ...(fontFamily !== undefined && { fontFamily }),
+                ...(style     !== undefined && { style }),
+                ...(orientation !== undefined && { orientation }),
+                ...(showUnits !== undefined && { showUnits }),
+                ...finalLabels,
+                expiredBehavior: finalExpiredBehavior,
+                ...(expiredText !== undefined && { expiredText }),
+                expiredRedirect: finalExpiredRedirect,
+            },
+        });
+
+        res.json({
+            id:     updated.id,
+            gifUrl: `${req.protocol}://${req.get('host')}/gif/${updated.id}`,
+            countdown: updated,
+        });
+    } catch (err) {
+        console.error('Erreur édition countdown :', err);
+        res.status(500).json({ error: 'Erreur lors de la mise à jour' });
+    }
+});
+
 // ── Supprimer un countdown ─────────────────────────────────────
 router.delete('/countdown/:id', requireAuth, async (req, res) => {
     try {
