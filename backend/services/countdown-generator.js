@@ -43,7 +43,9 @@ async function generateCountdownGif(
     const canvasW = W;
     const canvasH = isVert
         ? Math.round(W * 0.95 * unitCount / 4)
-        : Math.round(W * 0.28);
+        : style === 'circle'
+            ? Math.round(W * 0.34)   // un peu plus haut pour loger cercle + label
+            : Math.round(W * 0.28);
 
     const target = perpetual
         ? Date.now() + perpetualSeconds * 1000
@@ -232,20 +234,26 @@ async function generateCountdownGif(
 
     function drawBlockCircle(x, y, bW, bH, value, label) {
         const cx     = x + bW / 2;
-        const cy     = y + bH * 0.42;
-        const radius = Math.min(bW, bH * 0.84) / 2;
+        const radius = Math.min(bW, bH * 0.78) / 2;
+        // Centre le cercle en laissant de la place pour le label en dessous
+        const cy     = y + radius + Math.round(bH * 0.04);
+        // Fond du cercle = couleur de fond configurée
         ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        ctx.fillStyle = rgba(textColor, 0.1); ctx.fill();
+        ctx.fillStyle = bgColor; ctx.fill();
+        // Anneau
         ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2);
         ctx.strokeStyle = textColor; ctx.lineWidth = 2; ctx.stroke();
+        // Valeur
         ctx.fillStyle = textColor;
         ctx.font = `bold ${fSize}px ${fontFamily}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(value, cx, cy);
+        // Label espacé sous le cercle
+        const labelY = cy + radius + Math.round(fSizeSm * 0.9);
         ctx.fillStyle = rgba(textColor, 0.55);
         ctx.font = `bold ${fSizeSm}px sans-serif`;
-        ctx.textBaseline = 'top';
-        ctx.fillText(label, cx, y + bH * 0.86);
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, cx, labelY);
     }
 
     function drawBlockNeon(x, y, bW, bH, value, label) {
