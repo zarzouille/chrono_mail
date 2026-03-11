@@ -4,6 +4,21 @@ const { generateCountdownGif } = require('../services/countdown-generator');
 const prisma   = require('../lib/prisma');
 const { requireAuth } = require('../lib/auth');
 
+/**
+ * Construit l'URL publique d'un GIF.
+ * Priorité : variable d'env BASE_URL → reconstruction depuis la requête.
+ * Render + autres reverse proxies renvoient parfois http/localhost,
+ * d'où la nécessité de BASE_URL en production.
+ */
+function buildGifUrl(req, countdownId) {
+    if (process.env.BASE_URL) {
+        return `${process.env.BASE_URL.replace(/\/+$/, '')}/gif/${countdownId}`;
+    }
+    const proto = req.get('X-Forwarded-Proto') || req.protocol;
+    const host  = req.get('X-Forwarded-Host')  || req.get('host');
+    return `${proto}://${host}/gif/${countdownId}`;
+}
+
 // ── Santé ──────────────────────────────────────────────────────
 router.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -21,12 +36,10 @@ router.post('/countdown', requireAuth, async (req, res) => {
             fontSize         = 36,
             width            = 400,
             timezone         = 'Europe/Paris',
-            // Free
             fontFamily       = 'monospace',
             style            = 'rounded',
             orientation      = 'horizontal',
             showUnits        = 'days,hours,minutes,seconds',
-            // Pro
             labelDays        = 'JOURS',
             labelHours       = 'HEURES',
             labelMinutes     = 'MIN',
@@ -35,7 +48,6 @@ router.post('/countdown', requireAuth, async (req, res) => {
             expiredText      = 'Offre terminée',
             expiredRedirect  = null,
             bgImageUrl       = null,
-            // Business
             perpetual        = false,
             perpetualSeconds = 86400,
         } = req.body;
@@ -93,7 +105,7 @@ router.post('/countdown', requireAuth, async (req, res) => {
 
         res.json({
             id:     countdown.id,
-            gifUrl: `${req.protocol}://${req.get('host')}/gif/${countdown.id}`,
+            gifUrl: buildGifUrl(req, countdown.id),
             countdown,
         });
 
@@ -133,7 +145,6 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
             expiredBehavior, expiredText, expiredRedirect,
         } = req.body;
 
-        // Plan gates identiques à la création
         const finalLabels = plan === 'FREE'
             ? { labelDays: 'JOURS', labelHours: 'HEURES', labelMinutes: 'MIN', labelSeconds: 'SEC' }
             : { labelDays, labelHours, labelMinutes, labelSeconds };
@@ -146,17 +157,17 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
         const updated = await prisma.countdown.update({
             where: { id: req.params.id },
             data: {
-                ...(name      !== undefined && { name }),
-                ...(endDate   !== undefined && { endDate: new Date(endDate) }),
-                ...(bgColor   !== undefined && { bgColor }),
-                ...(textColor !== undefined && { textColor }),
-                ...(fontSize  !== undefined && { fontSize: parseInt(fontSize) }),
-                ...(width     !== undefined && { width: parseInt(width) }),
-                ...(timezone  !== undefined && { timezone }),
+                ...(name       !== undefined && { name }),
+                ...(endDate    !== undefined && { endDate: new Date(endDate) }),
+                ...(bgColor    !== undefined && { bgColor }),
+                ...(textColor  !== undefined && { textColor }),
+                ...(fontSize   !== undefined && { fontSize: parseInt(fontSize) }),
+                ...(width      !== undefined && { width: parseInt(width) }),
+                ...(timezone   !== undefined && { timezone }),
                 ...(fontFamily !== undefined && { fontFamily }),
-                ...(style     !== undefined && { style }),
+                ...(style      !== undefined && { style }),
                 ...(orientation !== undefined && { orientation }),
-                ...(showUnits !== undefined && { showUnits }),
+                ...(showUnits  !== undefined && { showUnits }),
                 ...finalLabels,
                 expiredBehavior: finalExpiredBehavior,
                 ...(expiredText !== undefined && { expiredText }),
@@ -166,7 +177,7 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
 
         res.json({
             id:     updated.id,
-            gifUrl: `${req.protocol}://${req.get('host')}/gif/${updated.id}`,
+            gifUrl: buildGifUrl(req, updated.id),
             countdown: updated,
         });
     } catch (err) {
@@ -251,17 +262,17 @@ router.get('/gif/:id', async (req, res) => {
 router.get('/gif', async (req, res) => {
     try {
         const {
-            endDate    = new Date(Date.now() + 86400000).toISOString(),
-            bgColor    = '#ffffff',
-            textColor  = '#2563eb',
-            fontSize   = 36,
-            width      = 400,
-            fontFamily = 'monospace',
-            style      = 'rounded',
-            orientation = 'horizontal',
-            showUnits   = 'days,hours,minutes,seconds',
-            labelDays   = 'JOURS',
-            labelHours  = 'HEURES',
+            endDate      = new Date(Date.now() + 86400000).toISOString(),
+            bgColor      = '#ffffff',
+            textColor    = '#2563eb',
+            fontSize     = 36,
+            width        = 400,
+            fontFamily   = 'monospace',
+            style        = 'rounded',
+            orientation  = 'horizontal',
+            showUnits    = 'days,hours,minutes,seconds',
+            labelDays    = 'JOURS',
+            labelHours   = 'HEURES',
             labelMinutes = 'MIN',
             labelSeconds = 'SEC',
         } = req.query;
