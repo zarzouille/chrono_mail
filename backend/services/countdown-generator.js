@@ -21,6 +21,8 @@ async function generateCountdownGif(
         expiredBehavior  = 'SHOW_ZEROS',
         expiredText      = 'Offre terminée',
         bgImageUrl       = null,
+        blockBgColor     = null,
+        fontLabels       = null,
         perpetual        = false,
         perpetualSeconds = 86400,
     } = options;
@@ -180,7 +182,7 @@ async function generateCountdownGif(
 
     function drawBlockRounded(x, y, bW, bH, value, label) {
         const r = Math.round(Math.min(bW, bH) * 0.12);
-        ctx.fillStyle = rgba(textColor, 0.1);
+        ctx.fillStyle = blockBgColor || rgba(textColor, 0.1);
         roundRect(ctx, x, y, bW, bH, r); ctx.fill();
         ctx.strokeStyle = rgba(textColor, 0.2); ctx.lineWidth = 1;
         roundRect(ctx, x, y, bW, bH, r); ctx.stroke();
@@ -189,7 +191,7 @@ async function generateCountdownGif(
     }
 
     function drawBlockFlat(x, y, bW, bH, value, label) {
-        ctx.fillStyle = rgba(textColor, 0.1);
+        ctx.fillStyle = blockBgColor || rgba(textColor, 0.1);
         ctx.fillRect(x, y, bW, bH);
         ctx.strokeStyle = rgba(textColor, 0.2); ctx.lineWidth = 1;
         ctx.strokeRect(x, y, bW, bH);
@@ -285,7 +287,7 @@ async function generateCountdownGif(
 
     function drawLabel(x, y, bW, bH, label, color) {
         ctx.fillStyle = color;
-        ctx.font = `bold ${fSizeSm}px sans-serif`;
+        ctx.font = `bold ${fSizeSm}px ${fontLabels || 'sans-serif'}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
         ctx.fillText(label, x + bW / 2, y + bH * 0.70);
     }

@@ -290,448 +290,438 @@
      dans frontend/public/index.html
      ============================================================ -->
 <div id="page-create" class="page">
-    <div class="main-content">
+    <div class="create-page-wrap">
 
-        <div class="page-header">
-            <div>
-                <div class="page-title">Créer un countdown</div>
-                <div class="page-subtitle">Configurez votre timer et copiez le code dans votre email</div>
+        <!-- ═══ COLONNE GAUCHE — Formulaire ═══ -->
+        <div class="create-col-form">
+
+            <!-- Header -->
+            <div class="create-form-header">
+                <div class="create-form-title">Créer un countdown</div>
+                <button class="btn btn-ghost btn-sm" onclick="showPage('dashboard')">← Dashboard</button>
             </div>
-            <button class="btn btn-ghost" onclick="showPage('dashboard')">← Dashboard</button>
-        </div>
 
-        <!-- BARRE DE PROGRESSION -->
-        <div class="progress-bar-wrap" style="margin-bottom:20px">
-            <div class="progress-steps">
-                <div class="progress-step active" id="step-1" onclick="goToStep(1)">
-                    <div class="progress-step-num"><span>1</span></div>
-                    <div class="progress-step-label">Informations</div>
+            <!-- Progress bar -->
+            <div class="create-progress">
+                <div class="cp-step done" id="step-1" onclick="goToStep(1)">
+                    <div class="cp-num"><span>1</span></div>
+                    <div class="cp-lbl">Informations</div>
                 </div>
-                <div class="progress-line" id="line-1-2"></div>
-                <div class="progress-step" id="step-2" onclick="goToStep(2)">
-                    <div class="progress-step-num"><span>2</span></div>
-                    <div class="progress-step-label">Apparence</div>
+                <div class="cp-line" id="line-1-2"></div>
+                <div class="cp-step active" id="step-2" onclick="goToStep(2)">
+                    <div class="cp-num"><span>2</span></div>
+                    <div class="cp-lbl">Apparence</div>
                 </div>
-                <div class="progress-line" id="line-2-3"></div>
-                <div class="progress-step" id="step-3" onclick="goToStep(3)">
-                    <div class="progress-step-num"><span>3</span></div>
-                    <div class="progress-step-label">Expiration</div>
+                <div class="cp-line" id="line-2-3"></div>
+                <div class="cp-step" id="step-3" onclick="goToStep(3)">
+                    <div class="cp-num"><span>3</span></div>
+                    <div class="cp-lbl">Expiration</div>
                 </div>
-                <div class="progress-line" id="line-3-4"></div>
-                <div class="progress-step" id="step-4" onclick="goToStep(4)">
-                    <div class="progress-step-num"><span>4</span></div>
-                    <div class="progress-step-label">Publication</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="create-layout">
-
-            <!-- COLONNE GAUCHE -->
-            <div class="create-form-col">
-
-                <!-- ÉTAPE 1 — INFORMATIONS -->
-                <div class="form-card accordion-card active" id="accordion-1">
-                    <div class="accordion-header" onclick="toggleAccordion(1)">
-                        <div class="accordion-left">
-                            <div class="accordion-step-badge">1</div>
-                            <div>
-                                <div class="accordion-title">Informations</div>
-                                <div class="accordion-summary">Nom, date cible, timezone</div>
-                            </div>
-                        </div>
-                        <span class="accordion-chevron">▾</span>
-                    </div>
-                    <div class="accordion-body open" id="body-1">
-                        <div class="form-group">
-                            <label class="form-label">Nom du countdown <span class="optional">(usage interne)</span></label>
-                            <input type="text" class="form-input" id="cd-name" value="Vente Flash Été 2026" oninput="schedulePreview()">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Date et heure cible</label>
-                            <input type="datetime-local" class="form-input" id="cd-date" oninput="schedulePreview()">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0">
-                            <label class="form-label">Timezone</label>
-                            <select class="form-input" id="cd-timezone" onchange="schedulePreview()">
-                                <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
-                                <option value="Europe/London">Europe/London (UTC+0)</option>
-                                <option value="America/New_York">America/New_York (UTC−5)</option>
-                                <option value="America/Los_Angeles">America/Los_Angeles (UTC−8)</option>
-                                <option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</option>
-                            </select>
-                        </div>
-                        <div class="accordion-nav-row">
-                            <button class="btn btn-primary btn-sm" onclick="goToStep(2)">Suivant →</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ÉTAPE 2 — APPARENCE -->
-                <div class="form-card accordion-card" id="accordion-2">
-                    <div class="accordion-header" onclick="toggleAccordion(2)">
-                        <div class="accordion-left">
-                            <div class="accordion-step-badge">2</div>
-                            <div>
-                                <div class="accordion-title">Apparence</div>
-                                <div class="accordion-summary">Orientation, style, police, couleurs</div>
-                            </div>
-                        </div>
-                        <span class="accordion-chevron">▾</span>
-                    </div>
-                    <div class="accordion-body" id="body-2">
-
-                        <!-- Orientation -->
-                        <div class="form-group">
-                            <label class="form-label">Orientation</label>
-                            <div class="orientation-picker" id="orientation-picker">
-                                <div class="orient-opt selected" data-orient="horizontal" onclick="pickOrientation(this)">
-                                    <div class="orient-demo orient-demo-h">
-                                        <div class="orient-block"></div>
-                                        <div class="orient-block"></div>
-                                        <div class="orient-block"></div>
-                                        <div class="orient-block"></div>
-                                    </div>
-                                    <span>Horizontal</span>
-                                </div>
-                                <div class="orient-opt" data-orient="vertical" onclick="pickOrientation(this)">
-                                    <div class="orient-demo orient-demo-v">
-                                        <div class="orient-block"></div>
-                                        <div class="orient-block"></div>
-                                        <div class="orient-block"></div>
-                                        <div class="orient-block"></div>
-                                    </div>
-                                    <span>Vertical</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Unités affichées -->
-                        <div class="form-group">
-                            <label class="form-label">Unités affichées</label>
-                            <div class="units-picker">
-                                <label class="unit-toggle">
-                                    <input type="checkbox" id="unit-days" checked onchange="schedulePreview()">
-                                    <span class="unit-toggle-label">Jours</span>
-                                </label>
-                                <label class="unit-toggle">
-                                    <input type="checkbox" id="unit-hours" checked onchange="schedulePreview()">
-                                    <span class="unit-toggle-label">Heures</span>
-                                </label>
-                                <label class="unit-toggle">
-                                    <input type="checkbox" id="unit-minutes" checked onchange="schedulePreview()">
-                                    <span class="unit-toggle-label">Minutes</span>
-                                </label>
-                                <label class="unit-toggle">
-                                    <input type="checkbox" id="unit-seconds" checked onchange="schedulePreview()">
-                                    <span class="unit-toggle-label">Secondes</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Style -->
-                        <div class="form-group">
-                            <label class="form-label">Style</label>
-
-                            <div class="style-section-label">Gratuit</div>
-                            <div class="style-picker style-picker-b" id="style-picker">
-                                <div class="style-opt-b selected" data-style="rounded" onclick="pickStyle(this)">
-                                    <div class="style-demo-b style-demo-rounded">42</div>
-                                    <span>Arrondi</span>
-                                </div>
-                                <div class="style-opt-b" data-style="flat" onclick="pickStyle(this)">
-                                    <div class="style-demo-b style-demo-flat">42</div>
-                                    <span>Flat</span>
-                                </div>
-                                <div class="style-opt-b" data-style="bordered" onclick="pickStyle(this)">
-                                    <div class="style-demo-b style-demo-bordered">42</div>
-                                    <span>Bordure</span>
-                                </div>
-                            </div>
-
-                            <div class="style-section-label" style="margin-top:14px">Pro</div>
-                            <div class="style-picker style-picker-b">
-                                <div class="style-opt-b style-opt-b-locked" data-style="glass" onclick="pickStyleGated(this,'glass')" data-plan="pro">
-                                    <span class="style-badge-plan badge-pro-s">Pro</span>
-                                    <div class="style-demo-b style-demo-glass">42</div>
-                                    <span>Verre</span>
-                                </div>
-                                <div class="style-opt-b style-opt-b-locked" data-style="pill" onclick="pickStyleGated(this,'pill')" data-plan="pro">
-                                    <span class="style-badge-plan badge-pro-s">Pro</span>
-                                    <div class="style-demo-b style-demo-pill">42</div>
-                                    <span>Pill</span>
-                                </div>
-                                <div class="style-opt-b style-opt-b-locked" data-style="circle" onclick="pickStyleGated(this,'circle')" data-plan="pro">
-                                    <span class="style-badge-plan badge-pro-s">Pro</span>
-                                    <div class="style-demo-b style-demo-circle">42</div>
-                                    <span>Cercle</span>
-                                </div>
-                            </div>
-
-                            <div class="style-section-label" style="margin-top:14px">Business</div>
-                            <div class="style-picker style-picker-b">
-                                <div class="style-opt-b style-opt-b-locked" data-style="neon" onclick="pickStyleGated(this,'neon')" data-plan="business">
-                                    <span class="style-badge-plan badge-biz-s">Business</span>
-                                    <div class="style-demo-b style-demo-neon">42</div>
-                                    <span>Neon</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Police -->
-                        <div class="form-group">
-                            <label class="form-label">Police</label>
-                            <div class="font-picker" id="font-picker">
-                                <div class="font-opt selected" data-font="monospace" onclick="pickFont(this)">
-                                    <span class="font-demo" style="font-family:monospace">42</span>
-                                    <span class="font-name">Mono</span>
-                                </div>
-                                <div class="font-opt" data-font="sans-serif" onclick="pickFont(this)">
-                                    <span class="font-demo" style="font-family:sans-serif">42</span>
-                                    <span class="font-name">Sans</span>
-                                </div>
-                                <div class="font-opt" data-font="serif" onclick="pickFont(this)">
-                                    <span class="font-demo" style="font-family:serif">42</span>
-                                    <span class="font-name">Serif</span>
-                                </div>
-                                <div class="font-opt" data-font="cursive" onclick="pickFont(this)">
-                                    <span class="font-demo" style="font-family:cursive">42</span>
-                                    <span class="font-name">Cursive</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Taille -->
-                        <div class="form-group">
-                            <div class="font-size-row">
-                                <label class="form-label" style="margin:0">Taille du texte</label>
-                                <span class="font-size-val" id="font-size-display">36px</span>
-                            </div>
-                            <input type="range" class="form-range" id="cd-fontsize" min="20" max="50" value="36" step="2" oninput="updateFontSize(this.value)">
-                        </div>
-
-                        <!-- Couleur principale -->
-                        <div class="form-group">
-                            <label class="form-label">Couleur principale</label>
-                            <div class="color-field-row">
-                                <input type="color" class="color-field-input" id="color-main" value="#2563eb" oninput="pickColorMain(this.value)">
-                                <div class="color-field-preview" id="color-main-preview" style="background:#2563eb"></div>
-                                <span class="color-field-hex" id="color-main-hex">#2563eb</span>
-                            </div>
-                        </div>
-
-                        <!-- Couleur de fond -->
-                        <div class="form-group">
-                            <label class="form-label">Couleur de fond</label>
-                            <div class="color-field-row">
-                                <input type="color" class="color-field-input" id="color-bg" value="#f8f7f4" oninput="pickBgMain(this.value)">
-                                <div class="color-field-preview" id="color-bg-preview" style="background:#f8f7f4;border:1px solid var(--border2)"></div>
-                                <span class="color-field-hex" id="color-bg-hex">#f8f7f4</span>
-                            </div>
-                        </div>
-
-                        <!-- Largeur -->
-                        <div class="form-group" style="margin-bottom:0">
-                            <label class="form-label">Largeur du GIF <span class="optional">(px)</span></label>
-                            <input type="number" class="form-input" id="cd-width" value="400" min="200" max="800" oninput="schedulePreview()">
-                        </div>
-
-                        <div class="accordion-nav-row">
-                            <button class="btn btn-ghost btn-sm" onclick="goToStep(1)">← Retour</button>
-                            <button class="btn btn-primary btn-sm" onclick="goToStep(3)">Suivant →</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ÉTAPE 3 — EXPIRATION -->
-                <div class="form-card accordion-card" id="accordion-3">
-                    <div class="accordion-header" onclick="toggleAccordion(3)">
-                        <div class="accordion-left">
-                            <div class="accordion-step-badge">3</div>
-                            <div>
-                                <div class="accordion-title">Expiration</div>
-                                <div class="accordion-summary">Labels personnalisés <span class="plan-gate-badge" style="font-size:9px;padding:1px 5px">Pro</span> · Comportement</div>
-                            </div>
-                        </div>
-                        <span class="accordion-chevron">▾</span>
-                    </div>
-                    <div class="accordion-body" id="body-3">
-
-                        <!-- Labels Pro -->
-                        <div style="position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-bottom:16px;background:var(--bg)">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                                <span style="font-size:13px;font-weight:600;color:var(--text2)">Labels personnalisés</span>
-                            </div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                                <div class="form-group" style="margin-bottom:0">
-                                    <label class="form-label">Jours</label>
-                                    <input type="text" class="form-input" id="cd-label-days" value="JOURS" maxlength="10" oninput="schedulePreview()">
-                                </div>
-                                <div class="form-group" style="margin-bottom:0">
-                                    <label class="form-label">Heures</label>
-                                    <input type="text" class="form-input" id="cd-label-hours" value="HEURES" maxlength="10" oninput="schedulePreview()">
-                                </div>
-                                <div class="form-group" style="margin-bottom:0">
-                                    <label class="form-label">Minutes</label>
-                                    <input type="text" class="form-input" id="cd-label-minutes" value="MIN" maxlength="10" oninput="schedulePreview()">
-                                </div>
-                                <div class="form-group" style="margin-bottom:0">
-                                    <label class="form-label">Secondes</label>
-                                    <input type="text" class="form-input" id="cd-label-seconds" value="SEC" maxlength="10" oninput="schedulePreview()">
-                                </div>
-                            </div>
-                            <div class="plan-gate-overlay" id="overlay-labels" onclick="openUpgradeModal('labels')">
-                                <div class="plan-gate-msg">🔒 Disponible en <strong>Pro</strong> — Cliquez pour upgrader</div>
-                            </div>
-                        </div>
-
-                        <!-- Comportement -->
-                        <div class="form-group">
-                            <label class="form-label">Comportement après expiration</label>
-                            <select class="form-input" id="cd-expired" onchange="updateExpiredUI()">
-                                <option value="SHOW_ZEROS">Afficher 00:00:00:00</option>
-                                <option value="SHOW_TEXT">Afficher un texte</option>
-                                <option value="REDIRECT" id="opt-redirect">↗ Rediriger vers une URL (Pro)</option>
-                            </select>
-                        </div>
-                        <div id="expired-text-row" style="display:none" class="form-group">
-                            <label class="form-label">Texte à afficher</label>
-                            <input type="text" class="form-input" id="cd-expired-text" value="Offre terminée" placeholder="Offre terminée">
-                        </div>
-                        <div id="expired-redirect-row" style="display:none;position:relative" class="form-group">
-                            <label class="form-label">URL de redirection <span class="plan-gate-badge">Pro</span></label>
-                            <input type="url" class="form-input" id="cd-expired-redirect" placeholder="https://votresite.com/nouvelle-offre">
-                            <div class="plan-gate-overlay" id="overlay-redirect" onclick="openUpgradeModal('redirect')">
-                                <div class="plan-gate-msg">🔒 <strong>Pro</strong></div>
-                            </div>
-                        </div>
-
-                        <div class="accordion-nav-row">
-                            <button class="btn btn-ghost btn-sm" onclick="goToStep(2)">← Retour</button>
-                            <button class="btn btn-primary btn-sm" onclick="goToStep(4)">Suivant →</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ÉTAPE 4 — PUBLICATION -->
-                <div class="form-card accordion-card" id="accordion-4">
-                    <div class="accordion-header" onclick="toggleAccordion(4)">
-                        <div class="accordion-left">
-                            <div class="accordion-step-badge">4</div>
-                            <div>
-                                <div class="accordion-title">Publication</div>
-                                <div class="accordion-summary">Générer et obtenir le code</div>
-                            </div>
-                        </div>
-                        <span class="accordion-chevron">▾</span>
-                    </div>
-                    <div class="accordion-body" id="body-4">
-                        <p style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:16px">
-                            Votre countdown sera hébergé sur chrono.mail. Copiez ensuite le code HTML dans votre outil d'emailing.
-                        </p>
-                        <button class="btn btn-success" style="width:100%;justify-content:center;font-size:15px;padding:12px" onclick="publishCountdown()" id="publish-btn-2">
-                            ✓ Publier & obtenir le code
-                        </button>
-                        <div class="accordion-nav-row" style="justify-content:flex-start">
-                            <button class="btn btn-ghost btn-sm" onclick="goToStep(3)">← Retour</button>
-                        </div>
-                    </div>
-                </div>
-
-            </div><!-- /create-form-col -->
-
-            <!-- COLONNE DROITE — Preview GIF live -->
-            <div class="preview-panel">
-                <div class="panel-card">
-
-                    <div class="panel-header">
-                        <div class="panel-header-title">Preview</div>
-                        <div id="preview-status-badge" class="live-badge" style="font-size:10px;padding:2px 8px">
-                            <div class="live-badge-dot"></div>En attente
-                        </div>
-                    </div>
-
-                    <!-- GIF preview — rendu exact dans l'email -->
-                    <div class="gif-preview-box" id="gif-preview-box" style="min-height:130px;position:relative">
-                        <div id="gif-preview-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted2)">
-                            <div style="font-size:28px">⏱</div>
-                            <div style="font-size:12px;font-weight:600">Choisissez une date pour voir l'aperçu</div>
-                        </div>
-                        <img id="gif-preview-img" src="" alt="Preview GIF" style="display:none;max-width:100%;border-radius:var(--radius-s)">
-                        <div id="gif-preview-loader" style="display:none;position:absolute;inset:0;background:rgba(248,247,244,0.85);display:none;align-items:center;justify-content:center;font-size:12px;color:var(--muted);gap:6px">
-                            <div class="gif-loader-spinner"></div> Génération...
-                        </div>
-                    </div>
-
-                    <!-- Code (après publication) -->
-                    <div class="code-section" id="code-section" style="display:none">
-                        <div class="code-section-title">Code à intégrer</div>
-                        <div class="code-tabs-row">
-                            <button class="code-tab-btn active" onclick="switchCodeTab('minimal',this)">Minimal</button>
-                            <button class="code-tab-btn" onclick="switchCodeTab('standard',this)">Standard</button>
-                            <button class="code-tab-btn" onclick="switchCodeTab('klaviyo',this)">Klaviyo</button>
-                            <button class="code-tab-btn" onclick="switchCodeTab('mailchimp',this)">Mailchimp</button>
-                        </div>
-                        <div id="code-minimal"   class="code-panel active"><div class="code-block" id="code-minimal-content"></div></div>
-                        <div id="code-standard"  class="code-panel"><div class="code-block" id="code-standard-content"></div></div>
-                        <div id="code-klaviyo"   class="code-panel"><div class="code-block" id="code-klaviyo-content"></div></div>
-                        <div id="code-mailchimp" class="code-panel"><div class="code-block" id="code-mailchimp-content"></div></div>
-                        <div class="copy-row">
-                            <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="copyCurrentCode()">📋 Copier le code</button>
-                            <button class="btn btn-surface btn-sm" onclick="copyUrl()">🔗 URL</button>
-                        </div>
-                        <div class="url-row">
-                            <span class="url-label">URL</span>
-                            <span class="url-value" id="gif-url-display">—</span>
-                        </div>
-                    </div>
-
-                    <div class="compat-section">
-                        <div class="compat-title">Compatibilité</div>
-                        <span style="color:var(--green)">✓</span> Gmail · Apple Mail · iOS Mail<br>
-                        <span style="color:var(--green)">✓</span> Yahoo · Outlook 2013+<br>
-                        <span style="color:var(--green)">✓</span> Klaviyo · Mailchimp · Brevo<br>
-                        <span style="color:var(--orange)">⚠</span> Outlook 2007–10 → 1ère frame statique
-                    </div>
-
+                <div class="cp-line" id="line-3-4"></div>
+                <div class="cp-step" id="step-4" onclick="goToStep(4)">
+                    <div class="cp-num"><span>4</span></div>
+                    <div class="cp-lbl">Publication</div>
                 </div>
             </div>
 
-        </div>
+            <!-- Scrollable form body -->
+            <div class="create-form-body" id="create-form-body">
 
-        <!-- ============================================================
-             MODALE UPGRADE — Apparaît au clic sur un élément Pro verrouillé
-             ============================================================ -->
-        <div id="upgrade-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;align-items:center;justify-content:center;padding:20px" onclick="closeUpgradeModal(event)">
-            <div class="upgrade-modal" id="upgrade-modal">
-                <div class="upgrade-modal-header">
-                    <div class="upgrade-modal-icon">✦</div>
-                    <div>
-                        <div class="upgrade-modal-title" id="upgrade-modal-title">Fonctionnalité Pro</div>
-                        <div class="upgrade-modal-subtitle" id="upgrade-modal-subtitle">Disponible à partir du plan Pro</div>
+                <!-- ── ÉTAPE 1 — INFORMATIONS ── -->
+                <div class="create-step" id="create-step-1">
+                    <div class="fg">
+                        <label class="fl">Nom du countdown <span class="opt">usage interne</span></label>
+                        <input type="text" class="fi" id="cd-name" value="Vente Flash Été 2026" oninput="schedulePreview()">
                     </div>
-                    <button class="upgrade-modal-close" onclick="closeUpgradeModal()">✕</button>
+                    <div class="fg">
+                        <label class="fl">Date et heure cible</label>
+                        <input type="datetime-local" class="fi" id="cd-date" oninput="schedulePreview()">
+                    </div>
+                    <div class="fg">
+                        <label class="fl">Timezone</label>
+                        <select class="fi" id="cd-timezone" onchange="schedulePreview()">
+                            <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
+                            <option value="Europe/London">Europe/London (UTC+0)</option>
+                            <option value="America/New_York">America/New_York (UTC−5)</option>
+                            <option value="America/Los_Angeles">America/Los_Angeles (UTC−8)</option>
+                            <option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</option>
+                        </select>
+                    </div>
+                    <div class="step-nav">
+                        <button class="btn btn-primary btn-sm" onclick="goToStep(2)">Suivant →</button>
+                    </div>
                 </div>
-                <div class="upgrade-modal-body">
-                    <div class="upgrade-modal-feature-desc" id="upgrade-modal-desc"></div>
-                    <div class="upgrade-modal-list-title">Pro débloque aussi :</div>
-                    <ul class="upgrade-modal-list">
-                        <li>✓ Labels personnalisés (Jours, Heures…)</li>
-                        <li>✓ Redirection après expiration</li>
-                        <li>✓ Countdowns illimités</li>
-                        <li>✓ Analytics avancées</li>
-                        <li>✓ Image de fond personnalisée</li>
-                    </ul>
-                    <div class="upgrade-modal-price">À partir de <strong>9€/mois</strong> — sans engagement</div>
+
+                <!-- ── ÉTAPE 2 — APPARENCE ── -->
+                <div class="create-step hidden" id="create-step-2">
+
+                    <!-- Dropdown Style -->
+                    <div class="fg">
+                        <label class="fl">Style</label>
+                        <div class="style-dd-wrap" id="style-dd-wrap">
+                            <div class="style-dd-sel" id="style-dd-sel" onclick="toggleStyleDD()">
+                                <div class="style-dd-ico" id="style-dd-ico">
+                                    <div class="sdi rounded">42</div>
+                                </div>
+                                <div class="style-dd-info">
+                                    <div class="style-dd-name" id="style-dd-name">Arrondi</div>
+                                    <div class="style-dd-desc" id="style-dd-desc">Coins arrondis, fond teinté</div>
+                                </div>
+                                <div class="style-dd-chev" id="style-dd-chev">▾</div>
+                            </div>
+                            <div class="style-dd-opts" id="style-dd-opts">
+                                <div class="style-dd-sec">Gratuit</div>
+                                <div class="style-dd-row sel" onclick="pickStyleDD(this,'rounded','Arrondi','Coins arrondis, fond teinté')">
+                                    <div class="sdi rounded">42</div><span class="sdn">Arrondi</span><span class="sdc sel-chk">✓</span>
+                                </div>
+                                <div class="style-dd-row" onclick="pickStyleDD(this,'flat','Flat','Coins droits, fond teinté')">
+                                    <div class="sdi flat">42</div><span class="sdn">Flat</span>
+                                </div>
+                                <div class="style-dd-row" onclick="pickStyleDD(this,'bordered','Bordure','Contour coloré, fond vide')">
+                                    <div class="sdi bordered">42</div><span class="sdn">Bordure</span>
+                                </div>
+                                <div class="style-dd-sec">Pro</div>
+                                <div class="style-dd-row" onclick="pickStyleDDGated(this,'glass','Verre','Glassmorphism sur dégradé','pro')">
+                                    <div class="sdi glass">42</div><span class="sdn">Verre</span><span class="plan-badge pro-badge">Pro</span>
+                                </div>
+                                <div class="style-dd-row" onclick="pickStyleDDGated(this,'pill','Pill','Capsule pleine couleur','pro')">
+                                    <div class="sdi pill">42</div><span class="sdn">Pill</span><span class="plan-badge pro-badge">Pro</span>
+                                </div>
+                                <div class="style-dd-row" onclick="pickStyleDDGated(this,'circle','Cercle','Anneau circulaire','pro')">
+                                    <div class="sdi circle">42</div><span class="sdn">Cercle</span><span class="plan-badge pro-badge">Pro</span>
+                                </div>
+                                <div class="style-dd-sec">Business</div>
+                                <div class="style-dd-row" onclick="pickStyleDDGated(this,'neon','Neon','Effets lumineux sur fond sombre','business')">
+                                    <div class="sdi neon">42</div><span class="sdn">Neon</span><span class="plan-badge biz-badge">Business</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panneau contextuel (options spécifiques au style) -->
+                    <div class="ctx-panel" id="ctx-panel">
+                        <div class="ctx-title" id="ctx-title">Options — Arrondi</div>
+                        <div class="ctx-grid">
+                            <div>
+                                <div class="ctx-lbl">Couleur principale</div>
+                                <div class="color-row">
+                                    <input type="color" class="color-inp" id="color-main" value="#2563eb" oninput="pickColorMain(this.value)">
+                                    <div class="color-preview" id="color-main-preview" style="background:#2563eb"></div>
+                                    <span class="color-hex" id="color-main-hex">#2563eb</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="ctx-lbl">Couleur de fond</div>
+                                <div class="color-row">
+                                    <input type="color" class="color-inp" id="color-bg" value="#f8f7f4" oninput="pickBgMain(this.value)">
+                                    <div class="color-preview" id="color-bg-preview" style="background:#f8f7f4;border:1px solid var(--border2)"></div>
+                                    <span class="color-hex" id="color-bg-hex">#f8f7f4</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="ctx-lbl">Fond des blocs</div>
+                                <div class="color-row">
+                                    <input type="color" class="color-inp" id="color-block" value="#dbeafe" oninput="pickBlockBg(this.value)">
+                                    <div class="color-preview" id="color-block-preview" style="background:#dbeafe"></div>
+                                    <span class="color-hex" id="color-block-hex">Auto</span>
+                                </div>
+                            </div>
+                            <div class="ctx-full" id="ctx-extra">
+                                <!-- Options spécifiques au style injectées ici par JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Labels avec toggle show/hide -->
+                    <div class="fg">
+                        <label class="fl">Labels</label>
+                        <div class="labels-grid">
+                            <div class="label-row">
+                                <div class="lbl-tog on" id="ltog-days" onclick="toggleLabelRow(this,'days')">✓</div>
+                                <input class="fi lbl-inp" id="cd-label-days" value="JOURS" maxlength="10" oninput="schedulePreview()">
+                                <span class="lbl-unit">Jours</span>
+                            </div>
+                            <div class="label-row">
+                                <div class="lbl-tog on" id="ltog-hours" onclick="toggleLabelRow(this,'hours')">✓</div>
+                                <input class="fi lbl-inp" id="cd-label-hours" value="HEURES" maxlength="10" oninput="schedulePreview()">
+                                <span class="lbl-unit">Heures</span>
+                            </div>
+                            <div class="label-row">
+                                <div class="lbl-tog on" id="ltog-minutes" onclick="toggleLabelRow(this,'minutes')">✓</div>
+                                <input class="fi lbl-inp" id="cd-label-minutes" value="MIN" maxlength="10" oninput="schedulePreview()">
+                                <span class="lbl-unit">Minutes</span>
+                            </div>
+                            <div class="label-row">
+                                <div class="lbl-tog on" id="ltog-seconds" onclick="toggleLabelRow(this,'seconds')">✓</div>
+                                <input class="fi lbl-inp" id="cd-label-seconds" value="SEC" maxlength="10" oninput="schedulePreview()">
+                                <span class="lbl-unit">Secondes</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Polices séparées chiffres / labels -->
+                    <div class="fg">
+                        <label class="fl">Polices</label>
+                        <div class="font-grid-2">
+                            <div>
+                                <div class="sub-lbl">Chiffres</div>
+                                <select class="fi" id="cd-font-digits" onchange="pickFontDigits(this.value)">
+                                    <option value="'JetBrains Mono',monospace">JetBrains Mono</option>
+                                    <option value="'Courier New',monospace">Courier New</option>
+                                    <option value="'Inter',sans-serif">Inter</option>
+                                    <option value="'Roboto',sans-serif">Roboto</option>
+                                    <option value="'Oswald',sans-serif">Oswald</option>
+                                    <option value="'Playfair Display',serif">Playfair Display</option>
+                                    <option value="'Bebas Neue',sans-serif">Bebas Neue</option>
+                                    <option value="'Pacifico',cursive">Pacifico</option>
+                                </select>
+                            </div>
+                            <div>
+                                <div class="sub-lbl">Labels</div>
+                                <select class="fi" id="cd-font-labels" onchange="pickFontLabels(this.value)">
+                                    <option value="'Inter',sans-serif">Inter</option>
+                                    <option value="'Roboto',sans-serif">Roboto</option>
+                                    <option value="'JetBrains Mono',monospace">JetBrains Mono</option>
+                                    <option value="'Courier New',monospace">Courier New</option>
+                                    <option value="'Oswald',sans-serif">Oswald</option>
+                                    <option value="'Playfair Display',serif">Playfair Display</option>
+                                    <option value="'Bebas Neue',sans-serif">Bebas Neue</option>
+                                    <option value="'Pacifico',cursive">Pacifico</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Taille du texte -->
+                    <div class="fg">
+                        <div class="sz-row">
+                            <label class="fl" style="margin:0">Taille du texte</label>
+                            <span class="sz-badge" id="font-size-display">36px</span>
+                        </div>
+                        <input type="range" class="form-range" id="cd-fontsize" min="20" max="50" value="36" step="2" oninput="updateFontSize(this.value)">
+                    </div>
+
+                    <!-- Orientation -->
+                    <div class="fg">
+                        <label class="fl">Orientation</label>
+                        <div class="orient-picker">
+                            <div class="orient-opt selected" data-orient="horizontal" onclick="pickOrientation(this)">
+                                <div class="orient-demo orient-demo-h">
+                                    <div class="orient-block"></div><div class="orient-block"></div>
+                                    <div class="orient-block"></div><div class="orient-block"></div>
+                                </div>
+                                <span>Horizontal</span>
+                            </div>
+                            <div class="orient-opt" data-orient="vertical" onclick="pickOrientation(this)">
+                                <div class="orient-demo orient-demo-v">
+                                    <div class="orient-block"></div><div class="orient-block"></div>
+                                    <div class="orient-block"></div><div class="orient-block"></div>
+                                </div>
+                                <span>Vertical</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Largeur dropdown style Sendtric -->
+                    <div class="fg">
+                        <label class="fl">Largeur du GIF</label>
+                        <div class="wd-wrap" id="wd-wrap">
+                            <div class="wd-sel" id="wd-sel" onclick="toggleWdDD()">
+                                <span id="wd-sel-name">Medium — 400px</span>
+                                <span class="style-dd-chev" id="wd-chev">▾</span>
+                            </div>
+                            <div class="wd-opts" id="wd-opts">
+                                <div class="wd-row" onclick="pickWidth(this,'X-Small',200)">
+                                    <span class="wd-name">X-Small</span>
+                                    <div class="wd-bar-wrap"><div class="wd-bar" style="width:8%"></div></div>
+                                    <span class="wd-px">200px</span>
+                                </div>
+                                <div class="wd-row" onclick="pickWidth(this,'Small',300)">
+                                    <span class="wd-name">Small</span>
+                                    <div class="wd-bar-wrap"><div class="wd-bar" style="width:22%"></div></div>
+                                    <span class="wd-px">300px</span>
+                                </div>
+                                <div class="wd-row sel" onclick="pickWidth(this,'Medium',400)">
+                                    <span class="wd-name">Medium</span>
+                                    <div class="wd-bar-wrap"><div class="wd-bar" style="width:38%"></div></div>
+                                    <span class="wd-px">400px</span>
+                                </div>
+                                <div class="wd-row" onclick="pickWidth(this,'Large',600)">
+                                    <span class="wd-name">Large</span>
+                                    <div class="wd-bar-wrap"><div class="wd-bar" style="width:60%"></div></div>
+                                    <span class="wd-px">600px</span>
+                                </div>
+                                <div class="wd-row" onclick="pickWidth(this,'X-Large',800)">
+                                    <span class="wd-name">X-Large</span>
+                                    <div class="wd-bar-wrap"><div class="wd-bar" style="width:92%"></div></div>
+                                    <span class="wd-px">800px</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-nav">
+                        <button class="btn btn-ghost btn-sm" onclick="goToStep(1)">← Retour</button>
+                        <button class="btn btn-primary btn-sm" onclick="goToStep(3)">Suivant →</button>
+                    </div>
                 </div>
-                <div class="upgrade-modal-footer">
-                    <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="handleUpgradeFromModal()">Passer à Pro →</button>
-                    <button class="btn btn-ghost" onclick="closeUpgradeModal()">Plus tard</button>
+
+                <!-- ── ÉTAPE 3 — EXPIRATION ── -->
+                <div class="create-step hidden" id="create-step-3">
+
+                    <!-- Labels Pro -->
+                    <div style="position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-bottom:16px;background:var(--bg)">
+                        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px">
+                            Labels personnalisés <span class="plan-gate-badge">Pro</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                            <div class="fg" style="margin:0"><label class="fl" style="font-size:11px">Jours</label>
+                                <input type="text" class="fi" id="cd-label-days-exp" value="JOURS" maxlength="10" oninput="syncLabel('days',this.value)"></div>
+                            <div class="fg" style="margin:0"><label class="fl" style="font-size:11px">Heures</label>
+                                <input type="text" class="fi" id="cd-label-hours-exp" value="HEURES" maxlength="10" oninput="syncLabel('hours',this.value)"></div>
+                            <div class="fg" style="margin:0"><label class="fl" style="font-size:11px">Minutes</label>
+                                <input type="text" class="fi" id="cd-label-minutes-exp" value="MIN" maxlength="10" oninput="syncLabel('minutes',this.value)"></div>
+                            <div class="fg" style="margin:0"><label class="fl" style="font-size:11px">Secondes</label>
+                                <input type="text" class="fi" id="cd-label-seconds-exp" value="SEC" maxlength="10" oninput="syncLabel('seconds',this.value)"></div>
+                        </div>
+                        <div class="plan-gate-overlay" id="overlay-labels" onclick="openUpgradeModal('labels')">
+                            <div class="plan-gate-msg">🔒 Disponible en <strong>Pro</strong> — Cliquez pour upgrader</div>
+                        </div>
+                    </div>
+
+                    <!-- Comportement après expiration -->
+                    <div class="fg">
+                        <label class="fl">Comportement après expiration</label>
+                        <select class="fi" id="cd-expired" onchange="updateExpiredUI()">
+                            <option value="SHOW_ZEROS">Afficher 00:00:00:00</option>
+                            <option value="SHOW_TEXT">Afficher un texte</option>
+                            <option value="REDIRECT" id="opt-redirect">↗ Rediriger vers une URL (Pro)</option>
+                        </select>
+                    </div>
+                    <div id="expired-text-row" style="display:none" class="fg">
+                        <label class="fl">Texte à afficher</label>
+                        <input type="text" class="fi" id="cd-expired-text" value="Offre terminée">
+                    </div>
+                    <div id="expired-redirect-row" style="display:none;position:relative" class="fg">
+                        <label class="fl">URL de redirection <span class="plan-gate-badge">Pro</span></label>
+                        <input type="url" class="fi" id="cd-expired-redirect" placeholder="https://votresite.com/nouvelle-offre">
+                        <div class="plan-gate-overlay" id="overlay-redirect" onclick="openUpgradeModal('redirect')">
+                            <div class="plan-gate-msg">🔒 <strong>Pro</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="step-nav">
+                        <button class="btn btn-ghost btn-sm" onclick="goToStep(2)">← Retour</button>
+                        <button class="btn btn-primary btn-sm" onclick="goToStep(4)">Suivant →</button>
+                    </div>
+                </div>
+
+                <!-- ── ÉTAPE 4 — PUBLICATION ── -->
+                <div class="create-step hidden" id="create-step-4">
+                    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">
+                        Votre countdown sera hébergé sur chrono.mail. Copiez ensuite le code HTML dans votre outil d'emailing.
+                    </p>
+                    <button class="btn btn-success" style="width:100%;justify-content:center;font-size:14px;padding:11px" onclick="publishCountdown()" id="publish-btn-2">
+                        ✓ Publier & obtenir le code
+                    </button>
+                    <div class="step-nav" style="justify-content:flex-start">
+                        <button class="btn btn-ghost btn-sm" onclick="goToStep(3)">← Retour</button>
+                    </div>
+                </div>
+
+            </div><!-- /create-form-body -->
+        </div><!-- /create-col-form -->
+
+        <!-- ═══ COLONNE DROITE — Preview ═══ -->
+        <div class="create-col-preview">
+
+            <!-- Header preview -->
+            <div class="prev-header">
+                <div class="prev-header-title">Aperçu</div>
+                <div id="preview-status-badge" class="live-badge">
+                    <div class="live-badge-dot"></div>En attente
                 </div>
             </div>
-        </div>
 
+            <!-- Zone GIF — grande et aérée -->
+            <div class="prev-zone" id="gif-preview-box">
+                <div id="gif-preview-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--muted2)">
+                    <div style="font-size:32px">⏱</div>
+                    <div style="font-size:12px;font-weight:600">Choisissez une date pour voir l'aperçu</div>
+                </div>
+                <img id="gif-preview-img" src="" alt="Preview GIF" style="display:none;max-width:100%;border-radius:var(--radius-s)">
+                <div id="gif-preview-loader" style="display:none;position:absolute;inset:0;background:rgba(248,247,244,0.85);align-items:center;justify-content:center;font-size:12px;color:var(--muted);gap:6px">
+                    <div class="gif-loader-spinner"></div>Génération...
+                </div>
+                <div class="dim-badge" id="dim-badge">400 × 112 px</div>
+            </div>
+
+            <!-- Code après publication -->
+            <div class="code-section" id="code-section" style="display:none">
+                <div class="code-tabs-row">
+                    <button class="code-tab-btn active" onclick="switchCodeTab('minimal',this)">Minimal</button>
+                    <button class="code-tab-btn" onclick="switchCodeTab('standard',this)">Standard</button>
+                </div>
+                <div id="code-minimal" class="code-panel active"><div class="code-block" id="code-minimal-content"></div></div>
+                <div id="code-standard" class="code-panel"><div class="code-block" id="code-standard-content"></div></div>
+                <div class="copy-row">
+                    <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="copyCurrentCode()">📋 Copier le code</button>
+                    <button class="btn btn-surface btn-sm" onclick="copyUrl()">🔗 URL</button>
+                </div>
+                <div class="url-row">
+                    <span class="url-label">URL</span>
+                    <span class="url-value" id="gif-url-display">—</span>
+                </div>
+            </div>
+
+            <!-- Publish button toujours visible -->
+            <div class="prev-publish">
+                <button class="btn btn-success" style="width:100%;justify-content:center;font-size:14px;padding:11px" onclick="publishCountdown()" id="publish-btn-1">
+                    ✓ Publier & obtenir le code
+                </button>
+            </div>
+
+            <!-- Compat -->
+            <div class="compat-section">
+                <div class="compat-title">Compatibilité</div>
+                <div class="compat-row"><span style="color:var(--green)">✓</span><span>Animé — Gmail, Apple Mail, iOS, Yahoo, Outlook 2013+, Klaviyo, Mailchimp, Brevo</span></div>
+                <div class="compat-row"><span style="color:var(--orange)">⚠</span><span>Outlook 2007–2010 — 1ère frame uniquement (statique)</span></div>
+            </div>
+
+        </div><!-- /create-col-preview -->
+
+    </div><!-- /create-page-wrap -->
+
+    <!-- ═══ MODALE UPGRADE ═══ -->
+    <div id="upgrade-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;align-items:center;justify-content:center;padding:20px" onclick="closeUpgradeModal(event)">
+        <div class="upgrade-modal" id="upgrade-modal">
+            <div class="upgrade-modal-header">
+                <div class="upgrade-modal-icon">✦</div>
+                <div>
+                    <div class="upgrade-modal-title" id="upgrade-modal-title">Fonctionnalité Pro</div>
+                    <div class="upgrade-modal-subtitle" id="upgrade-modal-subtitle">Disponible à partir du plan Pro</div>
+                </div>
+                <button class="upgrade-modal-close" onclick="closeUpgradeModal()">✕</button>
+            </div>
+            <div class="upgrade-modal-body">
+                <div class="upgrade-modal-feature-desc" id="upgrade-modal-desc"></div>
+                <div class="upgrade-modal-list-title">Pro débloque aussi :</div>
+                <ul class="upgrade-modal-list">
+                    <li>✓ Labels personnalisés (Jours, Heures…)</li>
+                    <li>✓ Redirection après expiration</li>
+                    <li>✓ Countdowns illimités</li>
+                    <li>✓ Analytics avancées</li>
+                    <li>✓ Image de fond personnalisée</li>
+                </ul>
+                <div class="upgrade-modal-price">À partir de <strong>9€/mois</strong> — sans engagement</div>
+            </div>
+            <div class="upgrade-modal-footer">
+                <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="handleUpgradeFromModal()">Passer à Pro →</button>
+                <button class="btn btn-ghost" onclick="closeUpgradeModal()">Plus tard</button>
+            </div>
+        </div>
     </div>
+
 </div>
 
 <!-- ============================================================
