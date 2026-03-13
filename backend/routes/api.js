@@ -289,6 +289,7 @@ router.get('/gif', async (req, res) => {
             blockBgColor:    blockBgColor   || null,
             sepColor:        sepColor       || null,
             showSeparators:  showSeparators !== '0',
+            previewMode:     true,
             style, orientation, showUnits,
             labelDays, labelHours, labelMinutes, labelSeconds,
         });

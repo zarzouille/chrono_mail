@@ -25,6 +25,7 @@ async function generateCountdownGif(
         fontLabels       = null,
         sepColor         = null,
         showSeparators   = true,
+        previewMode      = false,  // 3 frames au lieu de 10 pour la preview live
         perpetual        = false,
         perpetualSeconds = 86400,
     } = options;
@@ -32,7 +33,7 @@ async function generateCountdownGif(
     const W       = Math.max(200, Math.min(800, parseInt(width) || 400));
     const fSize   = Math.max(16, Math.min(50, parseInt(fontSize) || 36));
     const fSizeSm = Math.round(fSize * 0.30);
-    const FRAMES  = 10;
+    const FRAMES  = previewMode ? 3 : 10;
     const isVert  = orientation === 'vertical';
 
     const active   = new Set(showUnits.split(',').map(s => s.trim()));

@@ -1,4 +1,6 @@
 require('dotenv').config();
+const { loadFonts } = require('./services/load-fonts');
+loadFonts().catch(err => console.error('[fonts] Erreur init:', err));
 const express  = require('express');
 const path     = require('path');
 const passport = require('./lib/passport');
