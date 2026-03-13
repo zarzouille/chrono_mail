@@ -598,7 +598,7 @@ async function publishCountdown() {
     const showUnits = getShowUnits();
     if (!showUnits) { showToast('⚠️ Activez au moins une unité'); return; }
 
-    btns.forEach(b => b && (b.textContent = '⏳ Génération...') && (b.disabled = true));
+    btns.forEach(b => { if (b) { b.textContent = '⏳ Génération...'; b.disabled = true; } });
 
     try {
         const res = await authFetch('/countdown', {
@@ -640,7 +640,7 @@ async function publishCountdown() {
     } catch (err) {
         showToast('❌ Erreur réseau');
     } finally {
-        btns.forEach(b => b && (b.textContent = '✓ Publier & obtenir le code') && (b.disabled = false));
+        btns.forEach(b => { if (b) { b.textContent = '❆ Publier & obtenir le code'; b.disabled = false; } });
     }
 }
 

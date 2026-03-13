@@ -34,6 +34,20 @@ async function generateCountdownGif(
     const fSize   = Math.max(16, Math.min(50, parseInt(fontSize) || 36));
     const fSizeSm = Math.round(fSize * 0.30);
     const FRAMES  = previewMode ? 3 : 10;
+
+    /**
+     * Extrait le premier nom de famille d'une valeur CSS font-family.
+     * Ex: "'JetBrains Mono',monospace" → "JetBrains Mono"
+     *     "monospace" → "monospace"
+     */
+    function parseFontFamily(cssValue) {
+        if (!cssValue) return 'sans-serif';
+        const first = cssValue.split(',')[0].trim().replace(/['"]/g, '');
+        return first || 'sans-serif';
+    }
+
+    const resolvedFont       = parseFontFamily(fontFamily);
+    const resolvedFontLabels = parseFontFamily(fontLabels || 'sans-serif');
     const isVert  = orientation === 'vertical';
 
     const active   = new Set(showUnits.split(',').map(s => s.trim()));
@@ -118,7 +132,7 @@ async function generateCountdownGif(
         if (expired && expiredBehavior !== 'SHOW_ZEROS') {
             if (expiredBehavior === 'SHOW_TEXT') {
                 ctx.fillStyle    = style === 'neon' ? textColor : textColor;
-                ctx.font         = `bold ${Math.round(fSize * 0.65)}px ${fontFamily}`;
+                ctx.font         = `bold ${Math.round(fSize * 0.65)}px ${resolvedFont}`;
                 ctx.textAlign    = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(expiredText || 'Offre terminée', canvasW / 2, canvasH / 2);
@@ -162,7 +176,7 @@ async function generateCountdownGif(
                             : style === 'glass' ? 'rgba(255,255,255,0.6)'
                                 :                     rgba(textColor, 0.35);
                     ctx.fillStyle    = sColor;
-                    ctx.font         = `bold ${Math.round(fSize * 0.6)}px ${fontFamily}`;
+                    ctx.font         = `bold ${Math.round(fSize * 0.6)}px ${resolvedFont}`;
                     ctx.textBaseline = 'middle';
                     ctx.textAlign    = 'center';
                     if (style === 'neon') { ctx.shadowColor = sepColor || textColor; ctx.shadowBlur = 8; }
@@ -265,7 +279,7 @@ async function generateCountdownGif(
         ctx.strokeStyle = textColor; ctx.lineWidth = 2; ctx.stroke();
         // Valeur
         ctx.fillStyle = textColor;
-        ctx.font = `bold ${fSize}px ${fontFamily}`;
+        ctx.font = `bold ${fSize}px ${resolvedFont}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(value, cx, cy);
         // Label espacé sous le cercle
@@ -285,7 +299,7 @@ async function generateCountdownGif(
         roundRect(ctx, x, y, bW, bH, r); ctx.stroke();
         ctx.shadowBlur = 0;
         ctx.fillStyle = textColor;
-        ctx.font = `bold ${fSize}px ${fontFamily}`;
+        ctx.font = `bold ${fSize}px ${resolvedFont}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.shadowColor = textColor; ctx.shadowBlur = 12;
         ctx.fillText(value, x + bW / 2, y + bH * 0.42);
@@ -298,7 +312,7 @@ async function generateCountdownGif(
 
     function drawValue(x, y, bW, bH, value, color, hasLabel = true) {
         ctx.fillStyle = color;
-        ctx.font = `bold ${fSize}px ${fontFamily}`;
+        ctx.font = `bold ${fSize}px ${resolvedFont}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         // Si pas de label, centre la valeur verticalement dans le bloc
         const vY = hasLabel ? y + bH * 0.42 : y + bH * 0.5;
@@ -308,7 +322,7 @@ async function generateCountdownGif(
     function drawLabel(x, y, bW, bH, label, color) {
         if (!label) return; // label vide = on ne dessine rien
         ctx.fillStyle = color;
-        ctx.font = `bold ${fSizeSm}px ${fontLabels || 'sans-serif'}`;
+        ctx.font = `bold ${fSizeSm}px ${resolvedFontLabels}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
         ctx.fillText(label, x + bW / 2, y + bH * 0.70);
     }

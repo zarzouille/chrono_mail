@@ -597,10 +597,43 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 }
 
 .prev-publish {
-    padding: 12px 20px;
+    padding: 14px 20px 16px;
     border-top: 1px solid var(--border);
     background: var(--surface);
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Bouton publier — centré, largeur auto, pas pleine largeur */
+.publish-btn-styled {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: var(--radius-l);
+    padding: 11px 28px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .18s;
+    box-shadow: 0 2px 8px rgba(22,163,74,0.25);
+    letter-spacing: -0.2px;
+}
+.publish-btn-styled:hover {
+    background: #15803d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(22,163,74,0.35);
+}
+.publish-btn-styled:active { transform: translateY(0); }
+.publish-btn-styled:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .compat-section {
@@ -621,27 +654,69 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 
 /* ── Mobile responsive ── */
 @media (max-width: 768px) {
+
+    /* Layout : une seule colonne, preview EN HAUT */
     .create-page-wrap {
         grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
+        grid-template-rows: auto auto;
+        min-height: unset;
     }
 
+    /* Preview en premier sur mobile */
+    .create-col-preview {
+        order: -1;
+        height: auto;
+        position: static;
+        max-height: none;
+        border-bottom: 1px solid var(--border);
+    }
+
+    /* Formulaire en dessous */
     .create-col-form {
         height: auto;
         position: static;
         border-right: none;
-        border-bottom: 1px solid var(--border);
+        overflow: visible;
     }
 
-    .create-form-body { max-height: 60vh; }
-
-    .create-col-preview {
-        height: auto;
-        position: static;
-        order: -1; /* Preview en haut sur mobile */
+    .create-form-body {
+        max-height: none;
+        overflow-y: visible;
+        padding-bottom: 80px; /* espace pour les boutons fixes */
     }
 
-    .prev-zone { min-height: 160px; padding: 20px; }
+    /* Zone GIF plus compacte */
+    .prev-zone {
+        min-height: 140px;
+        padding: 20px 16px;
+    }
+
+    /* Progress bar plus compact */
+    .create-progress { gap: 3px; padding: 8px 12px; }
+    .cp-line { width: 14px; }
+    .cp-lbl { font-size: 8px; }
+
+    /* Contexte panel en 1 colonne sur petits écrans */
+    .ctx-grid { grid-template-columns: 1fr; }
+    .ctx-full { grid-column: 1; }
+
+    /* Font grid en 1 colonne */
+    .font-grid-2 { grid-template-columns: 1fr; }
+
+    /* Bouton publier mobile */
+    .publish-btn-styled { width: 100%; justify-content: center; }
+    .prev-publish { padding: 12px 16px; }
+
+    /* Compat section */
+    .compat-section { padding: 10px 16px; }
+    .code-section { padding: 12px 16px; }
+}
+
+/* Très petits écrans */
+@media (max-width: 420px) {
+    .create-form-header { padding: 10px 14px; }
+    .create-form-body { padding: 12px 14px; }
+    .ctx-grid { grid-template-columns: 1fr; }
 }
 
 /* ── Toggle séparateur ── */
