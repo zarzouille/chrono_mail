@@ -135,23 +135,33 @@ async function generateCountdownGif(
     }
 
     function drawHorizontal(vals) {
-        const gap    = Math.round(canvasW * 0.025);
-        const blockW = Math.round((canvasW - gap * (unitCount + 1)) / unitCount);
-        const blockH = Math.round(canvasH * 0.74);
-        const blockY = Math.round((canvasH - blockH) / 2);
+        const hasSep    = !['pill','circle'].includes(style);
+        const sepCount  = hasSep ? unitCount - 1 : 0;
+        // Séparateur : largeur fixe = ~1.8× la taille de police, espace latéraux fixes
+        const sepW      = hasSep ? Math.round(fSize * 1.1) : 0;
+        const outerGap  = Math.round(canvasW * 0.025);
+        // blockW = espace restant après outer gaps + séparateurs, divisé par nb blocs
+        const totalSep  = sepCount * sepW;
+        const blockW    = Math.round((canvasW - outerGap * 2 - totalSep) / unitCount);
+        const blockH    = Math.round(canvasH * 0.74);
+        const blockY    = Math.round((canvasH - blockH) / 2);
 
+        let curX = outerGap;
         unitDefs.forEach(({ key, label }, i) => {
-            const x = gap + i * (blockW + gap);
-            drawBlock(x, blockY, blockW, blockH, vals[key], label);
+            drawBlock(curX, blockY, blockW, blockH, vals[key], label);
+            curX += blockW;
 
-            if (i < unitDefs.length - 1 && !['pill','circle'].includes(style)) {
-                ctx.fillStyle    = style === 'neon' ? rgba(textColor, 0.7) : style === 'glass' ? 'rgba(255,255,255,0.6)' : rgba(textColor, 0.4);
-                ctx.font         = `bold ${Math.round(fSize * 0.65)}px ${fontFamily}`;
+            if (i < unitDefs.length - 1 && hasSep) {
+                ctx.fillStyle    = style === 'neon'  ? rgba(textColor, 0.7)
+                    : style === 'glass' ? 'rgba(255,255,255,0.6)'
+                        :                     rgba(textColor, 0.35);
+                ctx.font         = `bold ${Math.round(fSize * 0.6)}px ${fontFamily}`;
                 ctx.textBaseline = 'middle';
                 ctx.textAlign    = 'center';
                 if (style === 'neon') { ctx.shadowColor = textColor; ctx.shadowBlur = 8; }
-                ctx.fillText(':', x + blockW + gap / 2, blockY + blockH * 0.42);
+                ctx.fillText(':', curX + sepW / 2, blockY + blockH * 0.40);
                 ctx.shadowBlur = 0;
+                curX += sepW;
             }
         });
     }
@@ -186,7 +196,7 @@ async function generateCountdownGif(
         roundRect(ctx, x, y, bW, bH, r); ctx.fill();
         ctx.strokeStyle = rgba(textColor, 0.2); ctx.lineWidth = 1;
         roundRect(ctx, x, y, bW, bH, r); ctx.stroke();
-        drawValue(x, y, bW, bH, value, textColor);
+        drawValue(x, y, bW, bH, value, textColor, !!label);
         drawLabel(x, y, bW, bH, label, rgba(textColor, 0.55));
     }
 
@@ -195,14 +205,14 @@ async function generateCountdownGif(
         ctx.fillRect(x, y, bW, bH);
         ctx.strokeStyle = rgba(textColor, 0.2); ctx.lineWidth = 1;
         ctx.strokeRect(x, y, bW, bH);
-        drawValue(x, y, bW, bH, value, textColor);
+        drawValue(x, y, bW, bH, value, textColor, !!label);
         drawLabel(x, y, bW, bH, label, rgba(textColor, 0.55));
     }
 
     function drawBlockBordered(x, y, bW, bH, value, label) {
         ctx.strokeStyle = textColor; ctx.lineWidth = 2;
         roundRect(ctx, x, y, bW, bH, 4); ctx.stroke();
-        drawValue(x, y, bW, bH, value, textColor);
+        drawValue(x, y, bW, bH, value, textColor, !!label);
         drawLabel(x, y, bW, bH, label, rgba(textColor, 0.55));
     }
 
@@ -278,14 +288,17 @@ async function generateCountdownGif(
         ctx.fillText(label, x + bW / 2, y + bH * 0.70);
     }
 
-    function drawValue(x, y, bW, bH, value, color) {
+    function drawValue(x, y, bW, bH, value, color, hasLabel = true) {
         ctx.fillStyle = color;
         ctx.font = `bold ${fSize}px ${fontFamily}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(value, x + bW / 2, y + bH * 0.42);
+        // Si pas de label, centre la valeur verticalement dans le bloc
+        const vY = hasLabel ? y + bH * 0.42 : y + bH * 0.5;
+        ctx.fillText(value, x + bW / 2, vY);
     }
 
     function drawLabel(x, y, bW, bH, label, color) {
+        if (!label) return; // label vide = on ne dessine rien
         ctx.fillStyle = color;
         ctx.font = `bold ${fSizeSm}px ${fontLabels || 'sans-serif'}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
