@@ -643,3 +643,20 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 
     .prev-zone { min-height: 160px; padding: 20px; }
 }
+
+/* ── Toggle séparateur ── */
+.sep-toggle {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 10px;
+    flex-shrink: 0;
+    transition: all .12s;
+    user-select: none;
+}
+.sep-toggle.on  { background: var(--accent-l); border: 1px solid rgba(37,99,235,0.4); color: var(--accent); }
+.sep-toggle.off { background: var(--surface2); border: 1px solid var(--border2); color: transparent; }

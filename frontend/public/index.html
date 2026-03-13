@@ -426,6 +426,17 @@
                                     <span class="color-hex" id="color-block-hex">Auto</span>
                                 </div>
                             </div>
+                            <div>
+                                <div class="ctx-lbl">Séparateurs " : "</div>
+                                <div class="color-row" style="gap:8px">
+                                    <div class="sep-toggle on" id="sep-toggle" onclick="toggleSeparators(this)" title="Afficher / masquer">
+                                        <span id="sep-toggle-icon">✓</span>
+                                    </div>
+                                    <input type="color" class="color-inp" id="color-sep" value="#2563eb" oninput="pickSepColor(this.value)">
+                                    <div class="color-preview" id="color-sep-preview" style="background:#2563eb"></div>
+                                    <span class="color-hex" id="color-sep-hex">#2563eb</span>
+                                </div>
+                            </div>
                             <div class="ctx-full" id="ctx-extra">
                                 <!-- Options spécifiques au style injectées ici par JS -->
                             </div>

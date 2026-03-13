@@ -23,6 +23,8 @@ async function generateCountdownGif(
         bgImageUrl       = null,
         blockBgColor     = null,
         fontLabels       = null,
+        sepColor         = null,
+        showSeparators   = true,
         perpetual        = false,
         perpetualSeconds = 86400,
     } = options;
@@ -152,15 +154,20 @@ async function generateCountdownGif(
             curX += blockW;
 
             if (i < unitDefs.length - 1 && hasSep) {
-                ctx.fillStyle    = style === 'neon'  ? rgba(textColor, 0.7)
-                    : style === 'glass' ? 'rgba(255,255,255,0.6)'
-                        :                     rgba(textColor, 0.35);
-                ctx.font         = `bold ${Math.round(fSize * 0.6)}px ${fontFamily}`;
-                ctx.textBaseline = 'middle';
-                ctx.textAlign    = 'center';
-                if (style === 'neon') { ctx.shadowColor = textColor; ctx.shadowBlur = 8; }
-                ctx.fillText(':', curX + sepW / 2, blockY + blockH * 0.40);
-                ctx.shadowBlur = 0;
+                if (showSeparators !== false && showSeparators !== 'false' && showSeparators !== '0') {
+                    const sColor = sepColor
+                        ? sepColor
+                        : style === 'neon'  ? rgba(textColor, 0.7)
+                            : style === 'glass' ? 'rgba(255,255,255,0.6)'
+                                :                     rgba(textColor, 0.35);
+                    ctx.fillStyle    = sColor;
+                    ctx.font         = `bold ${Math.round(fSize * 0.6)}px ${fontFamily}`;
+                    ctx.textBaseline = 'middle';
+                    ctx.textAlign    = 'center';
+                    if (style === 'neon') { ctx.shadowColor = sepColor || textColor; ctx.shadowBlur = 8; }
+                    ctx.fillText(':', curX + sepW / 2, blockY + blockH * 0.40);
+                    ctx.shadowBlur = 0;
+                }
                 curX += sepW;
             }
         });

@@ -268,8 +268,10 @@ router.get('/gif', async (req, res) => {
             fontSize     = 36,
             width        = 400,
             fontFamily   = 'monospace',
-            fontLabels   = null,
-            blockBgColor = null,
+            fontLabels      = null,
+            blockBgColor    = null,
+            sepColor        = null,
+            showSeparators  = '1',
             style        = 'rounded',
             orientation  = 'horizontal',
             showUnits    = 'days,hours,minutes,seconds',
@@ -283,8 +285,10 @@ router.get('/gif', async (req, res) => {
 
         const gifBuffer = await generateCountdownGif(endDate, bgColor, textColor, fontSize, width, {
             fontFamily,
-            fontLabels:   fontLabels   || null,
-            blockBgColor: blockBgColor || null,
+            fontLabels:      fontLabels     || null,
+            blockBgColor:    blockBgColor   || null,
+            sepColor:        sepColor       || null,
+            showSeparators:  showSeparators !== '0',
             style, orientation, showUnits,
             labelDays, labelHours, labelMinutes, labelSeconds,
         });

@@ -158,6 +158,8 @@ updateHeroTimer();
 let currentColor       = '#2563eb';
 let currentBg          = '#f8f7f4';
 let currentBlockBg     = null;     // null = auto (teinté depuis textColor)
+let currentSepColor    = null;     // null = auto
+let showSeparators     = true;
 let currentFontDigits  = "'JetBrains Mono',monospace";
 let currentFontLabels  = "'Inter',sans-serif";
 let currentStyle       = 'rounded';
@@ -231,7 +233,9 @@ function refreshPreview() {
         endDate,
         bgColor:      currentBg,
         textColor:    currentColor,
-        blockBgColor: currentBlockBg || '',
+        blockBgColor:   currentBlockBg  || '',
+        sepColor:       currentSepColor || '',
+        showSeparators: showSeparators ? '1' : '0',
         fontSize:     currentFontSize,
         width:        currentWidth,
         fontFamily:   currentFontDigits,
@@ -392,7 +396,28 @@ function isLightColor(hex) {
     return (r * 299 + g * 587 + b * 114) / 1000 > 200;
 }
 
-// Alias compatibilité
+// == Separateurs =========================================
+function toggleSeparators(el) {
+    showSeparators = !showSeparators;
+    el.classList.toggle('on',  showSeparators);
+    el.classList.toggle('off', !showSeparators);
+    const icon = document.getElementById('sep-toggle-icon');
+    if (icon) icon.textContent = showSeparators ? '✓' : '';
+    const inp = document.getElementById('color-sep');
+    if (inp) inp.style.opacity = showSeparators ? '1' : '0.35';
+    schedulePreview();
+}
+
+function pickSepColor(value) {
+    currentSepColor = value;
+    const p = document.getElementById('color-sep-preview');
+    const h = document.getElementById('color-sep-hex');
+    if (p) p.style.background = value;
+    if (h) h.textContent = value;
+    schedulePreview();
+}
+
+// Alias compatibilite
 function pickColorCustom(v) { pickColorMain(v); }
 function pickBgCustom(v)    { pickBgMain(v); }
 
