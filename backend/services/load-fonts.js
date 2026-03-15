@@ -7,10 +7,11 @@ const https  = require('https');
 const http   = require('http');
 const fs     = require('fs');
 const path   = require('path');
+const { execSync } = require('child_process');
 
 const FONTS_DIR = path.join(__dirname, '..', 'fonts');
 
-// URLs directes vers les fichiers TTF (testées et vérifiées)
+// Toutes les polices disponibles dans le formulaire
 const FONT_LIST = [
     {
         family: 'JetBrains Mono',
@@ -20,7 +21,7 @@ const FONT_LIST = [
     {
         family: 'Inter',
         file: 'Inter-Bold.ttf',
-        url: 'https://github.com/rsms/inter/raw/master/fonts/Inter-Bold.ttf',
+        url: 'https://github.com/digitalocean/hacktoberfest/raw/master/app/assets/fonts/Inter-Bold.ttf',
     },
     {
         family: 'Roboto',
@@ -35,27 +36,65 @@ const FONT_LIST = [
     {
         family: 'Playfair Display',
         file: 'PlayfairDisplay-Bold.ttf',
-        url: 'https://github.com/googlefonts/playfair/raw/main/fonts/ttf/PlayfairDisplay-Bold.ttf',
+        // Doit être téléchargé manuellement via gwfh si absent (voir README)
+        url: null,
     },
     {
         family: 'Bebas Neue',
         file: 'BebasNeue-Regular.ttf',
-        url: 'https://github.com/dharmatype/Bebas-Neue/raw/master/fonts/ttf/BebasNeue-Regular.ttf',
+        url: 'https://github.com/dharmatype/Bebas-Neue/raw/master/fonts/BebasNeue(OFL)/ttf/BebasNeue-Regular.ttf',
+        fallbackUrl: 'https://github.com/dharmatype/Bebas-Neue/raw/master/fonts/ttf/BebasNeue-Regular.ttf',
     },
     {
         family: 'Pacifico',
         file: 'Pacifico-Regular.ttf',
         url: 'https://github.com/googlefonts/Pacifico/raw/main/fonts/ttf/Pacifico-Regular.ttf',
     },
+    {
+        family: 'Montserrat',
+        file: 'Montserrat-Bold.ttf',
+        url: 'https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Bold.ttf',
+    },
+    {
+        family: 'Raleway',
+        file: 'Raleway-Bold.ttf',
+        url: 'https://github.com/impallari/Raleway/raw/master/fonts/ttf/Raleway-Bold.ttf',
+        fallbackUrl: 'https://github.com/googlefonts/raleway/raw/main/fonts/ttf/Raleway-Bold.ttf',
+    },
+    {
+        family: 'Lato',
+        file: 'Lato-Bold.ttf',
+        url: 'https://github.com/googlefonts/LatoGFVersion/raw/main/fonts/Lato-Bold.ttf',
+    },
+    {
+        family: 'Nunito',
+        file: 'Nunito-Bold.ttf',
+        url: 'https://github.com/googlefonts/nunito/raw/main/fonts/variable/Nunito[wght].ttf',
+        fallbackUrl: 'https://github.com/googlefonts/nunito/raw/main/fonts/ttf/Nunito-Bold.ttf',
+    },
+    {
+        family: 'Abril Fatface',
+        file: 'AbrilFatface-Regular.ttf',
+        url: 'https://github.com/googlefonts/AbrilFatface/raw/main/fonts/ttf/AbrilFatface-Regular.ttf',
+    },
+    {
+        family: 'Permanent Marker',
+        file: 'PermanentMarker-Regular.ttf',
+        url: 'https://github.com/googlefonts/permanent-marker/raw/main/fonts/ttf/PermanentMarker-Regular.ttf',
+    },
+    {
+        family: 'Black Han Sans',
+        file: 'BlackHanSans-Regular.ttf',
+        url: 'https://github.com/googlefonts/blackhansans/raw/main/fonts/BlackHanSans-Regular.ttf',
+        fallbackUrl: 'https://fonts.gstatic.com/s/blackhansans/v17/ea8Aad44WunzF9a-dL6toA8r8nqVIXSkH-Hc.ttf',
+    },
 ];
 
 function downloadFile(url, destPath) {
     return new Promise((resolve, reject) => {
-        const file    = fs.createWriteStream(destPath);
-        const client  = url.startsWith('https') ? https : http;
-
-        const request = client.get(url, res => {
-            // Suit les redirections (GitHub renvoie des 302)
+        const file   = fs.createWriteStream(destPath);
+        const client = url.startsWith('https') ? https : http;
+        const request = client.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, res => {
             if (res.statusCode === 301 || res.statusCode === 302) {
                 file.close();
                 fs.unlink(destPath, () => {});
@@ -63,17 +102,13 @@ function downloadFile(url, destPath) {
                 return;
             }
             if (res.statusCode !== 200) {
-                reject(new Error(`HTTP ${res.statusCode} pour ${url}`));
+                reject(new Error(`HTTP ${res.statusCode}`));
                 return;
             }
             res.pipe(file);
             file.on('finish', () => { file.close(); resolve(); });
         });
-
-        request.on('error', err => {
-            fs.unlink(destPath, () => {});
-            reject(err);
-        });
+        request.on('error', err => { fs.unlink(destPath, () => {}); reject(err); });
     });
 }
 
@@ -81,28 +116,37 @@ async function loadFonts() {
     if (!fs.existsSync(FONTS_DIR)) fs.mkdirSync(FONTS_DIR, { recursive: true });
 
     const canvas = require('@napi-rs/canvas');
-
     if (!canvas.GlobalFonts || typeof canvas.GlobalFonts.registerFromPath !== 'function') {
         console.warn('[fonts] GlobalFonts.registerFromPath non disponible');
         return;
     }
 
-    const ok = [], errors = [];
+    const ok = [], skipped = [], errors = [];
 
     for (const font of FONT_LIST) {
         const destPath = path.join(FONTS_DIR, font.file);
         try {
             if (!fs.existsSync(destPath)) {
-                process.stdout.write(`[fonts] Téléchargement ${font.family}...`);
-                await downloadFile(font.url, destPath);
-                // Vérifie que le fichier est bien un TTF valide (>10kb)
-                const stats = fs.statSync(destPath);
-                if (stats.size < 10000) {
-                    fs.unlinkSync(destPath);
-                    throw new Error(`Fichier trop petit (${stats.size} bytes) — URL incorrecte`);
+                // Pas d'URL = téléchargement manuel requis, on skip silencieusement
+                if (!font.url) {
+                    skipped.push(font.family);
+                    continue;
                 }
-                process.stdout.write(` ${Math.round(stats.size/1024)}kb OK\n`);
+                process.stdout.write(`[fonts] Téléchargement ${font.family}...`);
+                let downloaded = false;
+                for (const url of [font.url, font.fallbackUrl].filter(Boolean)) {
+                    try {
+                        await downloadFile(url, destPath);
+                        const stats = fs.statSync(destPath);
+                        if (stats.size > 10000) { downloaded = true; break; }
+                        fs.unlinkSync(destPath);
+                    } catch(e) { /* essaie le fallback */ }
+                }
+                if (!downloaded) throw new Error('Toutes les URLs ont échoué');
+                const size = Math.round(fs.statSync(destPath).size / 1024);
+                process.stdout.write(` ${size}kb OK\n`);
             }
+
             canvas.GlobalFonts.registerFromPath(destPath, font.family);
             ok.push(font.family);
         } catch (err) {
@@ -112,14 +156,9 @@ async function loadFonts() {
         }
     }
 
-    // Vérifie quelles familles sont bien disponibles dans le canvas
-    const registered = canvas.GlobalFonts.getFamilies
-        ? canvas.GlobalFonts.getFamilies().map(f => f.family || f)
-        : [];
-
     console.log(`[fonts] Chargées (${ok.length}): ${ok.join(', ') || 'aucune'}`);
-    if (registered.length) console.log(`[fonts] Disponibles canvas: ${registered.slice(0,10).join(', ')}`);
-    if (errors.length) console.warn(`[fonts] Échecs: ${errors.join(', ')}`);
+    if (skipped.length) console.log(`[fonts] À télécharger manuellement: ${skipped.join(', ')}`);
+    if (errors.length)  console.warn(`[fonts] Échecs: ${errors.join(', ')}`);
 }
 
 module.exports = { loadFonts };

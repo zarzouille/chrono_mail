@@ -3,6 +3,7 @@ const router   = express.Router();
 const { generateCountdownGif } = require('../services/countdown-generator');
 const prisma   = require('../lib/prisma');
 const { requireAuth } = require('../lib/auth');
+const gifCache       = require('./gif-cache');
 
 /**
  * Construit l'URL publique d'un GIF.
@@ -261,6 +262,17 @@ router.get('/gif/:id', async (req, res) => {
 // ── GIF preview (sans sauvegarde) ─────────────────────────────
 router.get('/gif', async (req, res) => {
     try {
+        // Vérifie le cache avant de générer
+        const cacheKey = gifCache.makeCacheKey(req.query);
+        const cached   = gifCache.get(cacheKey);
+        if (cached) {
+            res.set({
+                'Content-Type':  'image/gif',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'X-Cache':       'HIT',
+            });
+            return res.send(cached);
+        }
         const {
             endDate      = new Date(Date.now() + 86400000).toISOString(),
             bgColor      = '#ffffff',
@@ -294,11 +306,15 @@ router.get('/gif', async (req, res) => {
             labelDays, labelHours, labelMinutes, labelSeconds,
         });
 
+        // Stocke en cache pour les prochaines requêtes identiques
+        gifCache.set(cacheKey, gifBuffer);
+
         res.set({
             'Content-Type':  'image/gif',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma':        'no-cache',
             'Expires':       '0',
+            'X-Cache':       'MISS',
         });
         res.send(gifBuffer);
 
