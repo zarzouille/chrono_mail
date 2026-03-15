@@ -839,3 +839,38 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
     background: var(--accent-l);
     color: var(--accent);
 }
+
+/* ── Onglets de code ── */
+.code-tabs-row {
+    display: flex;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    border-bottom: none;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+.code-tab-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border: none;
+    background: transparent;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .12s;
+    border-right: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.code-tab-btn:last-child { border-right: none; }
+.code-tab-btn.active { background: #1a1b26; color: #7aa2f7; }
+.code-tab-btn:hover:not(.active) { background: var(--surface3); color: var(--text2); }
+
+/* Raccorde le bloc de code aux onglets */
+.code-tabs-row + .code-panel.active .code-block-v2 {
+    border-radius: 0;
+    border-top: none;
+}
