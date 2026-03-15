@@ -677,16 +677,11 @@ function displayCode(gifUrl) {
     if (section) section.style.display = 'block';
     if (urlDisp) urlDisp.textContent   = gifUrl;
 
-    window._codeSnippets = {
-        minimal:  `<img src="${gifUrl}" alt="Offre expire dans..." width="${currentWidth}" border="0" style="display:block" />`,
-        standard: `<img src="${gifUrl}" border="0" style="display:block;max-width:100%" alt="Timer — chrono.mail" width="${currentWidth}" />`,
-    };
+    // Un seul snippet — balise <img> simple et propre
+    window._currentSnippet = `<img src="${gifUrl}" alt="Offre expire dans..." width="${currentWidth}" border="0" style="display:block" />`;
 
-    // Affiche avec coloration syntaxique
-    const minEl = document.getElementById('code-minimal-content');
-    const stdEl = document.getElementById('code-standard-content');
-    if (minEl) minEl.innerHTML = highlightHtml(window._codeSnippets.minimal);
-    if (stdEl) stdEl.innerHTML = highlightHtml(window._codeSnippets.standard);
+    const el = document.getElementById('code-snippet-content');
+    if (el) el.innerHTML = highlightHtml(window._currentSnippet);
 }
 
 function switchCodeTab(name, btn) {
@@ -698,9 +693,8 @@ function switchCodeTab(name, btn) {
 }
 
 function copyCurrentCode() {
-    const s = window._codeSnippets;
-    if (!s) { showToast('⚠️ Publiez d\'abord le countdown'); return; }
-    navigator.clipboard.writeText(s[activeCodeTab]).then(() => showToast('📋 Code HTML copié !'));
+    if (!window._currentSnippet) { showToast('⚠️ Publiez d\'abord le countdown'); return; }
+    navigator.clipboard.writeText(window._currentSnippet).then(() => showToast('📋 Code HTML copié !'));
 }
 
 function copyUrl() {

@@ -679,34 +679,18 @@
             <!-- Code après publication -->
             <div class="code-section" id="code-section" style="display:none">
 
-                <!-- Onglets -->
-                <div class="code-tabs-row">
-                    <button class="code-tab-btn active" onclick="switchCodeTab('minimal',this)">Minimal</button>
-                    <button class="code-tab-btn" onclick="switchCodeTab('standard',this)">Standard</button>
-                </div>
-
-                <!-- Panneau Minimal -->
-                <div id="code-minimal" class="code-panel active">
-                    <div class="code-block-v2" id="code-minimal-content"></div>
-                    <button class="btn-copy-code" onclick="copyCurrentCode()">
-                        <span class="copy-icon">📋</span> Copier le code HTML
-                    </button>
-                </div>
-
-                <!-- Panneau Standard -->
-                <div id="code-standard" class="code-panel">
-                    <div class="code-block-v2" id="code-standard-content"></div>
-                    <button class="btn-copy-code" onclick="copyCurrentCode()">
-                        <span class="copy-icon">📋</span> Copier le code HTML
-                    </button>
-                </div>
+                <!-- Bloc de code unique -->
+                <div class="code-block-v2" id="code-snippet-content"></div>
+                <button class="btn-copy-code" onclick="copyCurrentCode()">
+                    📋 Copier le code HTML
+                </button>
 
                 <!-- URL du GIF — champ copiable séparé -->
                 <div class="gif-url-section">
                     <div class="gif-url-label">URL directe du GIF</div>
                     <div class="gif-url-field">
                         <span class="gif-url-value" id="gif-url-display">—</span>
-                        <button class="gif-url-copy-btn" onclick="copyUrl()" title="Copier l'URL">
+                        <button class="gif-url-copy-btn" onclick="copyUrl()">
                             📎 Copier l'URL
                         </button>
                     </div>
