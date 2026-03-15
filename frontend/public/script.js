@@ -649,18 +649,26 @@ async function publishCountdown() {
 // CODE SNIPPETS
 // ============================================================
 /**
- * Applique la coloration syntaxique HTML sur un snippet de code.
- * Injecte des spans colorés dans le bloc .code-block-v2
+ * Coloration syntaxique HTML — travaille sur le texte brut,
+ * échappe ensuite uniquement ce qui n'est pas dans les spans.
  */
 function highlightHtml(code) {
-    return code
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        // Retablit les balises après échappement
-        .replace(/&lt;(\/?[\w]+)/g, '<span class="hl-tag">&lt;$1</span>')
-        .replace(/\/&gt;|&gt;/g, '<span class="hl-tag">$&</span>')
-        // Attributs = valeurs
-        .replace(/\s([\w-]+)(=)("(?:[^"]*)")/g,
-            ' <span class="hl-attr">$1</span><span class="hl-eq">$2</span><span class="hl-string">$3</span>');
+    // 1. Échappe d'abord tout le code pour affichage sécurisé
+    const escaped = code
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+
+    // 2. Colore sur le texte échappé
+    return escaped
+        // Balises ouvrantes/fermantes : &lt;img  &lt;/div  /&gt;  &gt;
+        .replace(/(&lt;\/?[\w]+)/g, '<span class="hl-tag">$1</span>')
+        .replace(/(\/&gt;|&gt;)/g, '<span class="hl-tag">$1</span>')
+        // Attributs name=
+        .replace(/\s([\w-]+)=/g, ' <span class="hl-attr">$1</span>=')
+        // Valeurs "..."
+        .replace(/=&quot;([^&]*)&quot;/g, '=<span class="hl-string">&quot;$1&quot;</span>');
 }
 
 function displayCode(gifUrl) {
