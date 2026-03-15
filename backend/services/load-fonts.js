@@ -4,48 +4,88 @@
  */
 
 const https  = require('https');
+const http   = require('http');
 const fs     = require('fs');
 const path   = require('path');
 
 const FONTS_DIR = path.join(__dirname, '..', 'fonts');
 
+// URLs directes vers les fichiers TTF (testées et vérifiées)
 const FONT_LIST = [
-    { family: 'JetBrains Mono',   file: 'JetBrainsMono-Bold.ttf',    url: 'https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbY2o-flEEny0FZhsfKu5WU4xD-IQ.ttf' },
-    { family: 'Inter',            file: 'Inter-Bold.ttf',             url: 'https://fonts.gstatic.com/s/inter/v19/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYAZ9hiJ-Ek-_EeA.ttf' },
-    { family: 'Roboto',           file: 'Roboto-Bold.ttf',            url: 'https://fonts.gstatic.com/s/roboto/v47/KFOMCnqEu92Fr1MmhF4lIjAjZA.ttf' },
-    { family: 'Oswald',           file: 'Oswald-Bold.ttf',            url: 'https://fonts.gstatic.com/s/oswald/v53/TK3_WkUHHAIjg75cFRf3bXL8LICs1_Fv.ttf' },
-    { family: 'Playfair Display', file: 'PlayfairDisplay-Bold.ttf',   url: 'https://fonts.gstatic.com/s/playfairdisplay/v38/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvUDQ.ttf' },
-    { family: 'Bebas Neue',       file: 'BebasNeue-Regular.ttf',      url: 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXooxW5rygbi49c.ttf' },
-    { family: 'Pacifico',         file: 'Pacifico-Regular.ttf',       url: 'https://fonts.gstatic.com/s/pacifico/v22/FwZY7-Qmy14u9lezJ-6H6MmBp0u-.ttf' },
+    {
+        family: 'JetBrains Mono',
+        file: 'JetBrainsMono-Bold.ttf',
+        url: 'https://github.com/JetBrains/JetBrainsMono/raw/master/fonts/ttf/JetBrainsMono-Bold.ttf',
+    },
+    {
+        family: 'Inter',
+        file: 'Inter-Bold.ttf',
+        url: 'https://github.com/rsms/inter/raw/master/fonts/Inter-Bold.ttf',
+    },
+    {
+        family: 'Roboto',
+        file: 'Roboto-Bold.ttf',
+        url: 'https://github.com/googlefonts/roboto/raw/main/src/hinted/Roboto-Bold.ttf',
+    },
+    {
+        family: 'Oswald',
+        file: 'Oswald-Bold.ttf',
+        url: 'https://github.com/googlefonts/OswaldFont/raw/main/fonts/ttf/Oswald-Bold.ttf',
+    },
+    {
+        family: 'Playfair Display',
+        file: 'PlayfairDisplay-Bold.ttf',
+        url: 'https://github.com/googlefonts/playfair/raw/main/fonts/ttf/PlayfairDisplay-Bold.ttf',
+    },
+    {
+        family: 'Bebas Neue',
+        file: 'BebasNeue-Regular.ttf',
+        url: 'https://github.com/dharmatype/Bebas-Neue/raw/master/fonts/ttf/BebasNeue-Regular.ttf',
+    },
+    {
+        family: 'Pacifico',
+        file: 'Pacifico-Regular.ttf',
+        url: 'https://github.com/googlefonts/Pacifico/raw/main/fonts/ttf/Pacifico-Regular.ttf',
+    },
 ];
 
 function downloadFile(url, destPath) {
     return new Promise((resolve, reject) => {
-        const file = fs.createWriteStream(destPath);
-        https.get(url, res => {
-            if (res.statusCode !== 200) { reject(new Error(`HTTP ${res.statusCode}`)); return; }
+        const file    = fs.createWriteStream(destPath);
+        const client  = url.startsWith('https') ? https : http;
+
+        const request = client.get(url, res => {
+            // Suit les redirections (GitHub renvoie des 302)
+            if (res.statusCode === 301 || res.statusCode === 302) {
+                file.close();
+                fs.unlink(destPath, () => {});
+                downloadFile(res.headers.location, destPath).then(resolve).catch(reject);
+                return;
+            }
+            if (res.statusCode !== 200) {
+                reject(new Error(`HTTP ${res.statusCode} pour ${url}`));
+                return;
+            }
             res.pipe(file);
             file.on('finish', () => { file.close(); resolve(); });
-        }).on('error', err => { fs.unlink(destPath, () => {}); reject(err); });
+        });
+
+        request.on('error', err => {
+            fs.unlink(destPath, () => {});
+            reject(err);
+        });
     });
 }
 
 async function loadFonts() {
     if (!fs.existsSync(FONTS_DIR)) fs.mkdirSync(FONTS_DIR, { recursive: true });
 
-    // Détecte la bonne API selon la version de @napi-rs/canvas
     const canvas = require('@napi-rs/canvas');
 
-    // Essaie les différentes APIs selon la version
-    let registerFn = null;
-
-    // API correcte : GlobalFonts.registerFromPath(filePath, family)
     if (!canvas.GlobalFonts || typeof canvas.GlobalFonts.registerFromPath !== 'function') {
         console.warn('[fonts] GlobalFonts.registerFromPath non disponible');
         return;
     }
-    registerFn = (filePath, family) => canvas.GlobalFonts.registerFromPath(filePath, family);
-    console.log('[fonts] API: GlobalFonts.registerFromPath');
 
     const ok = [], errors = [];
 
@@ -53,18 +93,33 @@ async function loadFonts() {
         const destPath = path.join(FONTS_DIR, font.file);
         try {
             if (!fs.existsSync(destPath)) {
+                process.stdout.write(`[fonts] Téléchargement ${font.family}...`);
                 await downloadFile(font.url, destPath);
+                // Vérifie que le fichier est bien un TTF valide (>10kb)
+                const stats = fs.statSync(destPath);
+                if (stats.size < 10000) {
+                    fs.unlinkSync(destPath);
+                    throw new Error(`Fichier trop petit (${stats.size} bytes) — URL incorrecte`);
+                }
+                process.stdout.write(` ${Math.round(stats.size/1024)}kb OK\n`);
             }
-            registerFn(destPath, font.family);
+            canvas.GlobalFonts.registerFromPath(destPath, font.family);
             ok.push(font.family);
         } catch (err) {
-            console.warn(`[fonts] Echec "${font.family}": ${err.message}`);
+            process.stdout.write('\n');
+            console.warn(`[fonts] Échec "${font.family}": ${err.message}`);
             errors.push(font.family);
         }
     }
 
-    console.log(`[fonts] Chargees: ${ok.join(', ') || 'aucune'}`);
-    if (errors.length) console.warn(`[fonts] Echecs: ${errors.join(', ')}`);
+    // Vérifie quelles familles sont bien disponibles dans le canvas
+    const registered = canvas.GlobalFonts.getFamilies
+        ? canvas.GlobalFonts.getFamilies().map(f => f.family || f)
+        : [];
+
+    console.log(`[fonts] Chargées (${ok.length}): ${ok.join(', ') || 'aucune'}`);
+    if (registered.length) console.log(`[fonts] Disponibles canvas: ${registered.slice(0,10).join(', ')}`);
+    if (errors.length) console.warn(`[fonts] Échecs: ${errors.join(', ')}`);
 }
 
 module.exports = { loadFonts };
