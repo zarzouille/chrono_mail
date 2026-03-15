@@ -648,6 +648,21 @@ async function publishCountdown() {
 // ============================================================
 // CODE SNIPPETS
 // ============================================================
+/**
+ * Applique la coloration syntaxique HTML sur un snippet de code.
+ * Injecte des spans colorés dans le bloc .code-block-v2
+ */
+function highlightHtml(code) {
+    return code
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        // Retablit les balises après échappement
+        .replace(/&lt;(\/?[\w]+)/g, '<span class="hl-tag">&lt;$1</span>')
+        .replace(/\/&gt;|&gt;/g, '<span class="hl-tag">$&</span>')
+        // Attributs = valeurs
+        .replace(/\s([\w-]+)(=)("(?:[^"]*)")/g,
+            ' <span class="hl-attr">$1</span><span class="hl-eq">$2</span><span class="hl-string">$3</span>');
+}
+
 function displayCode(gifUrl) {
     const section = document.getElementById('code-section');
     const urlDisp = document.getElementById('gif-url-display');
@@ -659,8 +674,11 @@ function displayCode(gifUrl) {
         standard: `<img src="${gifUrl}" border="0" style="display:block;max-width:100%" alt="Timer — chrono.mail" width="${currentWidth}" />`,
     };
 
-    document.getElementById('code-minimal-content').textContent  = window._codeSnippets.minimal;
-    document.getElementById('code-standard-content').textContent = window._codeSnippets.standard;
+    // Affiche avec coloration syntaxique
+    const minEl = document.getElementById('code-minimal-content');
+    const stdEl = document.getElementById('code-standard-content');
+    if (minEl) minEl.innerHTML = highlightHtml(window._codeSnippets.minimal);
+    if (stdEl) stdEl.innerHTML = highlightHtml(window._codeSnippets.standard);
 }
 
 function switchCodeTab(name, btn) {
