@@ -58,8 +58,7 @@ const FONT_LIST = [
     {
         family: 'Raleway',
         file: 'Raleway-Bold.ttf',
-        url: 'https://github.com/impallari/Raleway/raw/master/fonts/ttf/Raleway-Bold.ttf',
-        fallbackUrl: 'https://github.com/googlefonts/raleway/raw/main/fonts/ttf/Raleway-Bold.ttf',
+        url: 'https://github.com/googlefonts/raleway/raw/main/fonts/ttf/Raleway-Bold.ttf',
     },
     {
         family: 'Lato',
@@ -69,8 +68,7 @@ const FONT_LIST = [
     {
         family: 'Nunito',
         file: 'Nunito-Bold.ttf',
-        url: 'https://github.com/googlefonts/nunito/raw/main/fonts/variable/Nunito[wght].ttf',
-        fallbackUrl: 'https://github.com/googlefonts/nunito/raw/main/fonts/ttf/Nunito-Bold.ttf',
+        url: 'https://github.com/googlefonts/nunito/raw/main/fonts/ttf/Nunito-Bold.ttf',
     },
     {
         family: 'Abril Fatface',
@@ -149,6 +147,10 @@ async function loadFonts() {
 
             canvas.GlobalFonts.registerFromPath(destPath, font.family);
             ok.push(font.family);
+            // Debug : confirme le nom exact enregistré
+            if (process.env.NODE_ENV !== 'production') {
+                console.log(`[fonts] "${font.family}" enregistrée depuis ${font.file}`);
+            }
         } catch (err) {
             process.stdout.write('\n');
             console.warn(`[fonts] Échec "${font.family}": ${err.message}`);
