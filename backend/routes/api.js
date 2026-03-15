@@ -25,16 +25,6 @@ router.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ── Debug polices (temporaire) ─────────────────────────────────
-router.get('/fonts-debug', (req, res) => {
-    try {
-        const { GlobalFonts } = require('@napi-rs/canvas');
-        const families = GlobalFonts.getFamilies();
-        res.json({ count: families.length, families });
-    } catch(e) {
-        res.json({ error: e.message });
-    }
-});
 
 // ── Créer un countdown ─────────────────────────────────────────
 router.post('/countdown', requireAuth, async (req, res) => {
@@ -284,7 +274,6 @@ router.get('/gif', async (req, res) => {
             });
             return res.send(cached);
         }
-        console.log(`[gif] MISS — font: ${req.query.fontFamily || 'default'}, style: ${req.query.style || 'default'}`);
         const {
             endDate      = new Date(Date.now() + 86400000).toISOString(),
             bgColor      = '#ffffff',
