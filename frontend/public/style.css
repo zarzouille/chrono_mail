@@ -156,7 +156,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .cd-card-add:hover { color:var(--accent); border-color:var(--accent); background:var(--accent-l); transform:translateY(-2px); }
 .cd-card-add-icon { width:40px; height:40px; background:var(--surface2); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; transition:all .18s; }
 .cd-card-add:hover .cd-card-add-icon { background:var(--accent-b); }
-.cd-card-actions { display:flex; gap:8px; padding-top:12px; border-top:1px solid var(--border); margin-top:2px; }
+.cd-card-actions { display:flex; gap:8px; padding-top:12px; margin-top:12px; }
 .cd-action-btn { background:none; border:1px solid var(--border); border-radius:6px; padding:5px 11px; font-size:12px; font-weight:600; cursor:pointer; color:var(--muted); transition:all .15s; font-family:inherit; }
 .cd-action-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-l); }
 .cd-action-delete:hover { border-color:var(--red); color:var(--red); background:#fef2f2; }
@@ -951,13 +951,6 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .footer-link:hover { color:var(--accent); }
 .site-footer-bottom { padding:18px 32px; border-top:1px solid var(--border); max-width:1080px; margin:40px auto 0; display:flex; align-items:center; justify-content:space-between; font-size:12.5px; color:var(--muted); }
 
-/* Footer minimal (pricing, auth) */
-.pricing-footer-links { text-align:center; padding:32px 20px 40px; display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
-.footer-sep { color:var(--border2); }
-.auth-footer-links { text-align:center; padding:20px; font-size:12.5px; color:var(--muted); display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; }
-.auth-footer-links a { color:var(--muted); text-decoration:none; transition:color .12s; }
-.auth-footer-links a:hover { color:var(--accent); }
-.auth-footer-links span { color:var(--border2); }
 
 /* ============================================================
    PAGES LÉGALES & CONTACT
@@ -980,7 +973,6 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .legal-section ul li::before { content:'—'; position:absolute; left:0; color:var(--muted2); }
 .legal-section a { color:var(--accent); text-decoration:none; }
 .legal-section a:hover { text-decoration:underline; }
-.legal-footer-links { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding-top:40px; border-top:1px solid var(--border); margin-top:40px; }
 .contact-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
 .contact-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-l); padding:22px; display:flex; flex-direction:column; }
 .contact-card-icon { font-size:24px; margin-bottom:12px; }
