@@ -787,6 +787,28 @@
 <!-- TOAST -->
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
 
+<!-- ═══ MODALE CONFIRMATION SUPPRESSION ═══ -->
+<div id="confirm-delete-overlay" class="modal-overlay" onclick="closeConfirmModal(event)">
+    <div class="confirm-modal">
+        <div class="confirm-modal-header">
+            <div class="confirm-modal-icon">🗑</div>
+            <div>
+                <div class="confirm-modal-title">Supprimer ce countdown ?</div>
+                <div class="confirm-modal-subtitle" id="confirm-modal-name"></div>
+            </div>
+        </div>
+        <div class="confirm-modal-body">
+            <div class="confirm-modal-warn">
+                ⚠ Cette action est irréversible. Toutes les impressions associées seront également supprimées.
+            </div>
+        </div>
+        <div class="confirm-modal-footer">
+            <button class="btn btn-ghost" onclick="closeConfirmModal()">Annuler</button>
+            <button class="btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">Supprimer définitivement</button>
+        </div>
+    </div>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>

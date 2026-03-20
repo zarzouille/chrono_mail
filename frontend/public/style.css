@@ -933,3 +933,56 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
     border-radius: 0;
     border-top: none;
 }
+
+
+/* ============================================================
+   MODALES — Upgrade + Confirmation
+   ============================================================ */
+@keyframes modal-in { from { opacity:0; transform:scale(0.93) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+/* Overlay commun */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,17,26,0.45);
+    backdrop-filter: blur(3px);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+
+/* ── Upgrade modal ── */
+#upgrade-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,17,26,0.45); backdrop-filter:blur(3px); z-index:500; align-items:center; justify-content:center; padding:20px; }
+#upgrade-modal-overlay.open { display:flex !important; }
+
+.upgrade-modal { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-xl); width:100%; max-width:420px; box-shadow:var(--shadow-l); overflow:hidden; animation:modal-in .22s cubic-bezier(.34,1.56,.64,1); }
+.upgrade-modal-header { display:flex; align-items:center; gap:14px; padding:20px 22px 16px; border-bottom:1px solid var(--border); }
+.upgrade-modal-icon { width:40px; height:40px; background:linear-gradient(135deg,#2563eb,#7c3aed); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; font-size:18px; color:white; flex-shrink:0; }
+.upgrade-modal-title { font-size:16px; font-weight:800; color:var(--text); letter-spacing:-0.3px; }
+.upgrade-modal-subtitle { font-size:13px; color:var(--muted); margin-top:2px; }
+.upgrade-modal-close { margin-left:auto; background:none; border:none; cursor:pointer; color:var(--muted2); font-size:16px; padding:4px; border-radius:var(--radius-s); transition:all .12s; line-height:1; flex-shrink:0; }
+.upgrade-modal-close:hover { background:var(--surface2); color:var(--text); }
+.upgrade-modal-body { padding:18px 22px; }
+.upgrade-modal-feature-desc { font-size:14px; color:var(--text2); line-height:1.6; margin-bottom:14px; padding:12px 14px; background:var(--accent-l); border-radius:var(--radius); border:1px solid rgba(37,99,235,0.15); }
+.upgrade-modal-list-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); margin-bottom:10px; }
+.upgrade-modal-list { list-style:none; display:flex; flex-direction:column; gap:7px; margin-bottom:16px; }
+.upgrade-modal-list li { font-size:14px; color:var(--text2); display:flex; align-items:center; gap:8px; }
+.upgrade-modal-list li::before { content:''; display:none; }
+.upgrade-modal-price { font-size:13px; color:var(--muted); padding-top:14px; border-top:1px solid var(--border); }
+.upgrade-modal-price strong { color:var(--text); }
+.upgrade-modal-footer { display:flex; gap:10px; padding:14px 22px 20px; }
+
+/* ── Confirm (delete) modal ── */
+.confirm-modal { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-xl); width:100%; max-width:380px; box-shadow:var(--shadow-l); overflow:hidden; animation:modal-in .22s cubic-bezier(.34,1.56,.64,1); }
+.confirm-modal-header { display:flex; align-items:center; gap:14px; padding:22px 22px 16px; }
+.confirm-modal-icon { width:42px; height:42px; background:#fef2f2; border:1px solid #fecaca; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.confirm-modal-title { font-size:16px; font-weight:800; color:var(--text); letter-spacing:-0.3px; }
+.confirm-modal-subtitle { font-size:13px; color:var(--muted); margin-top:3px; line-height:1.5; }
+.confirm-modal-body { padding:0 22px 18px; }
+.confirm-modal-warn { display:flex; align-items:flex-start; gap:9px; background:#fef2f2; border:1px solid #fecaca; border-radius:var(--radius); padding:10px 13px; font-size:13px; color:#b91c1c; line-height:1.5; }
+.confirm-modal-footer { display:flex; gap:10px; padding:14px 22px 20px; border-top:1px solid var(--border); }
+.btn-danger { background:var(--red); color:white; border:1px solid var(--red); border-radius:var(--radius); padding:9px 18px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; flex:1; }
+.btn-danger:hover { background:#b91c1c; border-color:#b91c1c; }
