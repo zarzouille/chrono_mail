@@ -944,13 +944,40 @@ function editCountdown(id) {
 
 
 // ============================================================
-// SUPPRESSION — Supprime un countdown après confirmation
+// SUPPRESSION — Modale de confirmation custom
 // ============================================================
-async function deleteCountdown(id) {
-    if (!confirm('Supprimer ce countdown ? Cette action est irréversible.')) return;
+let _pendingDeleteId = null;
+
+function deleteCountdown(id) {
+    const cd = cdMap[id];
+    _pendingDeleteId = id;
+    const nameEl = document.getElementById('confirm-modal-name');
+    if (nameEl) nameEl.textContent = cd?.name || '';
+    const overlay = document.getElementById('confirm-delete-overlay');
+    if (overlay) { overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+}
+
+function closeConfirmModal(event) {
+    if (event && event.target !== document.getElementById('confirm-delete-overlay')) return;
+    _closeConfirmModal();
+}
+
+function _closeConfirmModal() {
+    const overlay = document.getElementById('confirm-delete-overlay');
+    if (overlay) overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    _pendingDeleteId = null;
+}
+
+async function confirmDelete() {
+    if (!_pendingDeleteId) return;
+    const id  = _pendingDeleteId;
+    const btn = document.getElementById('confirm-delete-btn');
+    if (btn) { btn.textContent = '⏳ Suppression...'; btn.disabled = true; }
     try {
         const res = await authFetch(`/countdown/${id}`, { method: 'DELETE' });
         if (res.ok) {
+            _closeConfirmModal();
             showToast('🗑 Countdown supprimé');
             loadDashboard();
         } else {
@@ -958,6 +985,8 @@ async function deleteCountdown(id) {
         }
     } catch(err) {
         showToast('❌ Erreur réseau');
+    } finally {
+        if (btn) { btn.textContent = 'Supprimer définitivement'; btn.disabled = false; }
     }
 }
 
@@ -1228,5 +1257,5 @@ updateNavAuth();
 
 // Ferme la modale upgrade avec la touche Escape
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeUpgradeModal();
+    if (e.key === 'Escape') { closeUpgradeModal(); _closeConfirmModal(); }
 });
