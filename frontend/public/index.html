@@ -119,6 +119,41 @@
             <button class="btn btn-xl" style="background:white;color:var(--accent);font-weight:700" onclick="showPage('register')">Commencer gratuitement →</button>
         </div>
     </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div class="site-footer-brand">
+                <div class="footer-logo" onclick="showPage('landing')">
+                    <div class="logo-dot" style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>
+                    chrono<span class="logo-suffix">.mail</span>
+                </div>
+                <div class="site-footer-tagline">Des countdowns GIF pour vos emails marketing.</div>
+            </div>
+            <div class="site-footer-links">
+                <div class="site-footer-col">
+                    <div class="site-footer-col-title">Produit</div>
+                    <a href="#" class="footer-link" onclick="showPage('pricing')">Tarifs</a>
+                    <a href="#" class="footer-link" onclick="showPage('register')">Commencer gratuitement</a>
+                    <a href="#" class="footer-link" onclick="handleDashboardClick()">Dashboard</a>
+                </div>
+                <div class="site-footer-col">
+                    <div class="site-footer-col-title">Légal</div>
+                    <a href="#" class="footer-link" onclick="showPage('legal-privacy')">Confidentialité</a>
+                    <a href="#" class="footer-link" onclick="showPage('legal-cgu')">CGU</a>
+                    <a href="#" class="footer-link" onclick="showPage('legal-cookies')">Cookies</a>
+                </div>
+                <div class="site-footer-col">
+                    <div class="site-footer-col-title">Assistance</div>
+                    <a href="#" class="footer-link" onclick="showPage('contact')">Nous contacter</a>
+                    <a href="mailto:contact@chrono.mail" class="footer-link">contact@chrono.mail</a>
+                </div>
+            </div>
+        </div>
+        <div class="site-footer-bottom">
+            <span>© 2026 chrono.mail — Tous droits réservés</span>
+            <span>Conçu en France 🇫🇷</span>
+        </div>
+    </footer>
 </div>
 
 <!-- ============================================================
@@ -211,6 +246,16 @@
                 <!-- Généré dynamiquement par script.js -->
             </div>
         </div>
+
+        <div class="pricing-footer-links">
+            <a href="#" class="footer-link" onclick="showPage('legal-privacy')">Confidentialité</a>
+            <span class="footer-sep">·</span>
+            <a href="#" class="footer-link" onclick="showPage('legal-cgu')">CGU</a>
+            <span class="footer-sep">·</span>
+            <a href="#" class="footer-link" onclick="showPage('legal-cookies')">Cookies</a>
+            <span class="footer-sep">·</span>
+            <a href="#" class="footer-link" onclick="showPage('contact')">Contact</a>
+        </div>
     </div>
 </div>
 
@@ -243,6 +288,15 @@
             </a>
             <div class="auth-switch">Pas encore de compte ? <a href="#" onclick="showPage('register')">S'inscrire gratuitement</a></div>
         </div>
+    </div>
+    <div class="auth-footer-links">
+        <a href="#" onclick="showPage('legal-privacy')">Confidentialité</a>
+        <span>·</span>
+        <a href="#" onclick="showPage('legal-cgu')">CGU</a>
+        <span>·</span>
+        <a href="#" onclick="showPage('legal-cookies')">Cookies</a>
+        <span>·</span>
+        <a href="#" onclick="showPage('contact')">Contact</a>
     </div>
 </div>
 
@@ -279,6 +333,15 @@
             </a>
             <div class="auth-switch">Déjà un compte ? <a href="#" onclick="showPage('login')">Se connecter</a></div>
         </div>
+    </div>
+    <div class="auth-footer-links">
+        <a href="#" onclick="showPage('legal-privacy')">Confidentialité</a>
+        <span>·</span>
+        <a href="#" onclick="showPage('legal-cgu')">CGU</a>
+        <span>·</span>
+        <a href="#" onclick="showPage('legal-cookies')">Cookies</a>
+        <span>·</span>
+        <a href="#" onclick="showPage('contact')">Contact</a>
     </div>
 </div>
 
@@ -785,6 +848,317 @@
 </div>
 
 <!-- TOAST -->
+<!-- ============================================================
+     PAGE LÉGALE — POLITIQUE DE CONFIDENTIALITÉ
+     ============================================================ -->
+<div id="page-legal-privacy" class="page">
+    <div class="legal-layout">
+        <button class="btn btn-ghost btn-sm legal-back" onclick="history.go(-1) || showPage('landing')">← Retour</button>
+        <div class="legal-header">
+            <div class="legal-eyebrow">Légal</div>
+            <h1 class="legal-title">Politique de confidentialité</h1>
+            <div class="legal-date">Dernière mise à jour : mars 2026</div>
+        </div>
+        <div class="legal-body">
+
+            <div class="legal-intro">
+                chrono.mail s'engage à protéger la vie privée de ses utilisateurs. Cette politique décrit quelles données nous collectons, pourquoi et comment vous pouvez exercer vos droits.
+            </div>
+
+            <div class="legal-section">
+                <h2>1. Responsable du traitement</h2>
+                <p>Le responsable du traitement des données est l'éditeur de la plateforme chrono.mail, joignable à l'adresse <a href="mailto:contact@chrono.mail">contact@chrono.mail</a>.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>2. Données collectées</h2>
+                <p>Nous collectons les données suivantes :</p>
+                <ul>
+                    <li><strong>Données de compte</strong> — adresse e-mail, nom (optionnel), mot de passe hashé (bcrypt). En cas de connexion Google, nous recevons votre adresse e-mail et votre nom depuis Google.</li>
+                    <li><strong>Données de countdown</strong> — nom, date cible, paramètres de style (couleurs, police, etc.), comportement à l'expiration.</li>
+                    <li><strong>Données d'impression</strong> — adresse IP (non stockée en clair, utilisée pour la géolocalisation approximative), User-Agent, horodatage, à chaque affichage d'un GIF.</li>
+                    <li><strong>Données de facturation</strong> — gérées exclusivement par Stripe. Nous ne stockons aucun numéro de carte bancaire.</li>
+                </ul>
+            </div>
+
+            <div class="legal-section">
+                <h2>3. Finalités et bases légales</h2>
+                <ul>
+                    <li><strong>Fourniture du service</strong> — exécution du contrat (article 6.1.b RGPD)</li>
+                    <li><strong>Gestion de la facturation</strong> — exécution du contrat</li>
+                    <li><strong>Statistiques d'impression</strong> — intérêt légitime (amélioration du service, article 6.1.f RGPD)</li>
+                    <li><strong>Sécurité et prévention des abus</strong> — intérêt légitime</li>
+                    <li><strong>Communications transactionnelles</strong> — exécution du contrat (confirmation d'inscription, factures)</li>
+                </ul>
+            </div>
+
+            <div class="legal-section">
+                <h2>4. Durée de conservation</h2>
+                <ul>
+                    <li><strong>Données de compte</strong> — conservées pendant la durée de vie du compte, puis supprimées dans un délai de 3 ans après la résiliation.</li>
+                    <li><strong>Données de countdown</strong> — conservées jusqu'à suppression par l'utilisateur ou clôture du compte.</li>
+                    <li><strong>Données d'impression</strong> — conservées 12 mois glissants.</li>
+                    <li><strong>Données de facturation</strong> — conservées 10 ans conformément aux obligations comptables légales (gérées par Stripe).</li>
+                </ul>
+            </div>
+
+            <div class="legal-section">
+                <h2>5. Partage avec des tiers</h2>
+                <p>Nous ne vendons jamais vos données. Nous faisons appel aux sous-traitants suivants :</p>
+                <ul>
+                    <li><strong>Stripe</strong> (paiement) — <a href="https://stripe.com/fr/privacy" target="_blank">politique de confidentialité Stripe</a></li>
+                    <li><strong>Render</strong> (hébergement backend) — serveurs situés aux États-Unis, couvert par des clauses contractuelles types.</li>
+                    <li><strong>Supabase</strong> (base de données) — hébergement PostgreSQL, données chiffrées au repos.</li>
+                    <li><strong>Google</strong> (authentification OAuth, optionnel) — <a href="https://policies.google.com/privacy" target="_blank">politique de confidentialité Google</a></li>
+                </ul>
+            </div>
+
+            <div class="legal-section">
+                <h2>6. Vos droits (RGPD)</h2>
+                <p>Conformément au Règlement Général sur la Protection des Données, vous disposez des droits suivants :</p>
+                <ul>
+                    <li><strong>Droit d'accès</strong> — obtenir une copie de vos données personnelles</li>
+                    <li><strong>Droit de rectification</strong> — corriger des données inexactes</li>
+                    <li><strong>Droit à l'effacement</strong> — demander la suppression de vos données</li>
+                    <li><strong>Droit à la portabilité</strong> — recevoir vos données dans un format structuré</li>
+                    <li><strong>Droit d'opposition</strong> — vous opposer à certains traitements fondés sur l'intérêt légitime</li>
+                </ul>
+                <p>Pour exercer ces droits, contactez-nous à <a href="mailto:contact@chrono.mail">contact@chrono.mail</a>. Nous répondrons dans un délai de 30 jours. Vous pouvez également introduire une réclamation auprès de la <strong>CNIL</strong> (<a href="https://www.cnil.fr" target="_blank">www.cnil.fr</a>).</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>7. Sécurité</h2>
+                <p>Nous mettons en œuvre des mesures techniques et organisationnelles appropriées : chiffrement TLS en transit, hachage des mots de passe (bcrypt), accès aux données restreint aux seuls membres de l'équipe qui en ont besoin, sauvegardes chiffrées.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>8. Modifications</h2>
+                <p>Nous nous réservons le droit de modifier cette politique à tout moment. En cas de modification substantielle, nous vous en informerons par e-mail ou par notification dans l'application.</p>
+            </div>
+
+        </div>
+        <div class="legal-footer-links">
+            <a href="#" class="footer-link" onclick="showPage('legal-cgu')">CGU</a>
+            <span class="footer-sep">·</span>
+            <a href="#" class="footer-link" onclick="showPage('legal-cookies')">Cookies</a>
+            <span class="footer-sep">·</span>
+            <a href="#" class="footer-link" onclick="showPage('contact')">Contact</a>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     PAGE LÉGALE — CGU
+     ============================================================ -->
+<div id="page-legal-cgu" class="page">
+    <div class="legal-layout">
+        <button class="btn btn-ghost btn-sm legal-back" onclick="history.go(-1) || showPage('landing')">← Retour</button>
+        <div class="legal-header">
+            <div class="legal-eyebrow">Légal</div>
+            <h1 class="legal-title">Conditions Générales d'Utilisation</h1>
+            <div class="legal-date">Dernière mise à jour : mars 2026</div>
+        </div>
+        <div class="legal-body">
+
+            <div class="legal-intro">
+                Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation de la plateforme chrono.mail. En créant un compte, vous acceptez sans réserve l'intégralité des présentes conditions.
+            </div>
+
+            <div class="legal-section">
+                <h2>Article 1 — Objet</h2>
+                <p>chrono.mail est une plateforme en ligne permettant de générer des GIFs animés de décompte (countdown) destinés à être intégrés dans des emails marketing. Le service est accessible à l'adresse chrono.mail et opéré par son éditeur.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>Article 2 — Accès et inscription</h2>
+                <p>L'accès au service nécessite la création d'un compte. Vous devez :</p>
+                <ul>
+                    <li>Être âgé d'au moins 18 ans ou avoir l'accord parental requis</li>
+                    <li>Fournir des informations exactes et à jour lors de l'inscription</li>
+                    <li>Maintenir la confidentialité de vos identifiants de connexion</li>
+                    <li>Nous notifier immédiatement de tout accès non autorisé à votre compte</li>
+                </ul>
+                <p>Un compte peut également être créé via Google OAuth. Les informations transmises par Google sont utilisées conformément à notre <a href="#" onclick="showPage('legal-privacy')">politique de confidentialité</a>.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>Article 3 — Plans tarifaires et paiement</h2>
+                <p>Le service est disponible selon trois plans :</p>
+                <ul>
+                    <li><strong>Free</strong> — gratuit, limité à 3 countdowns actifs</li>
+                    <li><strong>Pro (9€/mois ou 79€/an)</strong> — countdowns illimités, labels personnalisés, analytics, image de fond</li>
+                    <li><strong>Business (29€/mois ou 249€/an)</strong> — tout le plan Pro + timer perpétuel, API, support dédié</li>
+                </ul>
+                <p>Les paiements sont traités par <strong>Stripe</strong>, tiers de confiance certifié PCI-DSS. Les prix sont indiqués hors taxes. La TVA applicable sera ajoutée selon votre pays de résidence. Les abonnements sont renouvelés automatiquement. Vous pouvez annuler à tout moment depuis votre portail de facturation.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>Article 4 — Obligations de l'utilisateur</h2>
+                <p>Vous vous engagez à ne pas :</p>
+                <ul>
+                    <li>Utiliser le service à des fins illicites, frauduleuses ou contraires à l'ordre public</li>
+                    <li>Intégrer des countdowns dans des campagnes de spam ou de phishing</li>
+                    <li>Tenter de contourner les restrictions des plans</li>
+                    <li>Revendre ou sous-licencier l'accès au service à des tiers</li>
+                    <li>Porter atteinte à la sécurité, à l'intégrité ou à la disponibilité de la plateforme</li>
+                </ul>
+            </div>
+
+            <div class="legal-section">
+                <h2>Article 5 — Propriété intellectuelle</h2>
+                <p>La plateforme chrono.mail, son code source, son interface, ses marques et logos sont la propriété exclusive de son éditeur. Toute reproduction ou exploitation non autorisée est interdite.</p>
+                <p>Les données que vous saisissez (noms de countdowns, configurations, etc.) restent votre propriété. Vous nous accordez une licence limitée pour les utiliser dans le seul but de fournir le service.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>Article 6 — Limitation de responsabilité</h2>
+                <p>Le service est fourni « en l'état », sans garantie d'aucune sorte. Nous ne saurions être tenus responsables :</p>
+                <ul>
+                    <li>Des interruptions temporaires de service pour maintenance ou incidents techniques</li>
+                    <li>De l'affichage des GIFs dans des clients email tiers (notamment Outlook 2007-2010)</li>
+                    <li>De tout préjudice indirect résultant de l'utilisation ou de l'impossibilité d'utiliser le service</li>
+                </ul>
+                <p>Notre responsabilité totale ne pourra excéder les montants effectivement payés au cours des 12 derniers mois précédant le fait générateur.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>Article 7 — Résiliation</h2>
+                <p><strong>Par l'utilisateur</strong> — vous pouvez supprimer votre compte à tout moment depuis votre espace de facturation. Vos données seront supprimées dans un délai de 30 jours. Aucun remboursement n'est dû pour la période déjà facturée.</p>
+                <p><strong>Par chrono.mail</strong> — nous nous réservons le droit de suspendre ou résilier un compte en cas de violation des présentes CGU, sans préavis ni indemnité.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>Article 8 — Modification des CGU</h2>
+                <p>Nous nous réservons le droit de modifier les présentes CGU à tout moment. Les modifications entrent en vigueur 15 jours après leur publication, sauf disposition légale contraire. Votre utilisation continue du service après ce délai vaut acceptation des nouvelles CGU.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>Article 9 — Droit applicable</h2>
+                <p>Les présentes CGU sont soumises au droit français. En cas de litige, les parties s'efforceront de trouver une solution amiable avant tout recours judiciaire. À défaut, le Tribunal compétent sera celui du ressort de Paris.</p>
+            </div>
+
+        </div>
+        <div class="legal-footer-links">
+            <a href="#" class="footer-link" onclick="showPage('legal-privacy')">Confidentialité</a>
+            <span class="footer-sep">·</span>
+            <a href="#" class="footer-link" onclick="showPage('legal-cookies')">Cookies</a>
+            <span class="footer-sep">·</span>
+            <a href="#" class="footer-link" onclick="showPage('contact')">Contact</a>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     PAGE LÉGALE — COOKIES
+     ============================================================ -->
+<div id="page-legal-cookies" class="page">
+    <div class="legal-layout">
+        <button class="btn btn-ghost btn-sm legal-back" onclick="history.go(-1) || showPage('landing')">← Retour</button>
+        <div class="legal-header">
+            <div class="legal-eyebrow">Légal</div>
+            <h1 class="legal-title">Politique de cookies</h1>
+            <div class="legal-date">Dernière mise à jour : mars 2026</div>
+        </div>
+        <div class="legal-body">
+
+            <div class="legal-intro">
+                chrono.mail utilise un stockage local minimal, strictement nécessaire au fonctionnement du service. Nous n'utilisons aucun cookie de suivi publicitaire ni d'outil d'analyse de type Google Analytics.
+            </div>
+
+            <div class="legal-section">
+                <h2>1. Stockage local (localStorage)</h2>
+                <p>Pour maintenir votre session, l'application stocke dans le <strong>localStorage</strong> de votre navigateur :</p>
+                <ul>
+                    <li><strong>cm_token</strong> — jeton d'authentification JWT. Expiré automatiquement, supprimé à la déconnexion.</li>
+                    <li><strong>cm_user</strong> — informations de profil en cache (nom, email, plan). Supprimé à la déconnexion.</li>
+                </ul>
+                <p>Ces données restent sur votre appareil et ne sont jamais transmises à des tiers hormis nos propres serveurs lors des appels API.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>2. Cookies Stripe</h2>
+                <p>Lorsque vous accédez aux pages de paiement ou au portail de facturation <strong>Stripe</strong>, ce service tiers peut déposer ses propres cookies, nécessaires au traitement sécurisé des paiements. Ces cookies sont soumis à la <a href="https://stripe.com/fr/privacy" target="_blank">politique de confidentialité de Stripe</a>.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>3. Absence de cookies tiers de suivi</h2>
+                <p>Nous n'utilisons aucun service de tracking tiers (Google Analytics, Facebook Pixel, Hotjar, etc.). Les statistiques d'utilisation que nous collectons (impressions de vos GIFs) sont hébergées sur nos propres serveurs et ne sont pas partagées avec des régies publicitaires.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>4. Gestion de vos préférences</h2>
+                <p>Vous pouvez vider le localStorage de chrono.mail à tout moment via les outils de développement de votre navigateur (F12 → Application → Local Storage). Cela vous déconnectera.</p>
+                <p>La plupart des navigateurs permettent également de bloquer ou supprimer les cookies. Consultez l'aide de votre navigateur pour plus d'informations.</p>
+            </div>
+
+            <div class="legal-section">
+                <h2>5. Contact</h2>
+                <p>Pour toute question relative à notre utilisation du stockage local ou des cookies, contactez-nous à <a href="mailto:contact@chrono.mail">contact@chrono.mail</a>.</p>
+            </div>
+
+        </div>
+        <div class="legal-footer-links">
+            <a href="#" class="footer-link" onclick="showPage('legal-privacy')">Confidentialité</a>
+            <span class="footer-sep">·</span>
+            <a href="#" class="footer-link" onclick="showPage('legal-cgu')">CGU</a>
+            <span class="footer-sep">·</span>
+            <a href="#" class="footer-link" onclick="showPage('contact')">Contact</a>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     PAGE CONTACT
+     ============================================================ -->
+<div id="page-contact" class="page">
+    <div class="legal-layout">
+        <button class="btn btn-ghost btn-sm legal-back" onclick="history.go(-1) || showPage('landing')">← Retour</button>
+        <div class="legal-header">
+            <div class="legal-eyebrow">Assistance</div>
+            <h1 class="legal-title">Nous contacter</h1>
+        </div>
+        <div class="legal-body">
+            <div class="legal-intro">
+                Une question, un problème ou une suggestion ? Nous sommes là pour vous aider.
+            </div>
+
+            <div class="contact-grid">
+                <div class="contact-card">
+                    <div class="contact-card-icon">✉</div>
+                    <div class="contact-card-title">Support général</div>
+                    <div class="contact-card-desc">Questions sur le produit, problèmes techniques, demandes d'aide.</div>
+                    <a href="mailto:contact@chrono.mail" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;margin-top:14px">Écrire à contact@chrono.mail</a>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-card-icon">💳</div>
+                    <div class="contact-card-title">Facturation</div>
+                    <div class="contact-card-desc">Remboursement, facture avec TVA, modification d'abonnement.</div>
+                    <a href="mailto:billing@chrono.mail" class="btn btn-ghost" style="display:inline-flex;align-items:center;gap:8px;margin-top:14px">Écrire à billing@chrono.mail</a>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-card-icon">🔒</div>
+                    <div class="contact-card-title">Données personnelles</div>
+                    <div class="contact-card-desc">Exercice de vos droits RGPD : accès, rectification, suppression.</div>
+                    <a href="mailto:privacy@chrono.mail" class="btn btn-ghost" style="display:inline-flex;align-items:center;gap:8px;margin-top:14px">Écrire à privacy@chrono.mail</a>
+                </div>
+            </div>
+
+            <div class="legal-section" style="margin-top:32px">
+                <h2>Délai de réponse</h2>
+                <p>Nous répondons généralement sous <strong>48 heures ouvrées</strong>. Pour les urgences liées à un problème de facturation, précisez « URGENT » dans l'objet de votre email.</p>
+            </div>
+
+        </div>
+        <div class="legal-footer-links">
+            <a href="#" class="footer-link" onclick="showPage('legal-privacy')">Confidentialité</a>
+            <span class="footer-sep">·</span>
+            <a href="#" class="footer-link" onclick="showPage('legal-cgu')">CGU</a>
+            <span class="footer-sep">·</span>
+            <a href="#" class="footer-link" onclick="showPage('legal-cookies')">Cookies</a>
+        </div>
+    </div>
+</div>
+
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
 
 <!-- ═══ MODALE CONFIRMATION SUPPRESSION ═══ -->

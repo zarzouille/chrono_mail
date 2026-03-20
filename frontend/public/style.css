@@ -936,6 +936,68 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 
 
 /* ============================================================
+   FOOTER
+   ============================================================ */
+.site-footer { border-top:1px solid var(--border); background:var(--surface); padding:48px 0 0; }
+.site-footer-inner { max-width:1080px; margin:0 auto; padding:0 32px; display:flex; gap:48px; flex-wrap:wrap; justify-content:space-between; }
+.site-footer-brand { display:flex; flex-direction:column; gap:10px; max-width:220px; }
+.footer-logo { font-size:17px; font-weight:800; letter-spacing:-0.5px; color:var(--text); display:flex; align-items:center; gap:7px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; }
+.footer-logo:hover { color:var(--accent); }
+.site-footer-tagline { font-size:13px; color:var(--muted); line-height:1.5; }
+.site-footer-links { display:flex; gap:48px; flex-wrap:wrap; }
+.site-footer-col { display:flex; flex-direction:column; gap:10px; }
+.site-footer-col-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text2); margin-bottom:2px; }
+.footer-link { font-size:13.5px; color:var(--muted); text-decoration:none; transition:color .12s; cursor:pointer; }
+.footer-link:hover { color:var(--accent); }
+.site-footer-bottom { padding:18px 32px; border-top:1px solid var(--border); max-width:1080px; margin:40px auto 0; display:flex; align-items:center; justify-content:space-between; font-size:12.5px; color:var(--muted); }
+
+/* Footer minimal (pricing, auth) */
+.pricing-footer-links { text-align:center; padding:32px 20px 40px; display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
+.footer-sep { color:var(--border2); }
+.auth-footer-links { text-align:center; padding:20px; font-size:12.5px; color:var(--muted); display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; }
+.auth-footer-links a { color:var(--muted); text-decoration:none; transition:color .12s; }
+.auth-footer-links a:hover { color:var(--accent); }
+.auth-footer-links span { color:var(--border2); }
+
+/* ============================================================
+   PAGES LÉGALES & CONTACT
+   ============================================================ */
+.legal-layout { max-width:720px; margin:0 auto; padding:40px 32px 80px; }
+.legal-back { margin-bottom:32px; }
+.legal-header { margin-bottom:40px; border-bottom:1px solid var(--border); padding-bottom:28px; }
+.legal-eyebrow { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--accent); margin-bottom:10px; }
+.legal-title { font-size:32px; font-weight:800; color:var(--text); letter-spacing:-0.8px; margin-bottom:12px; line-height:1.2; }
+.legal-date { font-size:13px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+.legal-intro { font-size:15px; color:var(--text2); line-height:1.75; padding:16px 20px; background:var(--accent-l); border:1px solid rgba(37,99,235,0.15); border-radius:var(--radius); margin-bottom:32px; }
+.legal-body { display:flex; flex-direction:column; }
+.legal-section { padding:28px 0; border-bottom:1px solid var(--border); }
+.legal-section:last-child { border-bottom:none; }
+.legal-section h2 { font-size:17px; font-weight:700; color:var(--text); margin-bottom:12px; letter-spacing:-0.2px; }
+.legal-section p { font-size:14px; color:var(--text2); line-height:1.75; margin-bottom:10px; }
+.legal-section p:last-child { margin-bottom:0; }
+.legal-section ul { padding-left:0; list-style:none; display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+.legal-section ul li { font-size:14px; color:var(--text2); line-height:1.65; padding-left:16px; position:relative; }
+.legal-section ul li::before { content:'—'; position:absolute; left:0; color:var(--muted2); }
+.legal-section a { color:var(--accent); text-decoration:none; }
+.legal-section a:hover { text-decoration:underline; }
+.legal-footer-links { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding-top:40px; border-top:1px solid var(--border); margin-top:40px; }
+.contact-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+.contact-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-l); padding:22px; display:flex; flex-direction:column; }
+.contact-card-icon { font-size:24px; margin-bottom:12px; }
+.contact-card-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:6px; }
+.contact-card-desc { font-size:13px; color:var(--muted); line-height:1.6; flex:1; }
+
+@media (max-width:640px) {
+    .site-footer-inner { flex-direction:column; gap:32px; padding:0 20px; }
+    .site-footer-links { gap:32px; }
+    .site-footer-bottom { flex-direction:column; gap:6px; text-align:center; padding:16px 20px; }
+    .legal-layout { padding:24px 20px 60px; }
+    .legal-title { font-size:26px; }
+    .contact-grid { grid-template-columns:1fr; }
+}
+
+
+/* ============================================================
    MODALES — Upgrade + Confirmation
    ============================================================ */
 @keyframes modal-in { from { opacity:0; transform:scale(0.93) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
