@@ -75,7 +75,7 @@ function showPage(name) {
     window.scrollTo(0, 0);
     if (name === 'dashboard') loadDashboard();
     if (name === 'pricing')   renderPricing();
-    if (name === 'create')    { applyPlanGates(); updateExpiredUI(); goToStep(1); }
+    if (name === 'create')    { _resetCreateForm(); applyPlanGates(); updateExpiredUI(); goToStep(1); }
 }
 
 
@@ -169,6 +169,10 @@ let currentWidth       = 400;
 let activeCodeTab      = 'minimal';
 let currentGifUrl      = '';
 let previewDebounce    = null;
+let currentEditId      = null;    // ID du countdown en cours d'édition (null = création)
+
+// Map id → countdown, peuplée à chaque loadDashboard pour editCountdown()
+const cdMap = {};
 
 // Labels visibilité (true = affiché dans le GIF)
 let labelVisible = { days: true, hours: true, minutes: true, seconds: true };
@@ -601,8 +605,10 @@ async function publishCountdown() {
     btns.forEach(b => { if (b) { b.textContent = '⏳ Génération...'; b.disabled = true; } });
 
     try {
-        const res = await authFetch('/countdown', {
-            method: 'POST',
+        const url    = currentEditId ? `/countdown/${currentEditId}` : '/countdown';
+        const method = currentEditId ? 'PUT' : 'POST';
+        const res = await authFetch(url, {
+            method,
             body: JSON.stringify({
                 name:            document.getElementById('cd-name')?.value || 'Mon countdown',
                 endDate,
@@ -634,13 +640,14 @@ async function publishCountdown() {
         displayCode(data.gifUrl);
         const img = document.getElementById('gif-preview-img');
         if (img) { img.src = data.gifUrl + '?_t=' + Date.now(); img.style.display = 'block'; }
-        showToast('🚀 Countdown publié !');
+        showToast(currentEditId ? '✅ Countdown mis à jour !' : '🚀 Countdown publié !');
         updateProgressBar(5);
 
     } catch (err) {
         showToast('❌ Erreur réseau');
     } finally {
-        btns.forEach(b => { if (b) { b.textContent = '❆ Publier & obtenir le code'; b.disabled = false; } });
+        const btnLabel = currentEditId ? '✦ Mettre à jour' : '✦ Publier & obtenir le code';
+        btns.forEach(b => { if (b) { b.textContent = btnLabel; b.disabled = false; } });
     }
 }
 
@@ -717,6 +724,244 @@ document.addEventListener('click', e => {
 });
 
 
+// ============================================================
+// RESET FORMULAIRE — remet le formulaire create à l'état initial
+// ============================================================
+function _resetCreateForm() {
+    currentEditId      = null;
+    currentColor       = '#2563eb';
+    currentBg          = '#f8f7f4';
+    currentBlockBg     = null;
+    currentSepColor    = null;
+    showSeparators     = true;
+    currentFontDigits  = "'JetBrains Mono',monospace";
+    currentFontLabels  = "'Inter',sans-serif";
+    currentStyle       = 'rounded';
+    currentOrientation = 'horizontal';
+    currentFontSize    = 36;
+    currentWidth       = 400;
+    currentGifUrl      = '';
+    labelVisible       = { days: true, hours: true, minutes: true, seconds: true };
+
+    const nameEl = document.getElementById('cd-name');
+    if (nameEl) nameEl.value = '';
+    const dateEl = document.getElementById('cd-date');
+    if (dateEl) dateEl.value = new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16);
+    const tzEl = document.getElementById('cd-timezone');
+    if (tzEl) tzEl.value = 'Europe/Paris';
+
+    const colorMainEl = document.getElementById('color-main');
+    if (colorMainEl) colorMainEl.value = '#2563eb';
+    pickColorMain('#2563eb');
+    const colorBgEl = document.getElementById('color-bg');
+    if (colorBgEl) colorBgEl.value = '#f8f7f4';
+    pickBgMain('#f8f7f4');
+
+    const fsSlider = document.getElementById('cd-fontsize');
+    if (fsSlider) fsSlider.value = 36;
+    const fsDisp = document.getElementById('font-size-display');
+    if (fsDisp) fsDisp.textContent = '36px';
+
+    const wdSel = document.getElementById('wd-sel-name');
+    const dimBadge = document.getElementById('dim-badge');
+    if (wdSel) wdSel.textContent = 'Medium — 400px';
+    if (dimBadge) dimBadge.textContent = '400 × 112 px';
+    document.querySelectorAll('.wd-row').forEach(r => r.classList.remove('sel'));
+    const defaultWd = document.querySelector('.wd-row[onclick*=",400)"]');
+    if (defaultWd) defaultWd.classList.add('sel');
+
+    document.querySelectorAll('.orient-opt').forEach(e =>
+        e.classList.toggle('selected', e.dataset.orient === 'horizontal'));
+
+    const ico = document.getElementById('style-dd-ico');
+    if (ico) ico.innerHTML = '<div class="sdi rounded">42</div>';
+    const sdName  = document.getElementById('style-dd-name');
+    const sdDesc  = document.getElementById('style-dd-desc');
+    const ctxTitl = document.getElementById('ctx-title');
+    const ctxExt  = document.getElementById('ctx-extra');
+    if (sdName)  sdName.textContent  = 'Arrondi';
+    if (sdDesc)  sdDesc.textContent  = 'Coins arrondis, fond teinté';
+    if (ctxTitl) ctxTitl.textContent = 'Options — Arrondi';
+    if (ctxExt)  ctxExt.innerHTML    = STYLE_CTX['rounded'] || '';
+    document.querySelectorAll('.style-dd-row').forEach(r => {
+        r.classList.remove('sel');
+        r.querySelector('.sdc')?.remove();
+    });
+    const defaultStyleRow = document.querySelector(".style-dd-row[onclick*=\"'rounded'\"]");
+    if (defaultStyleRow) {
+        defaultStyleRow.classList.add('sel');
+        const chk = document.createElement('span');
+        chk.className = 'sdc sel-chk'; chk.textContent = '✓';
+        defaultStyleRow.appendChild(chk);
+    }
+
+    const fdEl = document.getElementById('cd-font-digits');
+    if (fdEl) fdEl.value = currentFontDigits;
+    const flEl = document.getElementById('cd-font-labels');
+    if (flEl) flEl.value = currentFontLabels;
+
+    const defaultLabels = { days: 'JOURS', hours: 'HEURES', minutes: 'MIN', seconds: 'SEC' };
+    ['days', 'hours', 'minutes', 'seconds'].forEach(unit => {
+        const tog    = document.getElementById('ltog-' + unit);
+        const inp    = document.getElementById('cd-label-' + unit);
+        const expInp = document.getElementById('cd-label-' + unit + '-exp');
+        if (tog)    { tog.classList.add('on'); tog.classList.remove('off'); tog.textContent = '✓'; }
+        if (inp)    { inp.classList.remove('disabled'); inp.disabled = false; inp.value = defaultLabels[unit]; }
+        if (expInp) expInp.value = defaultLabels[unit];
+    });
+
+    const expEl = document.getElementById('cd-expired');
+    if (expEl) expEl.value = 'SHOW_ZEROS';
+    const expTxtEl = document.getElementById('cd-expired-text');
+    if (expTxtEl) expTxtEl.value = 'Offre terminée';
+    const expRedEl = document.getElementById('cd-expired-redirect');
+    if (expRedEl) expRedEl.value = '';
+
+    const titleEl = document.querySelector('.create-form-title');
+    if (titleEl) titleEl.textContent = 'Créer un countdown';
+    ['publish-btn-1', 'publish-btn-2'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.textContent = '✦ Publier & obtenir le code';
+    });
+
+    const codeSection = document.getElementById('code-section');
+    if (codeSection) codeSection.style.display = 'none';
+    const previewImg = document.getElementById('gif-preview-img');
+    if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; }
+}
+
+
+// ============================================================
+// ÉDITION — Ouvre le formulaire pré-rempli avec un countdown existant
+// ============================================================
+function editCountdown(id) {
+    const cd = cdMap[id];
+    if (!cd) { showToast('❌ Countdown introuvable'); return; }
+
+    showPage('create');       // reset complet via _resetCreateForm()
+    currentEditId = cd.id;   // re-positionne en mode édition
+
+    const nameEl = document.getElementById('cd-name');
+    if (nameEl) nameEl.value = cd.name;
+
+    const dateEl = document.getElementById('cd-date');
+    if (dateEl) {
+        const dt  = new Date(cd.endDate);
+        const pad = n => String(n).padStart(2, '0');
+        dateEl.value = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    }
+
+    const tzEl = document.getElementById('cd-timezone');
+    if (tzEl) tzEl.value = cd.timezone || 'Europe/Paris';
+
+    const colorMainEl = document.getElementById('color-main');
+    if (colorMainEl) colorMainEl.value = cd.textColor;
+    pickColorMain(cd.textColor);
+    const colorBgEl = document.getElementById('color-bg');
+    if (colorBgEl) colorBgEl.value = cd.bgColor;
+    pickBgMain(cd.bgColor);
+
+    currentFontSize = cd.fontSize || 36;
+    const fsSlider = document.getElementById('cd-fontsize');
+    if (fsSlider) fsSlider.value = currentFontSize;
+    const fsDisp = document.getElementById('font-size-display');
+    if (fsDisp) fsDisp.textContent = currentFontSize + 'px';
+
+    const widthMap = { 200:'X-Small', 300:'Small', 400:'Medium', 600:'Large', 800:'X-Large' };
+    currentWidth = cd.width || 400;
+    const wdSel   = document.getElementById('wd-sel-name');
+    const dimBadge = document.getElementById('dim-badge');
+    if (wdSel)   wdSel.textContent   = (widthMap[currentWidth] || currentWidth + 'px') + ' — ' + currentWidth + 'px';
+    if (dimBadge) dimBadge.textContent = currentWidth + ' × ' + Math.round(currentWidth * 0.28) + ' px';
+    document.querySelectorAll('.wd-row').forEach(r =>
+        r.classList.toggle('sel', r.getAttribute('onclick')?.includes(',' + currentWidth + ')')));
+
+    currentOrientation = cd.orientation || 'horizontal';
+    document.querySelectorAll('.orient-opt').forEach(e =>
+        e.classList.toggle('selected', e.dataset.orient === currentOrientation));
+
+    const styleKey   = cd.style || 'rounded';
+    const styleNames = { rounded:'Arrondi', flat:'Flat', bordered:'Bordure', glass:'Verre', pill:'Pill', circle:'Cercle', neon:'Neon' };
+    const styleDescs = { rounded:'Coins arrondis, fond teinté', flat:'Coins droits, fond teinté', bordered:'Contour coloré, fond vide', glass:'Glassmorphism sur dégradé', pill:'Capsule pleine couleur', circle:'Anneau circulaire', neon:'Effets lumineux sur fond sombre' };
+    currentStyle = styleKey;
+    const ico = document.getElementById('style-dd-ico');
+    if (ico) ico.innerHTML = `<div class="sdi ${styleKey}">42</div>`;
+    const sdName  = document.getElementById('style-dd-name');
+    const sdDesc  = document.getElementById('style-dd-desc');
+    const ctxTitl = document.getElementById('ctx-title');
+    const ctxExt  = document.getElementById('ctx-extra');
+    if (sdName)  sdName.textContent  = styleNames[styleKey] || styleKey;
+    if (sdDesc)  sdDesc.textContent  = styleDescs[styleKey] || '';
+    if (ctxTitl) ctxTitl.textContent = 'Options — ' + (styleNames[styleKey] || styleKey);
+    if (ctxExt)  ctxExt.innerHTML    = STYLE_CTX[styleKey] || '';
+    document.querySelectorAll('.style-dd-row').forEach(r => {
+        r.classList.remove('sel');
+        r.querySelector('.sdc')?.remove();
+    });
+    const selStyleRow = document.querySelector(`.style-dd-row[onclick*="'${styleKey}'"]`);
+    if (selStyleRow) {
+        selStyleRow.classList.add('sel');
+        const chk = document.createElement('span');
+        chk.className = 'sdc sel-chk'; chk.textContent = '✓';
+        selStyleRow.appendChild(chk);
+    }
+
+    const fdEl = document.getElementById('cd-font-digits');
+    if (fdEl) { fdEl.value = cd.fontFamily; currentFontDigits = cd.fontFamily; }
+
+    const activeUnits = (cd.showUnits || 'days,hours,minutes,seconds').split(',');
+    ['days', 'hours', 'minutes', 'seconds'].forEach(unit => {
+        const visible  = activeUnits.includes(unit);
+        labelVisible[unit] = visible;
+        const tog    = document.getElementById('ltog-' + unit);
+        const inp    = document.getElementById('cd-label-' + unit);
+        const expInp = document.getElementById('cd-label-' + unit + '-exp');
+        if (tog) { tog.classList.toggle('on', visible); tog.classList.toggle('off', !visible); tog.textContent = visible ? '✓' : ''; }
+        if (inp) { inp.classList.toggle('disabled', !visible); inp.disabled = !visible; }
+        const labelKey = 'label' + unit.charAt(0).toUpperCase() + unit.slice(1);
+        const labelVal = cd[labelKey] || '';
+        if (inp)    inp.value    = labelVal;
+        if (expInp) expInp.value = labelVal;
+    });
+
+    const expEl    = document.getElementById('cd-expired');
+    if (expEl) expEl.value = cd.expiredBehavior || 'SHOW_ZEROS';
+    const expTxtEl = document.getElementById('cd-expired-text');
+    if (expTxtEl) expTxtEl.value = cd.expiredText || '';
+    const expRedEl = document.getElementById('cd-expired-redirect');
+    if (expRedEl) expRedEl.value = cd.expiredRedirect || '';
+    updateExpiredUI();
+
+    const titleEl = document.querySelector('.create-form-title');
+    if (titleEl) titleEl.textContent = 'Modifier le countdown';
+    ['publish-btn-1', 'publish-btn-2'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.textContent = '✦ Mettre à jour';
+    });
+
+    schedulePreview();
+}
+
+
+// ============================================================
+// SUPPRESSION — Supprime un countdown après confirmation
+// ============================================================
+async function deleteCountdown(id) {
+    if (!confirm('Supprimer ce countdown ? Cette action est irréversible.')) return;
+    try {
+        const res = await authFetch(`/countdown/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            showToast('🗑 Countdown supprimé');
+            loadDashboard();
+        } else {
+            showToast('❌ Erreur lors de la suppression');
+        }
+    } catch(err) {
+        showToast('❌ Erreur réseau');
+    }
+}
+
+
 // 15. DASHBOARD — Chargement et rendu des countdowns
 // ============================================================
 async function loadDashboard() {
@@ -749,7 +994,7 @@ async function loadDashboard() {
             else                      { upgradeBtn.style.display = 'none'; }
         }
         grid.innerHTML = '';
-        data.forEach(cd => grid.appendChild(buildCard(cd)));
+        data.forEach(cd => { cdMap[cd.id] = cd; grid.appendChild(buildCard(cd)); });
         if (plan === 'FREE' && total < 3) {
             const add = document.createElement('div');
             add.className = 'cd-card cd-card-add'; add.onclick = () => showPage('create');
@@ -794,6 +1039,10 @@ function buildCard(cd) {
       <div class="cd-stat"><strong>${imps}</strong>impressions</div>
       <div class="cd-stat"><strong>${cd.width}px</strong>largeur</div>
       <div class="cd-stat"><strong><a href="/gif/${cd.id}" target="_blank" style="color:var(--accent);text-decoration:none">Voir GIF →</a></strong></div>
+    </div>
+    <div class="cd-card-actions">
+      <button class="cd-action-btn" onclick="editCountdown('${cd.id}')">Modifier</button>
+      <button class="cd-action-btn cd-action-delete" onclick="deleteCountdown('${cd.id}')">Supprimer</button>
     </div>`;
     return card;
 }
