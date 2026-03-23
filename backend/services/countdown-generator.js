@@ -59,13 +59,22 @@ async function generateCountdownGif(
     ].filter(u => active.has(u.key));
     const unitCount = unitDefs.length || 1;
 
-    const canvasW = W;
+    // Pour le style "sentence", on élargit le canvas si le texte dépasse
+    let canvasW = W;
+    if (style === 'sentence') {
+        const tmpCtx = createCanvas(1, 1).getContext('2d');
+        const fs = Math.round(fSize * 0.62);
+        tmpCtx.font = `${fs}px ${resolvedFont}`;
+        const testText = unitDefs.map(u => `99 ${u.label}`).join('  ·  ');
+        const needed   = Math.ceil(tmpCtx.measureText(testText).width / 0.88);
+        canvasW = Math.min(Math.max(W, needed), 1200);
+    }
     const canvasH = isVert
         ? Math.round(W * 0.95 * unitCount / 4)
         : style === 'circle'
             ? Math.round(W * 0.34)
             : (style === 'inline' || style === 'sentence')
-                ? Math.round(W * 0.18)
+                ? Math.round(canvasW * 0.18)
                 : Math.round(W * 0.28);
 
     const target = perpetual
@@ -350,14 +359,8 @@ async function generateCountdownGif(
     function drawSentence(vals) {
         const parts = unitDefs.map(u => `${parseInt(vals[u.key])} ${u.label}`);
         const text  = parts.join('  ·  ');
-        const maxW  = canvasW * 0.90;
-        let fs = Math.round(fSize * 0.62);
-        ctx.font = `${fs}px ${resolvedFont}`;
-        while (ctx.measureText(text).width > maxW && fs > 9) {
-            fs--;
-            ctx.font = `${fs}px ${resolvedFont}`;
-        }
         ctx.fillStyle    = textColor;
+        ctx.font         = `${Math.round(fSize * 0.62)}px ${resolvedFont}`;
         ctx.textAlign    = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(text, canvasW / 2, canvasH / 2);
