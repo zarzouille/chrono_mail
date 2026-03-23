@@ -350,8 +350,14 @@ async function generateCountdownGif(
     function drawSentence(vals) {
         const parts = unitDefs.map(u => `${parseInt(vals[u.key])} ${u.label}`);
         const text  = parts.join('  ·  ');
+        const maxW  = canvasW * 0.90;
+        let fs = Math.round(fSize * 0.62);
+        ctx.font = `${fs}px ${resolvedFont}`;
+        while (ctx.measureText(text).width > maxW && fs > 9) {
+            fs--;
+            ctx.font = `${fs}px ${resolvedFont}`;
+        }
         ctx.fillStyle    = textColor;
-        ctx.font         = `${Math.round(fSize * 0.62)}px ${resolvedFont}`;
         ctx.textAlign    = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(text, canvasW / 2, canvasH / 2);
