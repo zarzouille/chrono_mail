@@ -392,7 +392,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
     z-index: 100;
     box-shadow: var(--shadow-m);
     overflow: hidden;
-    max-height: 280px;
+    max-height: 400px;
     overflow-y: auto;
 }
 .style-dd-opts.open { display: block; }
@@ -444,6 +444,10 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .sdi.pill     { background: var(--accent); color: white; border-radius: 100px; border: none; width: 40px; }
 .sdi.circle   { background: rgba(37,99,235,0.08); border: 2px solid var(--accent); border-radius: 50%; width: 28px; height: 28px; }
 .sdi.neon     { background: #0f0f1a; color: #a855f7; border: 1px solid rgba(168,85,247,0.5); border-radius: 4px; }
+.sdi.plain    { background: none; border: none; color: var(--text); }
+.sdi.minimal  { background: none; border: none; color: var(--text); font-size: 17px; }
+.sdi.inline   { background: none; border: none; color: var(--text); font-size: 10px; width: 46px; letter-spacing: 0.5px; }
+.sdi.sentence { background: none; border: none; color: var(--text); font-size: 8px; width: 52px; letter-spacing: 0.3px; }
 
 .plan-badge {
     font-size: 9px;

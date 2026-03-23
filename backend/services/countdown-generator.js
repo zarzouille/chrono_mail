@@ -63,8 +63,10 @@ async function generateCountdownGif(
     const canvasH = isVert
         ? Math.round(W * 0.95 * unitCount / 4)
         : style === 'circle'
-            ? Math.round(W * 0.34)   // un peu plus haut pour loger cercle + label
-            : Math.round(W * 0.28);
+            ? Math.round(W * 0.34)
+            : (style === 'inline' || style === 'sentence')
+                ? Math.round(W * 0.18)
+                : Math.round(W * 0.28);
 
     const target = perpetual
         ? Date.now() + perpetualSeconds * 1000
@@ -147,8 +149,10 @@ async function generateCountdownGif(
             seconds: pad(timeLeft.seconds),
         };
 
-        if (isVert) drawVertical(vals);
-        else        drawHorizontal(vals);
+        if (isVert)                drawVertical(vals);
+        else if (style === 'inline')   drawInline(vals);
+        else if (style === 'sentence') drawSentence(vals);
+        else                           drawHorizontal(vals);
     }
 
     function drawHorizontal(vals) {
@@ -208,6 +212,10 @@ async function generateCountdownGif(
             case 'pill':     drawBlockPill(x, y, bW, bH, value, label);     break;
             case 'circle':   drawBlockCircle(x, y, bW, bH, value, label);   break;
             case 'neon':     drawBlockNeon(x, y, bW, bH, value, label);     break;
+            case 'plain':
+            case 'inline':
+            case 'sentence': drawBlockPlain(x, y, bW, bH, value, label);    break;
+            case 'minimal':  drawBlockMinimal(x, y, bW, bH, value, label);  break;
             default:         drawBlockRounded(x, y, bW, bH, value, label);  break;
         }
     }
@@ -308,6 +316,45 @@ async function generateCountdownGif(
         ctx.font = `bold ${fSizeSm}px sans-serif`;
         ctx.textBaseline = 'top';
         ctx.fillText(label, x + bW / 2, y + bH * 0.70);
+    }
+
+    function drawBlockPlain(x, y, bW, bH, value, label) {
+        drawValue(x, y, bW, bH, value, textColor, !!label);
+        drawLabel(x, y, bW, bH, label, rgba(textColor, 0.50));
+    }
+
+    function drawBlockMinimal(x, y, bW, bH, value, label) {
+        ctx.fillStyle = textColor;
+        ctx.font = `bold ${fSize}px ${resolvedFont}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(value, x + bW / 2, y + bH * 0.43);
+        if (label) {
+            ctx.fillStyle = rgba(textColor, 0.38);
+            ctx.font = `${Math.round(fSizeSm * 0.85)}px ${resolvedFontLabels}`;
+            ctx.textBaseline = 'top';
+            ctx.fillText(label, x + bW / 2, y + bH * 0.75);
+        }
+    }
+
+    function drawInline(vals) {
+        const parts = unitDefs.map(u => vals[u.key]);
+        const text  = parts.join(' : ');
+        ctx.fillStyle    = textColor;
+        ctx.font         = `bold ${fSize}px ${resolvedFont}`;
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, canvasW / 2, canvasH / 2);
+    }
+
+    function drawSentence(vals) {
+        const parts = unitDefs.map(u => `${parseInt(vals[u.key])} ${u.label}`);
+        const text  = parts.join('  ·  ');
+        ctx.fillStyle    = textColor;
+        ctx.font         = `${Math.round(fSize * 0.62)}px ${resolvedFont}`;
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, canvasW / 2, canvasH / 2);
     }
 
     function drawValue(x, y, bW, bH, value, color, hasLabel = true) {
