@@ -146,7 +146,43 @@ router.post('/stripe/webhook',
                 }
 
                 case 'invoice.payment_failed': {
-                    console.warn(`⚠️ Paiement échoué pour customer ${event.data.object.customer}`);
+                    const invoice = event.data.object;
+                    const attempt = invoice.attempt_count || 1;
+                    console.warn(`⚠️ Paiement échoué (tentative ${attempt}) pour customer ${invoice.customer}`);
+
+                    // Après 3 tentatives échouées, Stripe annulera l'abonnement
+                    // automatiquement (si configuré). On log pour suivi.
+                    if (attempt >= 3) {
+                        console.warn(`🚨 3+ échecs de paiement pour customer ${invoice.customer} — abonnement en danger`);
+                    }
+                    break;
+                }
+
+                case 'customer.subscription.updated': {
+                    const sub = event.data.object;
+                    const priceId  = sub.items.data[0].price.id;
+                    const newPlan  = PLAN_BY_PRICE[priceId] || 'PRO';
+                    const periodEnd = sub.current_period_end
+                        ? new Date(sub.current_period_end * 1000)
+                        : null;
+
+                    if (sub.cancel_at_period_end) {
+                        // L'utilisateur a demandé l'annulation — l'abonnement reste actif
+                        // jusqu'à la fin de la période, puis Stripe enverra subscription.deleted
+                        console.log(`⏳ Annulation programmée pour customer ${sub.customer} (fin : ${periodEnd?.toISOString()})`);
+                    } else {
+                        // Changement de plan (upgrade/downgrade) ou réactivation après annulation
+                        await prisma.user.update({
+                            where: { stripeCustomerId: sub.customer },
+                            data: {
+                                plan: newPlan,
+                                stripeSubscriptionId:   sub.id,
+                                stripePriceId:          priceId,
+                                ...(periodEnd ? { stripeCurrentPeriodEnd: periodEnd } : {}),
+                            },
+                        });
+                        console.log(`🔀 Abonnement mis à jour : ${newPlan} pour customer ${sub.customer}`);
+                    }
                     break;
                 }
 
@@ -161,7 +197,7 @@ router.post('/stripe/webhook',
                             stripeCurrentPeriodEnd: null,
                         },
                     });
-                    console.log(`🔄 Abonnement annulé pour customer ${sub.customer}`);
+                    console.log(`🔄 Abonnement supprimé → FREE pour customer ${sub.customer}`);
                     break;
                 }
             }
