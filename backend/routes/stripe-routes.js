@@ -213,8 +213,8 @@ router.post('/stripe/webhook',
                 }
             }
         } catch (err) {
+            // Toujours renvoyer 200 à Stripe pour éviter les retries en boucle
             console.error('Erreur traitement webhook :', err);
-            return res.status(500).send('Erreur traitement webhook');
         }
 
         res.json({ received: true });
