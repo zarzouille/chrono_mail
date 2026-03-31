@@ -102,11 +102,13 @@ router.post('/stripe/webhook',
                     const subscriptionId = session.subscription;
                     if (!subscriptionId) { console.warn('Pas de subscription id dans session'); break; }
 
+                    const user = await prisma.user.findUnique({ where: { stripeCustomerId: session.customer } });
+                    if (!user) { console.warn(`⚠️ checkout.session.completed — customer ${session.customer} inconnu en DB`); break; }
+
                     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
                     const priceId      = subscription.items.data[0].price.id;
                     const plan         = PLAN_BY_PRICE[priceId] || 'PRO';
 
-                    // current_period_end est un timestamp Unix (secondes)
                     const periodEnd = subscription.current_period_end
                         ? new Date(subscription.current_period_end * 1000)
                         : null;
@@ -128,6 +130,9 @@ router.post('/stripe/webhook',
                     const invoice = event.data.object;
                     const subscriptionId = invoice.subscription;
                     if (!subscriptionId) break;
+
+                    const user = await prisma.user.findUnique({ where: { stripeCustomerId: invoice.customer } });
+                    if (!user) { console.warn(`⚠️ invoice.paid — customer ${invoice.customer} inconnu en DB`); break; }
 
                     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
                     const priceId      = subscription.items.data[0].price.id;
@@ -160,6 +165,9 @@ router.post('/stripe/webhook',
 
                 case 'customer.subscription.updated': {
                     const sub = event.data.object;
+                    const user = await prisma.user.findUnique({ where: { stripeCustomerId: sub.customer } });
+                    if (!user) { console.warn(`⚠️ subscription.updated — customer ${sub.customer} inconnu en DB`); break; }
+
                     const priceId  = sub.items.data[0].price.id;
                     const newPlan  = PLAN_BY_PRICE[priceId] || 'PRO';
                     const periodEnd = sub.current_period_end
@@ -188,6 +196,9 @@ router.post('/stripe/webhook',
 
                 case 'customer.subscription.deleted': {
                     const sub = event.data.object;
+                    const user = await prisma.user.findUnique({ where: { stripeCustomerId: sub.customer } });
+                    if (!user) { console.warn(`⚠️ subscription.deleted — customer ${sub.customer} inconnu en DB`); break; }
+
                     await prisma.user.update({
                         where: { stripeCustomerId: sub.customer },
                         data: {
