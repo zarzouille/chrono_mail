@@ -324,4 +324,86 @@ router.get('/gif', async (req, res) => {
     }
 });
 
+// ── Analytics : résumé global ─────────────────────────────────
+router.get('/analytics/summary', requireAuth, async (req, res) => {
+    try {
+        if (req.user.plan === 'FREE') return res.status(403).json({ error: 'Réservé aux plans Pro et Business' });
+
+        const countdowns = await prisma.countdown.findMany({
+            where: { userId: req.user.id },
+            select: { id: true, name: true },
+        });
+        if (!countdowns.length) return res.json({ total: 0, countdowns: [], daily: [] });
+
+        const cdIds = countdowns.map(c => c.id);
+
+        // Total impressions
+        const total = await prisma.impression.count({
+            where: { countdownId: { in: cdIds } },
+        });
+
+        // Impressions par countdown
+        const perCountdown = await prisma.impression.groupBy({
+            by: ['countdownId'],
+            where: { countdownId: { in: cdIds } },
+            _count: { id: true },
+        });
+        const cdStats = countdowns.map(cd => ({
+            id:    cd.id,
+            name:  cd.name,
+            count: perCountdown.find(p => p.countdownId === cd.id)?._count.id || 0,
+        }));
+
+        // Impressions par jour (30 derniers jours)
+        const since = new Date();
+        since.setDate(since.getDate() - 30);
+        const daily = await prisma.$queryRaw`
+            SELECT DATE("createdAt") as date, COUNT(*)::int as count
+            FROM "Impression"
+            WHERE "userId" = ${req.user.id}
+              AND "createdAt" >= ${since}
+            GROUP BY DATE("createdAt")
+            ORDER BY date ASC
+        `;
+
+        res.json({ total, countdowns: cdStats, daily });
+    } catch (err) {
+        console.error('Erreur analytics summary :', err);
+        res.status(500).json({ error: 'Erreur analytics' });
+    }
+});
+
+// ── Analytics : détail par countdown ──────────────────────────
+router.get('/analytics/:countdownId', requireAuth, async (req, res) => {
+    try {
+        if (req.user.plan === 'FREE') return res.status(403).json({ error: 'Réservé aux plans Pro et Business' });
+
+        const cd = await prisma.countdown.findUnique({ where: { id: req.params.countdownId } });
+        if (!cd) return res.status(404).json({ error: 'Countdown introuvable' });
+        if (cd.userId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' });
+
+        const days = parseInt(req.query.days) || 30;
+        const since = new Date();
+        since.setDate(since.getDate() - days);
+
+        const total = await prisma.impression.count({
+            where: { countdownId: cd.id, createdAt: { gte: since } },
+        });
+
+        const daily = await prisma.$queryRaw`
+            SELECT DATE("createdAt") as date, COUNT(*)::int as count
+            FROM "Impression"
+            WHERE "countdownId" = ${cd.id}
+              AND "createdAt" >= ${since}
+            GROUP BY DATE("createdAt")
+            ORDER BY date ASC
+        `;
+
+        res.json({ total, days, daily });
+    } catch (err) {
+        console.error('Erreur analytics countdown :', err);
+        res.status(500).json({ error: 'Erreur analytics' });
+    }
+});
+
 module.exports = router;

@@ -66,7 +66,7 @@ function handleDashboardClick() {
 // 2. NAVIGATION — Routage SPA
 // ============================================================
 function showPage(name) {
-    if (['dashboard','create'].includes(name) && !isLoggedIn()) {
+    if (['dashboard','create','analytics'].includes(name) && !isLoggedIn()) {
         showPage('login');
         return;
     }
@@ -74,6 +74,7 @@ function showPage(name) {
     document.getElementById('page-' + name).classList.add('active');
     window.scrollTo(0, 0);
     if (name === 'dashboard') loadDashboard();
+    if (name === 'analytics') loadAnalytics();
     if (name === 'pricing')   renderPricing();
     if (name === 'create')    { _resetCreateForm(); applyPlanGates(); updateExpiredUI(); goToStep(1); }
 }
@@ -1251,7 +1252,166 @@ function showToast(msg) {
 
 
 // ============================================================
-// 20. INIT
+// 20. ANALYTICS
+// ============================================================
+let _analyticsDays = 30;
+
+async function loadAnalytics() {
+    const user = getUser();
+    const plan = user?.plan || 'FREE';
+    const gate    = document.getElementById('analytics-gate');
+    const content = document.getElementById('analytics-content');
+
+    // Sync sidebar plan box (analytics page)
+    const chipA = document.getElementById('sidebar-plan-chip-a');
+    const upgradeA = document.getElementById('upgrade-btn-a');
+    if (chipA) { chipA.textContent = plan; chipA.className = 'plan-chip plan-chip-' + plan.toLowerCase(); }
+    if (upgradeA) {
+        if (plan === 'FREE')      { upgradeA.textContent = 'Passer à Pro ↗'; upgradeA.onclick = () => upgradePlan('pro_monthly'); upgradeA.style.display = 'block'; }
+        else if (plan === 'PRO') { upgradeA.textContent = 'Gérer mon abonnement'; upgradeA.onclick = openBillingPortal; upgradeA.style.display = 'block'; }
+        else                      { upgradeA.style.display = 'none'; }
+    }
+
+    if (plan === 'FREE') {
+        gate.style.display = 'block';
+        content.style.display = 'none';
+        return;
+    }
+    gate.style.display = 'none';
+    content.style.display = 'block';
+
+    // Period buttons
+    document.querySelectorAll('.analytics-period').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.days) === _analyticsDays);
+        btn.onclick = () => { _analyticsDays = parseInt(btn.dataset.days); loadAnalytics(); };
+    });
+
+    try {
+        const res = await authFetch('/analytics/summary');
+        if (res.status === 401) { logout(); return; }
+        if (res.status === 403) { gate.style.display = 'block'; content.style.display = 'none'; return; }
+        const data = await res.json();
+
+        // Summary cards
+        document.getElementById('analytics-total').textContent = data.total.toLocaleString('fr-FR');
+        const avg = _analyticsDays > 0 ? Math.round(data.total / _analyticsDays * 10) / 10 : 0;
+        document.getElementById('analytics-avg').textContent = avg.toLocaleString('fr-FR');
+
+        const top = data.countdowns.sort((a, b) => b.count - a.count)[0];
+        document.getElementById('analytics-top').textContent = top ? top.name : '—';
+
+        document.getElementById('analytics-subtitle').textContent =
+            `${data.total} impressions · ${data.countdowns.length} countdown${data.countdowns.length !== 1 ? 's' : ''}`;
+
+        // Chart
+        renderAnalyticsChart(data.daily, _analyticsDays);
+
+        // Table
+        renderAnalyticsTable(data.countdowns, data.total);
+    } catch (err) {
+        document.getElementById('analytics-subtitle').textContent = 'Erreur de chargement';
+    }
+}
+
+function renderAnalyticsChart(daily, days) {
+    const container = document.getElementById('analytics-chart');
+    const W = 700, H = 220, PX = 44, PY = 24, PB = 30;
+    const chartW = W - PX * 2, chartH = H - PY - PB;
+
+    // Build full date range
+    const dateMap = {};
+    daily.forEach(d => { dateMap[d.date.slice(0, 10)] = d.count; });
+    const points = [];
+    for (let i = days - 1; i >= 0; i--) {
+        const dt = new Date(); dt.setDate(dt.getDate() - i);
+        const key = dt.toISOString().slice(0, 10);
+        points.push({ date: key, count: dateMap[key] || 0 });
+    }
+
+    const maxVal = Math.max(1, ...points.map(p => p.count));
+    const xStep = points.length > 1 ? chartW / (points.length - 1) : 0;
+
+    const coords = points.map((p, i) => ({
+        x: PX + i * xStep,
+        y: PY + chartH - (p.count / maxVal) * chartH,
+        ...p,
+    }));
+
+    // Build SVG
+    const polyline = coords.map(c => `${c.x},${c.y}`).join(' ');
+    const areaPath = `M${coords[0].x},${PY + chartH} ${coords.map(c => `L${c.x},${c.y}`).join(' ')} L${coords[coords.length - 1].x},${PY + chartH} Z`;
+
+    // Y-axis labels
+    const ySteps = 4;
+    let yLabels = '';
+    for (let i = 0; i <= ySteps; i++) {
+        const val = Math.round(maxVal * (1 - i / ySteps));
+        const y = PY + (i / ySteps) * chartH;
+        yLabels += `<text x="${PX - 8}" y="${y + 4}" text-anchor="end" fill="var(--muted)" font-size="10" font-family="JetBrains Mono,monospace">${val}</text>`;
+        yLabels += `<line x1="${PX}" x2="${PX + chartW}" y1="${y}" y2="${y}" stroke="var(--border)" stroke-dasharray="3,3"/>`;
+    }
+
+    // X-axis labels (show ~6 labels max)
+    let xLabels = '';
+    const labelEvery = Math.max(1, Math.floor(points.length / 6));
+    coords.forEach((c, i) => {
+        if (i % labelEvery === 0 || i === coords.length - 1) {
+            const d = new Date(c.date);
+            const label = `${d.getDate()}/${d.getMonth() + 1}`;
+            xLabels += `<text x="${c.x}" y="${H - 4}" text-anchor="middle" fill="var(--muted)" font-size="10" font-family="JetBrains Mono,monospace">${label}</text>`;
+        }
+    });
+
+    // Dots + hover
+    let dots = '';
+    coords.forEach(c => {
+        dots += `<circle cx="${c.x}" cy="${c.y}" r="3" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`;
+    });
+
+    // Tooltip rects (invisible hover zones)
+    let hovers = '';
+    coords.forEach((c, i) => {
+        const w = i === 0 || i === coords.length - 1 ? xStep / 2 : xStep;
+        const xStart = i === 0 ? c.x : c.x - xStep / 2;
+        hovers += `<rect x="${xStart}" y="${PY}" width="${w || chartW}" height="${chartH}" fill="transparent" class="analytics-hover">
+            <title>${c.date} — ${c.count} impression${c.count !== 1 ? 's' : ''}</title>
+        </rect>`;
+    });
+
+    container.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        ${yLabels}
+        ${xLabels}
+        <path d="${areaPath}" fill="var(--accent)" opacity="0.08"/>
+        <polyline points="${polyline}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        ${dots}
+        ${hovers}
+    </svg>`;
+}
+
+function renderAnalyticsTable(countdowns, total) {
+    const tbody = document.querySelector('#analytics-table tbody');
+    if (!tbody) return;
+    const sorted = [...countdowns].sort((a, b) => b.count - a.count);
+    const maxCount = sorted[0]?.count || 1;
+    tbody.innerHTML = sorted.map(cd => {
+        const pct = total > 0 ? Math.round(cd.count / total * 100) : 0;
+        const barW = Math.round(cd.count / maxCount * 100);
+        return `<tr>
+            <td style="font-weight:600">${cd.name}</td>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:13px">${cd.count.toLocaleString('fr-FR')}</td>
+            <td style="min-width:120px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div class="at-bar" style="flex:1"><div class="at-bar-fill" style="width:${barW}%"></div></div>
+                    <span style="font-size:12px;color:var(--muted);min-width:32px">${pct}%</span>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// ============================================================
+// 21. INIT
 // ============================================================
 updateNavAuth();
 
