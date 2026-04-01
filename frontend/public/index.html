@@ -906,9 +906,9 @@
         <div class="sidebar">
             <div class="sidebar-section">
                 <div class="sidebar-section-label">Navigation</div>
-                <div class="sidebar-item active">▦ Mes countdowns</div>
+                <div class="sidebar-item active" onclick="showPage('dashboard')">▦ Mes countdowns</div>
                 <div class="sidebar-item" onclick="showPage('create')">＋ Créer</div>
-                <div class="sidebar-item">↗ Analytiques</div>
+                <div class="sidebar-item" onclick="showPage('analytics')">↗ Analytiques</div>
                 <div class="sidebar-item">⚙ Paramètres</div>
             </div>
             <div class="sidebar-spacer"></div>
@@ -929,6 +929,83 @@
             </div>
             <div class="cards-grid" id="cards-grid">
                 <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Chargement...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     ANALYTICS PAGE
+     ============================================================ -->
+<div id="page-analytics" class="page">
+    <div class="app-layout">
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Navigation</div>
+                <div class="sidebar-item" onclick="showPage('dashboard')">▦ Mes countdowns</div>
+                <div class="sidebar-item" onclick="showPage('create')">＋ Créer</div>
+                <div class="sidebar-item active" onclick="showPage('analytics')">↗ Analytiques</div>
+                <div class="sidebar-item">⚙ Paramètres</div>
+            </div>
+            <div class="sidebar-spacer"></div>
+            <div class="sidebar-plan-box">
+                <div class="sidebar-plan-name">Plan Free <span class="plan-chip" id="sidebar-plan-chip-a">Free</span></div>
+                <div class="quota-progress"><div class="quota-fill" id="quota-fill-a" style="width:0%"></div></div>
+                <div class="quota-text" id="quota-text-a">0 / 3 countdowns</div>
+                <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:8px" id="upgrade-btn-a" onclick="upgradePlan('pro_monthly')">Passer à Pro ↗</button>
+            </div>
+        </div>
+        <div class="main-content">
+            <!-- Gate Free -->
+            <div id="analytics-gate" style="display:none">
+                <div class="analytics-upgrade-box">
+                    <div class="analytics-upgrade-icon">📊</div>
+                    <div class="page-title" style="margin-bottom:8px">Analytiques</div>
+                    <p style="color:var(--muted);max-width:420px;margin:0 auto 20px">Suivez les performances de vos countdowns avec des courbes d'impressions détaillées. Disponible à partir du plan Pro.</p>
+                    <button class="btn btn-primary btn-lg" onclick="showPage('pricing')">Passer à Pro ↗</button>
+                </div>
+            </div>
+            <!-- Contenu analytics -->
+            <div id="analytics-content" style="display:none">
+                <div class="page-header">
+                    <div>
+                        <div class="page-title">Analytiques</div>
+                        <div class="page-subtitle" id="analytics-subtitle">Chargement...</div>
+                    </div>
+                    <div class="analytics-period-select">
+                        <button class="btn btn-ghost btn-sm analytics-period active" data-days="7">7j</button>
+                        <button class="btn btn-ghost btn-sm analytics-period" data-days="30">30j</button>
+                        <button class="btn btn-ghost btn-sm analytics-period" data-days="90">90j</button>
+                    </div>
+                </div>
+                <!-- Cartes résumé -->
+                <div class="analytics-summary">
+                    <div class="analytics-card">
+                        <div class="analytics-card-label">Total impressions</div>
+                        <div class="analytics-card-value" id="analytics-total">—</div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="analytics-card-label">Moyenne / jour</div>
+                        <div class="analytics-card-value" id="analytics-avg">—</div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="analytics-card-label">Top countdown</div>
+                        <div class="analytics-card-value analytics-card-value-sm" id="analytics-top">—</div>
+                    </div>
+                </div>
+                <!-- Graphique SVG -->
+                <div class="analytics-chart-box">
+                    <div class="analytics-chart-title">Impressions par jour</div>
+                    <div id="analytics-chart"></div>
+                </div>
+                <!-- Tableau par countdown -->
+                <div class="analytics-table-box">
+                    <div class="analytics-chart-title">Par countdown</div>
+                    <table class="analytics-table" id="analytics-table">
+                        <thead><tr><th>Nom</th><th>Impressions</th><th>Part</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
