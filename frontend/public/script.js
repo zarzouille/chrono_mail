@@ -1315,8 +1315,8 @@ async function loadAnalytics() {
 
 function renderAnalyticsChart(daily, days) {
     const container = document.getElementById('analytics-chart');
-    const W = 700, H = 220, PX = 44, PY = 24, PB = 30;
-    const chartW = W - PX * 2, chartH = H - PY - PB;
+    const W = 700, H = 220, PX = 56, PY = 24, PB = 30;
+    const chartW = W - PX - 20, chartH = H - PY - PB;
 
     // Build full date range
     const dateMap = {};
@@ -1379,7 +1379,7 @@ function renderAnalyticsChart(daily, days) {
     });
 
     container.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
         ${yLabels}
         ${xLabels}
         <path d="${areaPath}" fill="var(--accent)" opacity="0.08"/>
