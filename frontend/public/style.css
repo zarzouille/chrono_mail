@@ -205,6 +205,16 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .auth-divider { display:flex; align-items:center; gap:12px; margin:4px 0 16px; color:var(--muted2); font-size:12px; font-weight:500; }
 .auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
 
+/* FORMS */
+.form-group { margin-bottom:16px; }
+.form-label { display:block; font-size:13px; font-weight:600; color:var(--text2); margin-bottom:6px; }
+.form-label .optional { font-weight:400; color:var(--muted); }
+.form-input { width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); font-size:14px; font-family:inherit; color:var(--text); background:var(--surface); transition:border-color .15s, box-shadow .15s; box-sizing:border-box; }
+.form-input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-l); }
+.form-input::placeholder { color:var(--muted2); }
+.form-select { width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); font-size:14px; font-family:inherit; color:var(--text); background:var(--surface); cursor:pointer; box-sizing:border-box; }
+.form-select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-l); }
+
 /* PRICING */
 .pricing-layout { max-width:1100px; margin:0 auto; padding:72px 48px; }
 .pricing-header { text-align:center; margin-bottom:56px; }
