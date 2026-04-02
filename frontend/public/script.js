@@ -540,9 +540,11 @@ function applyPlanGates() {
     const isPro    = plan !== 'FREE';
     const olabels  = document.getElementById('overlay-labels');
     const oredirect= document.getElementById('overlay-redirect');
+    const obgimage = document.getElementById('overlay-bgimage');
     const optRedir = document.getElementById('opt-redirect');
     if (olabels)   olabels.style.display   = isPro ? 'none' : 'flex';
     if (oredirect) oredirect.style.display = isPro ? 'none' : 'flex';
+    if (obgimage)  obgimage.style.display  = isPro ? 'none' : 'flex';
     if (optRedir)  optRedir.disabled       = !isPro;
 }
 
@@ -566,6 +568,10 @@ const UPGRADE_MODAL_CONTENT = {
     business_style: {
         title: 'Style Neon', subtitle: 'Exclusif au plan Business',
         desc: 'Le style Neon avec effets lumineux est réservé au plan Business pour des campagnes ultra-premium.',
+    },
+    bgimage: {
+        title: 'Image de fond', subtitle: 'Disponible à partir du plan Pro',
+        desc: 'Ajoutez une image de fond personnalisée à vos countdowns pour un rendu professionnel qui matche votre charte graphique.',
     },
 };
 
@@ -592,6 +598,25 @@ function handleUpgradeFromModal() {
     else showPage('register');
 }
 
+
+// ============================================================
+// IMAGE DE FOND
+// ============================================================
+function previewBgImage(url) {
+    const preview = document.getElementById('bg-image-preview');
+    const img     = document.getElementById('bg-image-preview-img');
+    if (!preview || !img) return;
+    if (!url || !url.trim()) { preview.style.display = 'none'; return; }
+    img.src = url;
+    img.onload  = () => { preview.style.display = 'block'; };
+    img.onerror = () => { preview.style.display = 'none'; };
+}
+
+function clearBgImage() {
+    const input = document.getElementById('cd-bg-image-url');
+    if (input) input.value = '';
+    previewBgImage('');
+}
 
 // ============================================================
 // PUBLICATION
@@ -632,6 +657,7 @@ async function publishCountdown() {
                 expiredBehavior: document.getElementById('cd-expired')?.value       || 'SHOW_ZEROS',
                 expiredText:     document.getElementById('cd-expired-text')?.value  || 'Offre terminée',
                 expiredRedirect: document.getElementById('cd-expired-redirect')?.value || undefined,
+                bgImageUrl:      document.getElementById('cd-bg-image-url')?.value || undefined,
             }),
         });
 
@@ -932,6 +958,8 @@ function editCountdown(id) {
     if (expTxtEl) expTxtEl.value = cd.expiredText || '';
     const expRedEl = document.getElementById('cd-expired-redirect');
     if (expRedEl) expRedEl.value = cd.expiredRedirect || '';
+    const bgImgEl = document.getElementById('cd-bg-image-url');
+    if (bgImgEl) { bgImgEl.value = cd.bgImageUrl || ''; previewBgImage(cd.bgImageUrl || ''); }
     updateExpiredUI();
 
     const titleEl = document.querySelector('.create-form-title');

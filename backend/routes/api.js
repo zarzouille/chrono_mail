@@ -145,6 +145,7 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
             fontFamily, style, orientation, showUnits,
             labelDays, labelHours, labelMinutes, labelSeconds,
             expiredBehavior, expiredText, expiredRedirect,
+            bgImageUrl,
         } = req.body;
 
         const finalLabels = plan === 'FREE'
@@ -155,6 +156,7 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
         const finalExpiredBehavior = plan === 'FREE' && expiredBehavior === 'REDIRECT'
             ? 'SHOW_ZEROS'
             : (expiredBehavior || cd.expiredBehavior);
+        const finalBgImageUrl = plan === 'FREE' ? null : (bgImageUrl !== undefined ? (bgImageUrl || null) : undefined);
 
         const updated = await prisma.countdown.update({
             where: { id: req.params.id },
@@ -174,6 +176,7 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
                 expiredBehavior: finalExpiredBehavior,
                 ...(expiredText !== undefined && { expiredText }),
                 expiredRedirect: finalExpiredRedirect,
+                ...(finalBgImageUrl !== undefined && { bgImageUrl: finalBgImageUrl }),
             },
         });
 

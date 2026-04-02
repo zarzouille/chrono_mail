@@ -730,6 +730,24 @@
                         </div>
                     </div>
 
+                    <!-- Image de fond (Pro) -->
+                    <div style="position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-bottom:16px;background:var(--bg)">
+                        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px">
+                            Image de fond <span class="plan-gate-badge">Pro</span>
+                        </div>
+                        <div class="fg" style="margin:0">
+                            <label class="fl" style="font-size:11px">URL de l'image</label>
+                            <input type="url" class="fi" id="cd-bg-image-url" placeholder="https://exemple.com/image.jpg" oninput="previewBgImage(this.value)">
+                        </div>
+                        <div id="bg-image-preview" class="bg-image-preview" style="display:none">
+                            <img id="bg-image-preview-img" alt="Aperçu">
+                            <button class="btn btn-ghost btn-sm" onclick="clearBgImage()" style="margin-top:6px">Supprimer</button>
+                        </div>
+                        <div class="plan-gate-overlay" id="overlay-bgimage" onclick="openUpgradeModal('bgimage')">
+                            <div class="plan-gate-msg">🔒 Disponible en <strong>Pro</strong> — Cliquez pour upgrader</div>
+                        </div>
+                    </div>
+
                     <div class="step-nav">
                         <button class="btn btn-ghost btn-sm" onclick="goToStep(1)">← Retour</button>
                         <button class="btn btn-primary btn-sm" onclick="goToStep(3)">Suivant →</button>
