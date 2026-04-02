@@ -798,6 +798,29 @@
                         </div>
                     </div>
 
+                    <!-- Timer perpétuel (Business) -->
+                    <div style="position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-top:16px;margin-bottom:16px;background:var(--bg)">
+                        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px">
+                            Timer perpétuel <span class="plan-gate-badge" style="background:#7c3aed;color:#fff">Business</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                            <div class="toggle-switch" id="cd-perpetual" onclick="togglePerpetual()">
+                                <div class="toggle-knob"></div>
+                            </div>
+                            <span style="font-size:13px;color:var(--text)">Relancer automatiquement le countdown</span>
+                        </div>
+                        <div id="perpetual-duration-row" style="display:none">
+                            <div class="fg" style="margin:0">
+                                <label class="fl" style="font-size:11px">Durée du cycle (heures)</label>
+                                <input type="number" class="fi" id="cd-perpetual-hours" value="24" min="1" max="8760" step="1">
+                            </div>
+                            <p style="font-size:11px;color:var(--muted);margin-top:4px">Le countdown redémarrera automatiquement à la fin de chaque cycle.</p>
+                        </div>
+                        <div class="plan-gate-overlay" id="overlay-perpetual" onclick="openUpgradeModal('perpetual')">
+                            <div class="plan-gate-msg">🔒 Exclusif <strong>Business</strong> — Cliquez pour upgrader</div>
+                        </div>
+                    </div>
+
                     <div class="step-nav">
                         <button class="btn btn-ghost btn-sm" onclick="goToStep(2)">← Retour</button>
                         <button class="btn btn-primary btn-sm" onclick="goToStep(4)">Suivant →</button>

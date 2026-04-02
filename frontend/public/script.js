@@ -540,12 +540,15 @@ function applyPlanGates() {
     const isPro    = plan !== 'FREE';
     const olabels  = document.getElementById('overlay-labels');
     const oredirect= document.getElementById('overlay-redirect');
-    const obgimage = document.getElementById('overlay-bgimage');
-    const optRedir = document.getElementById('opt-redirect');
-    if (olabels)   olabels.style.display   = isPro ? 'none' : 'flex';
-    if (oredirect) oredirect.style.display = isPro ? 'none' : 'flex';
-    if (obgimage)  obgimage.style.display  = isPro ? 'none' : 'flex';
-    if (optRedir)  optRedir.disabled       = !isPro;
+    const obgimage    = document.getElementById('overlay-bgimage');
+    const optRedir    = document.getElementById('opt-redirect');
+    const operpetual  = document.getElementById('overlay-perpetual');
+    const isBusiness  = plan === 'BUSINESS';
+    if (olabels)    olabels.style.display    = isPro ? 'none' : 'flex';
+    if (oredirect)  oredirect.style.display  = isPro ? 'none' : 'flex';
+    if (obgimage)   obgimage.style.display   = isPro ? 'none' : 'flex';
+    if (optRedir)   optRedir.disabled        = !isPro;
+    if (operpetual) operpetual.style.display = isBusiness ? 'none' : 'flex';
 }
 
 
@@ -572,6 +575,10 @@ const UPGRADE_MODAL_CONTENT = {
     bgimage: {
         title: 'Image de fond', subtitle: 'Disponible à partir du plan Pro',
         desc: 'Ajoutez une image de fond personnalisée à vos countdowns pour un rendu professionnel qui matche votre charte graphique.',
+    },
+    perpetual: {
+        title: 'Timer perpétuel', subtitle: 'Exclusif au plan Business',
+        desc: 'Le countdown redémarre automatiquement à la fin de chaque cycle — idéal pour les offres récurrentes et les promotions continues.',
     },
 };
 
@@ -619,6 +626,21 @@ function clearBgImage() {
 }
 
 // ============================================================
+// TIMER PERPÉTUEL (Business)
+// ============================================================
+function togglePerpetual() {
+    const el = document.getElementById('cd-perpetual');
+    if (!el) return;
+    el.classList.toggle('active');
+    updatePerpetualUI();
+}
+function updatePerpetualUI() {
+    const el  = document.getElementById('cd-perpetual');
+    const row = document.getElementById('perpetual-duration-row');
+    if (row) row.style.display = el?.classList.contains('active') ? 'block' : 'none';
+}
+
+// ============================================================
 // PUBLICATION
 // ============================================================
 async function publishCountdown() {
@@ -658,6 +680,8 @@ async function publishCountdown() {
                 expiredText:     document.getElementById('cd-expired-text')?.value  || 'Offre terminée',
                 expiredRedirect: document.getElementById('cd-expired-redirect')?.value || undefined,
                 bgImageUrl:      document.getElementById('cd-bg-image-url')?.value || undefined,
+                perpetual:       document.getElementById('cd-perpetual')?.classList.contains('active') || false,
+                perpetualSeconds: (parseInt(document.getElementById('cd-perpetual-hours')?.value) || 24) * 3600,
             }),
         });
 
@@ -960,6 +984,11 @@ function editCountdown(id) {
     if (expRedEl) expRedEl.value = cd.expiredRedirect || '';
     const bgImgEl = document.getElementById('cd-bg-image-url');
     if (bgImgEl) { bgImgEl.value = cd.bgImageUrl || ''; previewBgImage(cd.bgImageUrl || ''); }
+    const perpEl = document.getElementById('cd-perpetual');
+    if (perpEl) { if (cd.perpetual) perpEl.classList.add('active'); else perpEl.classList.remove('active'); }
+    const perpHoursEl = document.getElementById('cd-perpetual-hours');
+    if (perpHoursEl) perpHoursEl.value = Math.round((cd.perpetualSeconds || 86400) / 3600);
+    updatePerpetualUI();
     updateExpiredUI();
 
     const titleEl = document.querySelector('.create-form-title');
