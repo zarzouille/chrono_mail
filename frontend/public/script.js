@@ -72,6 +72,7 @@ function showPage(name) {
     }
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + name).classList.add('active');
+    window.location.hash = name;
     window.scrollTo(0, 0);
     if (name === 'dashboard') loadDashboard();
     if (name === 'analytics') loadAnalytics();
@@ -1414,6 +1415,28 @@ function renderAnalyticsTable(countdowns, total) {
 // 21. INIT
 // ============================================================
 updateNavAuth();
+
+// Restaure la page depuis le hash ou les query params
+(function initRoute() {
+    const params = new URLSearchParams(window.location.search);
+    // Gestion retour OAuth / Stripe
+    if (params.get('token')) return; // géré ailleurs
+    if (params.get('checkout')) { if (isLoggedIn()) { showPage('dashboard'); return; } }
+
+    const hash = window.location.hash.replace('#', '');
+    const validPages = ['landing','login','register','dashboard','create','analytics','pricing',
+                        'legal-privacy','legal-cgu','legal-cookies','contact'];
+    if (hash && validPages.includes(hash)) {
+        showPage(hash);
+    } else if (isLoggedIn()) {
+        showPage('dashboard');
+    }
+})();
+
+window.addEventListener('hashchange', () => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash) showPage(hash);
+});
 
 // Ferme la modale upgrade avec la touche Escape
 document.addEventListener('keydown', (e) => {
