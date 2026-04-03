@@ -124,8 +124,11 @@ async function generateCountdownGif(
     function drawFrame(timeLeft) {
         const { expired } = timeLeft;
 
-        if (style === 'neon') {
+        if (style === 'neon' || style === 'circle') {
             ctx.fillStyle = '#0f0f1a';
+            ctx.fillRect(0, 0, canvasW, canvasH);
+        } else if (style === 'pill') {
+            ctx.fillStyle = darkenHex(textColor, 0.85);
             ctx.fillRect(0, 0, canvasW, canvasH);
         } else if (style === 'glass') {
             const grad = ctx.createLinearGradient(0, 0, canvasW, canvasH);
