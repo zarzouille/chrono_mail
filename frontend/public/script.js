@@ -679,6 +679,7 @@ async function publishCountdown() {
                 expiredBehavior: document.getElementById('cd-expired')?.value       || 'SHOW_ZEROS',
                 expiredText:     document.getElementById('cd-expired-text')?.value  || 'Offre terminée',
                 expiredRedirect: document.getElementById('cd-expired-redirect')?.value || undefined,
+                sepColor:        currentSepColor || undefined,
                 bgImageUrl:      document.getElementById('cd-bg-image-url')?.value || undefined,
                 perpetual:       document.getElementById('cd-perpetual')?.classList.contains('active') || false,
                 perpetualSeconds: (parseInt(document.getElementById('cd-perpetual-hours')?.value) || 24) * 3600,
@@ -960,6 +961,9 @@ function editCountdown(id) {
 
     const fdEl = document.getElementById('cd-font-digits');
     if (fdEl) { fdEl.value = cd.fontFamily; currentFontDigits = cd.fontFamily; }
+    currentBlockBg  = cd.blockBgColor || null;
+    currentSepColor = cd.sepColor || null;
+    currentFontLabels = cd.fontLabels || null;
 
     const activeUnits = (cd.showUnits || 'days,hours,minutes,seconds').split(',');
     ['days', 'hours', 'minutes', 'seconds'].forEach(unit => {

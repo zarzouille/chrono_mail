@@ -56,8 +56,12 @@ model Countdown {
   // Post-expiration
   expiredBehavior ExpiredBehavior @default(SHOW_ZEROS)
   expiredText     String?
-  expiredImageUrl String?
   expiredRedirect String?
+
+  // Apparence avancée (Pro)
+  blockBgColor String?
+  fontLabels   String?
+  sepColor     String?
 
   // Image de fond (Pro)
   bgImageUrl String?
@@ -66,8 +70,6 @@ model Countdown {
   perpetual        Boolean @default(false)
   perpetualSeconds Int     @default(86400)
 
-  clickUrl  String?
-  active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -101,7 +103,5 @@ enum Plan {
 enum ExpiredBehavior {
   SHOW_ZEROS
   SHOW_TEXT
-  SHOW_IMAGE
   REDIRECT
-  HIDE
 }

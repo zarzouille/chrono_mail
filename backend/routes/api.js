@@ -50,11 +50,17 @@ router.post('/countdown', requireAuth, async (req, res) => {
             expiredText      = 'Offre terminée',
             expiredRedirect  = null,
             bgImageUrl       = null,
+            blockBgColor     = null,
+            fontLabels       = null,
+            sepColor         = null,
             perpetual        = false,
             perpetualSeconds = 86400,
         } = req.body;
 
         if (!endDate) return res.status(400).json({ error: 'endDate est requis' });
+        const parsedEndDate = new Date(endDate);
+        if (isNaN(parsedEndDate.getTime())) return res.status(400).json({ error: 'endDate invalide' });
+        if (parsedEndDate <= new Date()) return res.status(400).json({ error: 'endDate doit être dans le futur' });
 
         // Limite Free : 3 countdowns max
         if (plan === 'FREE') {
@@ -67,6 +73,13 @@ router.post('/countdown', requireAuth, async (req, res) => {
             }
         }
 
+        // Style — gating par plan
+        const PRO_STYLES      = ['glass', 'pill', 'circle'];
+        const BUSINESS_STYLES = ['neon'];
+        let finalStyle = style;
+        if (plan === 'FREE' && (PRO_STYLES.includes(style) || BUSINESS_STYLES.includes(style))) finalStyle = 'rounded';
+        if (plan === 'PRO'  && BUSINESS_STYLES.includes(style)) finalStyle = 'rounded';
+
         // Labels personnalisés — Pro uniquement
         const finalLabels = plan === 'FREE'
             ? { labelDays:'JOURS', labelHours:'HEURES', labelMinutes:'MIN', labelSeconds:'SEC' }
@@ -77,6 +90,11 @@ router.post('/countdown', requireAuth, async (req, res) => {
         const finalExpiredRedirect = plan === 'FREE' ? null : expiredRedirect;
         const finalExpiredBehavior = plan === 'FREE' && expiredBehavior === 'REDIRECT' ? 'SHOW_ZEROS' : expiredBehavior;
 
+        // Apparence avancée — Pro uniquement
+        const finalBlockBgColor = plan === 'FREE' ? null : (blockBgColor || null);
+        const finalFontLabels   = plan === 'FREE' ? null : (fontLabels || null);
+        const finalSepColor     = plan === 'FREE' ? null : (sepColor || null);
+
         // Perpétuel — Business uniquement
         const finalPerpetual        = plan === 'BUSINESS' ? perpetual : false;
         const finalPerpetualSeconds = plan === 'BUSINESS' ? parseInt(perpetualSeconds) : 86400;
@@ -85,14 +103,14 @@ router.post('/countdown', requireAuth, async (req, res) => {
             data: {
                 userId:           req.user.id,
                 name,
-                endDate:          new Date(endDate),
+                endDate:          parsedEndDate,
                 bgColor,
                 textColor,
                 fontSize:         parseInt(fontSize),
                 width:            parseInt(width),
                 timezone,
                 fontFamily,
-                style,
+                style:            finalStyle,
                 orientation,
                 showUnits,
                 ...finalLabels,
@@ -100,6 +118,9 @@ router.post('/countdown', requireAuth, async (req, res) => {
                 expiredText,
                 expiredRedirect:  finalExpiredRedirect,
                 bgImageUrl:       finalBgImageUrl,
+                blockBgColor:     finalBlockBgColor,
+                fontLabels:       finalFontLabels,
+                sepColor:         finalSepColor,
                 perpetual:        finalPerpetual,
                 perpetualSeconds: finalPerpetualSeconds,
             },
@@ -146,6 +167,7 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
             labelDays, labelHours, labelMinutes, labelSeconds,
             expiredBehavior, expiredText, expiredRedirect,
             bgImageUrl,
+            blockBgColor, fontLabels, sepColor,
             perpetual, perpetualSeconds,
         } = req.body;
 
@@ -153,11 +175,23 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
             ? { labelDays: 'JOURS', labelHours: 'HEURES', labelMinutes: 'MIN', labelSeconds: 'SEC' }
             : { labelDays, labelHours, labelMinutes, labelSeconds };
 
+        // Style — gating par plan
+        const PRO_STYLES      = ['glass', 'pill', 'circle'];
+        const BUSINESS_STYLES = ['neon'];
+        let finalStyle = style;
+        if (style !== undefined) {
+            if (plan === 'FREE' && (PRO_STYLES.includes(style) || BUSINESS_STYLES.includes(style))) finalStyle = cd.style;
+            if (plan === 'PRO'  && BUSINESS_STYLES.includes(style)) finalStyle = cd.style;
+        }
+
         const finalExpiredRedirect = plan === 'FREE' ? null : (expiredRedirect || null);
         const finalExpiredBehavior = plan === 'FREE' && expiredBehavior === 'REDIRECT'
             ? 'SHOW_ZEROS'
             : (expiredBehavior || cd.expiredBehavior);
-        const finalBgImageUrl = plan === 'FREE' ? null : (bgImageUrl !== undefined ? (bgImageUrl || null) : undefined);
+        const finalBgImageUrl   = plan === 'FREE' ? null : (bgImageUrl !== undefined ? (bgImageUrl || null) : undefined);
+        const finalBlockBgColor = plan === 'FREE' ? null : (blockBgColor !== undefined ? (blockBgColor || null) : undefined);
+        const finalFontLabels   = plan === 'FREE' ? null : (fontLabels !== undefined ? (fontLabels || null) : undefined);
+        const finalSepColor     = plan === 'FREE' ? null : (sepColor !== undefined ? (sepColor || null) : undefined);
         const finalPerpetual        = plan === 'BUSINESS' && perpetual !== undefined ? !!perpetual : undefined;
         const finalPerpetualSeconds = plan === 'BUSINESS' && perpetualSeconds !== undefined ? parseInt(perpetualSeconds) : undefined;
 
@@ -172,7 +206,7 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
                 ...(width      !== undefined && { width: parseInt(width) }),
                 ...(timezone   !== undefined && { timezone }),
                 ...(fontFamily !== undefined && { fontFamily }),
-                ...(style      !== undefined && { style }),
+                ...(finalStyle !== undefined && { style: finalStyle }),
                 ...(orientation !== undefined && { orientation }),
                 ...(showUnits  !== undefined && { showUnits }),
                 ...finalLabels,
@@ -180,6 +214,9 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
                 ...(expiredText !== undefined && { expiredText }),
                 expiredRedirect: finalExpiredRedirect,
                 ...(finalBgImageUrl !== undefined && { bgImageUrl: finalBgImageUrl }),
+                ...(finalBlockBgColor !== undefined && { blockBgColor: finalBlockBgColor }),
+                ...(finalFontLabels !== undefined && { fontLabels: finalFontLabels }),
+                ...(finalSepColor !== undefined && { sepColor: finalSepColor }),
                 ...(finalPerpetual !== undefined && { perpetual: finalPerpetual }),
                 ...(finalPerpetualSeconds !== undefined && { perpetualSeconds: finalPerpetualSeconds }),
             },
@@ -215,10 +252,18 @@ router.get('/gif/:id', async (req, res) => {
         const countdown = await prisma.countdown.findUnique({ where: { id: req.params.id } });
         if (!countdown) return res.status(404).send('Countdown introuvable');
 
-        // Redirect post-expiration (Pro)
+        // Redirect post-expiration (Pro) — valider l'URL pour éviter open redirect
         if (countdown.expiredBehavior === 'REDIRECT' && countdown.expiredRedirect) {
             const isExpired = !countdown.perpetual && new Date(countdown.endDate) <= new Date();
-            if (isExpired) return res.redirect(countdown.expiredRedirect);
+            if (isExpired) {
+                try {
+                    const url = new URL(countdown.expiredRedirect);
+                    if (url.protocol === 'http:' || url.protocol === 'https:') {
+                        return res.redirect(countdown.expiredRedirect);
+                    }
+                } catch {}
+                // URL invalide ou protocole dangereux → afficher zéros
+            }
         }
 
         // Log impression (arrière-plan)
@@ -249,6 +294,9 @@ router.get('/gif/:id', async (req, res) => {
                 expiredBehavior:  countdown.expiredBehavior,
                 expiredText:      countdown.expiredText,
                 bgImageUrl:       countdown.bgImageUrl,
+                blockBgColor:     countdown.blockBgColor,
+                fontLabels:       countdown.fontLabels,
+                sepColor:         countdown.sepColor,
                 perpetual:        countdown.perpetual,
                 perpetualSeconds: countdown.perpetualSeconds,
             }
