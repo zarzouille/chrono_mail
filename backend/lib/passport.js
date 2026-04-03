@@ -1,6 +1,7 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const prisma = require('./prisma');
+const { sendWelcome } = require('../services/email-service');
 
 passport.use(new GoogleStrategy({
         clientID:     process.env.GOOGLE_CLIENT_ID,
@@ -17,6 +18,7 @@ passport.use(new GoogleStrategy({
             // Chercher l'utilisateur existant ou le créer
             let user = await prisma.user.findUnique({ where: { email } });
 
+            let isNewUser = false;
             if (!user) {
                 user = await prisma.user.create({
                     data: {
@@ -26,7 +28,11 @@ passport.use(new GoogleStrategy({
                         plan: 'FREE',
                     },
                 });
+                isNewUser = true;
             }
+
+            // Email de bienvenue pour les nouveaux inscrits Google (non bloquant)
+            if (isNewUser) sendWelcome(user.email, user.name).catch(() => {});
 
             return done(null, user);
         } catch (err) {

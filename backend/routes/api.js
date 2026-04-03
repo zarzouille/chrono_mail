@@ -4,6 +4,7 @@ const { generateCountdownGif } = require('../services/countdown-generator');
 const prisma   = require('../lib/prisma');
 const { requireAuth } = require('../lib/auth');
 const gifCache       = require('../services/gif-cache');
+const { sendCountdownExpired } = require('../services/email-service');
 
 /**
  * Construit l'URL publique d'un GIF.
@@ -279,6 +280,19 @@ router.get('/gif/:id', async (req, res) => {
                 ip:          req.ip || null,
             },
         }).catch(err => console.error('Erreur log impression :', err));
+
+        // Email notification expiration (une seule fois, non bloquant)
+        const isExpiredNow = !countdown.perpetual && new Date(countdown.endDate) <= new Date();
+        if (isExpiredNow && !countdown.expiredNotified) {
+            prisma.countdown.update({
+                where: { id: countdown.id },
+                data:  { expiredNotified: true },
+            }).then(() => {
+                return prisma.user.findUnique({ where: { id: countdown.userId } });
+            }).then(owner => {
+                if (owner) sendCountdownExpired(owner.email, owner.name, countdown.name, countdown.id);
+            }).catch(err => console.error('Erreur notification expiration :', err));
+        }
 
         const gifBuffer = await generateCountdownGif(
             countdown.endDate.toISOString(),

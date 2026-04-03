@@ -3,6 +3,7 @@ const router   = express.Router();
 const passport = require('../lib/passport');
 const prisma   = require('../lib/prisma');
 const { hashPassword, verifyPassword, generateToken, requireAuth } = require('../lib/auth');
+const { sendWelcome } = require('../services/email-service');
 
 // ── Inscription ───────────────────────────────────────────────────
 router.post('/auth/register', async (req, res) => {
@@ -21,6 +22,9 @@ router.post('/auth/register', async (req, res) => {
 
         const token = generateToken(user);
         res.status(201).json({ token, user: { id: user.id, email: user.email, name: user.name, plan: user.plan } });
+
+        // Email de bienvenue (non bloquant)
+        sendWelcome(user.email, user.name).catch(() => {});
 
     } catch (err) {
         console.error('Erreur register :', err);

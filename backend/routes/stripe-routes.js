@@ -4,6 +4,7 @@ const Stripe  = require('stripe');
 const stripe  = new Stripe(process.env.STRIPE_SECRET_KEY);
 const prisma  = require('../lib/prisma');
 const { requireAuth } = require('../lib/auth');
+const { sendUpgradeConfirmed, sendPaymentFailed, sendDowngraded } = require('../services/email-service');
 
 const PRICES = {
     pro_monthly:      process.env.STRIPE_PRO_PRICE_MONTHLY,
@@ -123,6 +124,11 @@ router.post('/stripe/webhook',
                         },
                     });
                     console.log(`✅ Plan activé : ${plan} pour customer ${session.customer}`);
+
+                    // Email de confirmation d'upgrade (non bloquant)
+                    const upgraded = await prisma.user.findUnique({ where: { stripeCustomerId: session.customer } });
+                    if (upgraded) sendUpgradeConfirmed(upgraded.email, upgraded.name, plan).catch(() => {});
+
                     break;
                 }
 
@@ -160,6 +166,11 @@ router.post('/stripe/webhook',
                     if (attempt >= 3) {
                         console.warn(`🚨 3+ échecs de paiement pour customer ${invoice.customer} — abonnement en danger`);
                     }
+
+                    // Email d'alerte paiement échoué (non bloquant)
+                    const failedUser = await prisma.user.findUnique({ where: { stripeCustomerId: invoice.customer } });
+                    if (failedUser) sendPaymentFailed(failedUser.email, failedUser.name, attempt).catch(() => {});
+
                     break;
                 }
 
@@ -209,6 +220,11 @@ router.post('/stripe/webhook',
                         },
                     });
                     console.log(`🔄 Abonnement supprimé → FREE pour customer ${sub.customer}`);
+
+                    // Email de downgrade (non bloquant)
+                    const downgraded = await prisma.user.findUnique({ where: { stripeCustomerId: sub.customer } });
+                    if (downgraded) sendDowngraded(downgraded.email, downgraded.name).catch(() => {});
+
                     break;
                 }
             }

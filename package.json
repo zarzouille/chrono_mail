@@ -24,6 +24,7 @@
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.19.0",
     "prisma": "^7.4.1",
+    "resend": "^6.10.0",
     "stripe": "^20.4.0"
   },
   "devDependencies": {
