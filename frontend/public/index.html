@@ -101,7 +101,25 @@
         <button class="btn btn-ghost" onclick="logout()">Déconnexion</button>
         <button class="btn btn-primary" onclick="showPage('create')">+ Nouveau countdown</button>
     </div>
+    <button class="nav-burger" id="nav-burger" onclick="toggleMobileNav()" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
 </nav>
+<div class="mobile-nav-overlay" id="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+<div class="mobile-nav" id="mobile-nav">
+    <a href="javascript:void(0)" onclick="showPage('landing');closeMobileNav()">Accueil</a>
+    <a href="javascript:void(0)" onclick="showPage('pricing');closeMobileNav()">Tarifs</a>
+    <a href="javascript:void(0)" onclick="handleDashboardClick();closeMobileNav()">Dashboard</a>
+    <div class="mobile-nav-divider"></div>
+    <div class="mobile-nav-cta" id="mobile-nav-guest">
+        <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="showPage('login');closeMobileNav()">Se connecter</button>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="showPage('register');closeMobileNav()">Commencer gratuitement</button>
+    </div>
+    <div class="mobile-nav-cta" id="mobile-nav-user" style="display:none">
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="showPage('create');closeMobileNav()">+ Nouveau countdown</button>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="logout();closeMobileNav()">Déconnexion</button>
+    </div>
+</div>
 
 <!-- ============================================================
      LANDING PAGE

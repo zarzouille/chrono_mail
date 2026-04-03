@@ -51,6 +51,11 @@ function updateNavAuth() {
     const user     = getUser();
     document.getElementById('nav-cta-guest').style.display = loggedIn ? 'none' : 'flex';
     document.getElementById('nav-cta-user').style.display  = loggedIn ? 'flex' : 'none';
+    // Mobile nav
+    const mGuest = document.getElementById('mobile-nav-guest');
+    const mUser  = document.getElementById('mobile-nav-user');
+    if (mGuest) mGuest.style.display = loggedIn ? 'none' : 'flex';
+    if (mUser)  mUser.style.display  = loggedIn ? 'flex' : 'none';
     if (loggedIn && user) {
         document.getElementById('nav-user-name').textContent = user.name || user.email;
     }
@@ -59,6 +64,22 @@ function updateNavAuth() {
 function handleDashboardClick() {
     if (isLoggedIn()) showPage('dashboard');
     else showPage('login');
+}
+
+// ── Mobile nav ───────────────────────────────────────────────
+function toggleMobileNav() {
+    const nav = document.getElementById('mobile-nav');
+    const overlay = document.getElementById('mobile-nav-overlay');
+    const burger = document.getElementById('nav-burger');
+    const isOpen = nav.classList.contains('open');
+    nav.classList.toggle('open', !isOpen);
+    overlay.classList.toggle('open', !isOpen);
+    burger.classList.toggle('open', !isOpen);
+}
+function closeMobileNav() {
+    document.getElementById('mobile-nav')?.classList.remove('open');
+    document.getElementById('mobile-nav-overlay')?.classList.remove('open');
+    document.getElementById('nav-burger')?.classList.remove('open');
 }
 
 
