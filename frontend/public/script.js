@@ -1486,7 +1486,7 @@ updateNavAuth();
 
     const hash = window.location.hash.replace('#', '');
     const validPages = ['landing','login','register','dashboard','create','analytics','pricing',
-                        'legal-privacy','legal-cgu','legal-cookies','contact'];
+                        'legal-mentions','legal-privacy','legal-cgu','legal-cgv','legal-cookies','contact'];
     if (hash && validPages.includes(hash)) {
         showPage(hash);
     } else if (isLoggedIn()) {
