@@ -48,6 +48,24 @@ app.use('/', authRoutes);
 app.use('/', apiRouter);
 app.use('/', stripeRoutes);
 
+// ── Email preview (dev only) ─────────────────────────────────
+const { previews } = require('./services/email-service');
+app.get('/email-preview/:template?', (req, res) => {
+    const name = req.params.template;
+    if (!name || !previews[name]) {
+        const list = Object.keys(previews).map(k =>
+            `<li style="margin:6px 0"><a href="/email-preview/${k}" style="color:#2563eb;font-size:15px">${k}</a></li>`
+        ).join('');
+        return res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Email Previews</title></head>
+<body style="font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto">
+<h1 style="font-size:24px">Email Previews</h1>
+<p style="color:#666">Cliquez sur un template pour le visualiser :</p>
+<ul>${list}</ul>
+</body></html>`);
+    }
+    res.send(previews[name]());
+});
+
 // Fichiers statiques
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 

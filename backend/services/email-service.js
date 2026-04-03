@@ -78,9 +78,9 @@ async function send(to, subject, html) {
 /**
  * 1. Bienvenue — après inscription
  */
-async function sendWelcome(email, name) {
-    const displayName = name || email.split('@')[0];
-    return send(email, 'Bienvenue sur chrono.mail !', layout(`
+function buildWelcomeHtml(name, email) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
+    return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Bienvenue, ${displayName} !
         </h1>
@@ -92,19 +92,22 @@ async function sendWelcome(email, name) {
         <p style="margin:0;font-size:14px;color:#8a877f;line-height:1.7">
             <strong>En 30 secondes :</strong> choisissez une date, un style, et copiez le tag HTML. C'est tout.
         </p>
-    `));
+    `);
+}
+async function sendWelcome(email, name) {
+    return send(email, 'Bienvenue sur chrono.mail !', buildWelcomeHtml(name, email));
 }
 
 /**
  * 2. Upgrade confirmé — après checkout.session.completed
  */
-async function sendUpgradeConfirmed(email, name, plan) {
-    const displayName = name || email.split('@')[0];
+function buildUpgradeHtml(name, email, plan) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
     const planLabel = plan === 'BUSINESS' ? 'Business' : 'Pro';
     const features = plan === 'BUSINESS'
         ? 'Countdowns illimités, 11 styles, timer perpétuel, analytics, support dédié'
         : 'Countdowns illimités, 10 styles, image de fond, analytics avancées';
-    return send(email, `Votre plan ${planLabel} est activé !`, layout(`
+    return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Merci, ${displayName} !
         </h1>
@@ -119,18 +122,22 @@ async function sendUpgradeConfirmed(email, name, plan) {
         <p style="margin:0;font-size:13px;color:#8a877f;line-height:1.7">
             Gérez votre abonnement et vos factures depuis le <a href="${APP}/#dashboard" style="color:#2563eb;text-decoration:none">portail de facturation</a>.
         </p>
-    `));
+    `);
+}
+async function sendUpgradeConfirmed(email, name, plan) {
+    const planLabel = plan === 'BUSINESS' ? 'Business' : 'Pro';
+    return send(email, `Votre plan ${planLabel} est activé !`, buildUpgradeHtml(name, email, plan));
 }
 
 /**
  * 3. Échec de paiement — après invoice.payment_failed
  */
-async function sendPaymentFailed(email, name, attempt) {
-    const displayName = name || email.split('@')[0];
+function buildPaymentFailedHtml(name, email, attempt) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
     const urgency = attempt >= 3
         ? '⚠️ C\'est la dernière tentative. Sans action de votre part, votre abonnement sera annulé.'
         : 'Pas de panique, Stripe réessaiera automatiquement dans quelques jours.';
-    return send(email, 'Problème de paiement sur votre compte', layout(`
+    return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Paiement échoué
         </h1>
@@ -144,15 +151,18 @@ async function sendPaymentFailed(email, name, attempt) {
         <p style="margin:0;font-size:13px;color:#8a877f;line-height:1.7">
             Besoin d'aide ? Contactez-nous à <a href="mailto:billing@chrono.mail" style="color:#2563eb;text-decoration:none">billing@chrono.mail</a>.
         </p>
-    `));
+    `);
+}
+async function sendPaymentFailed(email, name, attempt) {
+    return send(email, 'Problème de paiement sur votre compte', buildPaymentFailedHtml(name, email, attempt));
 }
 
 /**
  * 4. Downgrade vers Free — après customer.subscription.deleted
  */
-async function sendDowngraded(email, name) {
-    const displayName = name || email.split('@')[0];
-    return send(email, 'Votre abonnement a pris fin', layout(`
+function buildDowngradedHtml(name, email) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
+    return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Abonnement terminé
         </h1>
@@ -168,15 +178,18 @@ async function sendDowngraded(email, name) {
             Vos données restent en sécurité. Vous pouvez vous réabonner à tout moment pour retrouver toutes vos fonctionnalités.
         </p>
         ${btn('Voir les offres →', APP + '/#pricing')}
-    `));
+    `);
+}
+async function sendDowngraded(email, name) {
+    return send(email, 'Votre abonnement a pris fin', buildDowngradedHtml(name, email));
 }
 
 /**
  * 5. Countdown expiré — quand un countdown atteint sa date de fin
  */
-async function sendCountdownExpired(email, name, countdownName, countdownId) {
-    const displayName = name || email.split('@')[0];
-    return send(email, `Votre countdown "${countdownName}" a expiré`, layout(`
+function buildCountdownExpiredHtml(name, email, countdownName) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
+    return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Countdown expiré
         </h1>
@@ -192,9 +205,23 @@ async function sendCountdownExpired(email, name, countdownName, countdownId) {
         <p style="margin:0;font-size:13px;color:#8a877f;line-height:1.7">
             Vous pouvez modifier la date de fin ou créer un nouveau countdown depuis votre dashboard.
         </p>
-    `));
+    `);
+}
+async function sendCountdownExpired(email, name, countdownName, countdownId) {
+    return send(email, `Votre countdown "${countdownName}" a expiré`, buildCountdownExpiredHtml(name, email, countdownName));
 }
 
+
+// ── Previews HTML (pour la route /email-preview) ────────────────
+const previews = {
+    welcome:     () => buildWelcomeHtml('Sophie', 'sophie@exemple.fr'),
+    upgrade_pro: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'PRO'),
+    upgrade_biz: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'BUSINESS'),
+    payment_failed:    () => buildPaymentFailedHtml('Sophie', 'sophie@exemple.fr', 1),
+    payment_failed_3:  () => buildPaymentFailedHtml('Sophie', 'sophie@exemple.fr', 3),
+    downgraded:  () => buildDowngradedHtml('Sophie', 'sophie@exemple.fr'),
+    expired:     () => buildCountdownExpiredHtml('Sophie', 'sophie@exemple.fr', 'Vente Flash — Été 2026'),
+};
 
 module.exports = {
     sendWelcome,
@@ -202,4 +229,5 @@ module.exports = {
     sendPaymentFailed,
     sendDowngraded,
     sendCountdownExpired,
+    previews,
 };
