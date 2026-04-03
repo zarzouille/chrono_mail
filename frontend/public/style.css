@@ -427,7 +427,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
     z-index: 100;
     box-shadow: var(--shadow-m);
     overflow: hidden;
-    max-height: 400px;
+    max-height: 520px;
     overflow-y: auto;
 }
 .style-dd-opts.open { display: block; }
