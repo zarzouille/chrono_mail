@@ -97,7 +97,11 @@ router.post('/countdown', requireAuth, async (req, res) => {
 
         // Perpétuel — Business uniquement
         const finalPerpetual        = plan === 'BUSINESS' ? perpetual : false;
-        const finalPerpetualSeconds = plan === 'BUSINESS' ? parseInt(perpetualSeconds) : 86400;
+        const finalPerpetualSeconds = plan === 'BUSINESS' ? Math.max(3600, parseInt(perpetualSeconds) || 86400) : 86400;
+
+        // Borner fontSize et width
+        const finalFontSize = Math.max(16, Math.min(50, parseInt(fontSize) || 36));
+        const finalWidth    = Math.max(200, Math.min(800, parseInt(width) || 400));
 
         const countdown = await prisma.countdown.create({
             data: {
@@ -106,8 +110,8 @@ router.post('/countdown', requireAuth, async (req, res) => {
                 endDate:          parsedEndDate,
                 bgColor,
                 textColor,
-                fontSize:         parseInt(fontSize),
-                width:            parseInt(width),
+                fontSize:         finalFontSize,
+                width:            finalWidth,
                 timezone,
                 fontFamily,
                 style:            finalStyle,
@@ -193,7 +197,7 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
         const finalFontLabels   = plan === 'FREE' ? null : (fontLabels !== undefined ? (fontLabels || null) : undefined);
         const finalSepColor     = plan === 'FREE' ? null : (sepColor !== undefined ? (sepColor || null) : undefined);
         const finalPerpetual        = plan === 'BUSINESS' && perpetual !== undefined ? !!perpetual : undefined;
-        const finalPerpetualSeconds = plan === 'BUSINESS' && perpetualSeconds !== undefined ? parseInt(perpetualSeconds) : undefined;
+        const finalPerpetualSeconds = plan === 'BUSINESS' && perpetualSeconds !== undefined ? Math.max(3600, parseInt(perpetualSeconds) || 86400) : undefined;
 
         const updated = await prisma.countdown.update({
             where: { id: req.params.id },
@@ -202,8 +206,8 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
                 ...(endDate    !== undefined && { endDate: new Date(endDate) }),
                 ...(bgColor    !== undefined && { bgColor }),
                 ...(textColor  !== undefined && { textColor }),
-                ...(fontSize   !== undefined && { fontSize: parseInt(fontSize) }),
-                ...(width      !== undefined && { width: parseInt(width) }),
+                ...(fontSize   !== undefined && { fontSize: Math.max(16, Math.min(50, parseInt(fontSize) || 36)) }),
+                ...(width      !== undefined && { width: Math.max(200, Math.min(800, parseInt(width) || 400)) }),
                 ...(timezone   !== undefined && { timezone }),
                 ...(fontFamily !== undefined && { fontFamily }),
                 ...(finalStyle !== undefined && { style: finalStyle }),
