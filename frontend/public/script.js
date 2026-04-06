@@ -91,8 +91,10 @@ function showPage(name) {
         showPage('login');
         return;
     }
+    const target = document.getElementById('page-' + name);
+    if (!target) { showPage('404'); return; }
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + name).classList.add('active');
+    target.classList.add('active');
     window.location.hash = name;
     window.scrollTo(0, 0);
     if (name === 'dashboard') loadDashboard();
@@ -1507,9 +1509,12 @@ updateNavAuth();
 
     const hash = window.location.hash.replace('#', '');
     const validPages = ['landing','login','register','dashboard','create','analytics','pricing',
-                        'legal-mentions','legal-privacy','legal-cgu','legal-cgv','legal-cookies','contact'];
+                        'legal-mentions','legal-privacy','legal-cgu','legal-cgv','legal-cookies','contact','404'];
     if (hash && validPages.includes(hash)) {
         showPage(hash);
+    } else if (hash) {
+        // Hash invalide → 404
+        showPage('404');
     } else if (isLoggedIn()) {
         showPage('dashboard');
     }
