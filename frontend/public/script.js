@@ -1082,7 +1082,12 @@ async function confirmDelete() {
 async function loadDashboard() {
     const grid = document.getElementById('cards-grid');
     if (!grid) return;
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Chargement...</div>';
+    grid.innerHTML = Array(3).fill(`<div class="skeleton-card">
+        <div class="skeleton skeleton-line w60"></div>
+        <div class="skeleton skeleton-line w40"></div>
+        <div class="skeleton skeleton-block"></div>
+        <div class="skeleton skeleton-line w80"></div>
+    </div>`).join('');
     try {
         const res = await authFetch('/countdowns');
         if (res.status === 401) { logout(); return; }
