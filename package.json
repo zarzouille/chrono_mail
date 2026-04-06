@@ -5,7 +5,8 @@
   "main": "backend/app.js",
   "scripts": {
     "start": "node backend/app.js",
-    "dev": "nodemon backend/app.js"
+    "dev": "nodemon backend/app.js",
+    "test": "jest --forceExit --detectOpenHandles"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.95",
@@ -28,6 +29,8 @@
     "stripe": "^20.4.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "jest": "^30.3.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
   }
 }
