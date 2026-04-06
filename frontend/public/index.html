@@ -1235,6 +1235,7 @@
                 <div class="quota-text" id="quota-text">0 / 3 countdowns</div>
                 <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:8px" id="upgrade-btn" onclick="upgradePlan('pro_monthly')">Passer à Pro ↗</button>
             </div>
+            <button class="btn btn-sm" style="width:100%;justify-content:center;margin-top:8px;color:var(--muted);font-size:11px" onclick="confirmDeleteAccount()">Supprimer mon compte</button>
         </div>
         <div class="main-content">
             <div class="page-header">
@@ -2007,6 +2008,32 @@
         <div class="confirm-modal-footer">
             <button class="btn btn-ghost" onclick="closeConfirmModal()">Annuler</button>
             <button class="btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">Supprimer définitivement</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ MODALE SUPPRESSION COMPTE ═══ -->
+<div id="delete-account-overlay" class="modal-overlay" onclick="closeDeleteAccountModal(event)">
+    <div class="confirm-modal">
+        <div class="confirm-modal-header">
+            <div class="confirm-modal-icon">⚠️</div>
+            <div>
+                <div class="confirm-modal-title">Supprimer votre compte ?</div>
+                <div class="confirm-modal-subtitle">Cette action est définitive et irréversible.</div>
+            </div>
+        </div>
+        <div class="confirm-modal-body">
+            <div class="confirm-modal-warn">
+                Toutes vos données seront supprimées : countdowns, impressions, configuration. Si vous avez un abonnement actif, il sera annulé immédiatement.
+            </div>
+            <div style="margin-top:12px">
+                <label style="font-size:12px;font-weight:600;color:var(--text2)">Tapez <strong>SUPPRIMER</strong> pour confirmer</label>
+                <input type="text" class="form-input" id="delete-account-confirm" placeholder="SUPPRIMER" style="margin-top:6px">
+            </div>
+        </div>
+        <div class="confirm-modal-footer">
+            <button class="btn btn-ghost" onclick="closeDeleteAccountModal()">Annuler</button>
+            <button class="btn-danger" id="delete-account-btn" onclick="executeDeleteAccount()">Supprimer mon compte</button>
         </div>
     </div>
 </div>

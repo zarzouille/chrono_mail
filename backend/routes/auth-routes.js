@@ -91,4 +91,33 @@ router.get('/auth/google/callback',
     }
 );
 
+// ── Suppression de compte (RGPD) ────────────────────────────────
+router.delete('/auth/account', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+        // Annuler l'abonnement Stripe si existant
+        if (user.stripeSubscriptionId) {
+            try {
+                const Stripe = require('stripe');
+                const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+                await stripe.subscriptions.cancel(user.stripeSubscriptionId);
+            } catch (err) {
+                console.error('Erreur annulation Stripe :', err.message);
+            }
+        }
+
+        // Suppression en cascade (grâce à onDelete: Cascade dans le schema)
+        await prisma.user.delete({ where: { id: userId } });
+
+        console.log(`🗑️ Compte supprimé : ${user.email}`);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Erreur suppression compte :', err);
+        res.status(500).json({ error: 'Erreur lors de la suppression du compte' });
+    }
+});
+
 module.exports = router;

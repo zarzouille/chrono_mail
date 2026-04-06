@@ -46,6 +46,45 @@ function logout() {
     showToast('👋 Déconnecté');
 }
 
+// ── Suppression de compte (RGPD) ─────────────────────────────
+function confirmDeleteAccount() {
+    const overlay = document.getElementById('delete-account-overlay');
+    const input   = document.getElementById('delete-account-confirm');
+    if (overlay) overlay.classList.add('open');
+    if (input) input.value = '';
+}
+function closeDeleteAccountModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('delete-account-overlay')?.classList.remove('open');
+}
+async function executeDeleteAccount() {
+    const input = document.getElementById('delete-account-confirm');
+    if (input?.value !== 'SUPPRIMER') {
+        showToast('⚠️ Tapez SUPPRIMER pour confirmer');
+        return;
+    }
+    const btn = document.getElementById('delete-account-btn');
+    if (btn) { btn.textContent = 'Suppression...'; btn.disabled = true; }
+    try {
+        const res = await authFetch('/auth/account', { method: 'DELETE' });
+        if (res.ok) {
+            localStorage.removeItem('cm_token');
+            localStorage.removeItem('cm_user');
+            updateNavAuth();
+            showPage('landing');
+            closeDeleteAccountModal();
+            showToast('Votre compte a été supprimé.');
+        } else {
+            const data = await res.json();
+            showToast('❌ ' + (data.error || 'Erreur'));
+        }
+    } catch {
+        showToast('❌ Erreur réseau');
+    } finally {
+        if (btn) { btn.textContent = 'Supprimer mon compte'; btn.disabled = false; }
+    }
+}
+
 function updateNavAuth() {
     const loggedIn = isLoggedIn();
     const user     = getUser();
