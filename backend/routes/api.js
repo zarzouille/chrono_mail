@@ -294,37 +294,47 @@ router.get('/gif/:id', async (req, res) => {
             }).catch(err => console.error('Erreur notification expiration :', err));
         }
 
-        const gifBuffer = await generateCountdownGif(
-            countdown.endDate.toISOString(),
-            countdown.bgColor,
-            countdown.textColor,
-            countdown.fontSize,
-            countdown.width,
-            {
-                fontFamily:       countdown.fontFamily,
-                style:            countdown.style,
-                orientation:      countdown.orientation,
-                showUnits:        countdown.showUnits,
-                labelDays:        countdown.labelDays,
-                labelHours:       countdown.labelHours,
-                labelMinutes:     countdown.labelMinutes,
-                labelSeconds:     countdown.labelSeconds,
-                expiredBehavior:  countdown.expiredBehavior,
-                expiredText:      countdown.expiredText,
-                bgImageUrl:       countdown.bgImageUrl,
-                blockBgColor:     countdown.blockBgColor,
-                fontLabels:       countdown.fontLabels,
-                sepColor:         countdown.sepColor,
-                perpetual:        countdown.perpetual,
-                perpetualSeconds: countdown.perpetualSeconds,
-            }
-        );
+        // Cache production : clé = id + minute courante (TTL 60s)
+        const prodCacheKey = `prod:${countdown.id}:${Math.floor(Date.now() / 60000)}`;
+        const cachedGif    = gifCache.get(prodCacheKey);
+
+        let gifBuffer;
+        if (cachedGif) {
+            gifBuffer = cachedGif;
+            res.set('X-Cache', 'HIT');
+        } else {
+            gifBuffer = await generateCountdownGif(
+                countdown.endDate.toISOString(),
+                countdown.bgColor,
+                countdown.textColor,
+                countdown.fontSize,
+                countdown.width,
+                {
+                    fontFamily:       countdown.fontFamily,
+                    style:            countdown.style,
+                    orientation:      countdown.orientation,
+                    showUnits:        countdown.showUnits,
+                    labelDays:        countdown.labelDays,
+                    labelHours:       countdown.labelHours,
+                    labelMinutes:     countdown.labelMinutes,
+                    labelSeconds:     countdown.labelSeconds,
+                    expiredBehavior:  countdown.expiredBehavior,
+                    expiredText:      countdown.expiredText,
+                    bgImageUrl:       countdown.bgImageUrl,
+                    blockBgColor:     countdown.blockBgColor,
+                    fontLabels:       countdown.fontLabels,
+                    sepColor:         countdown.sepColor,
+                    perpetual:        countdown.perpetual,
+                    perpetualSeconds: countdown.perpetualSeconds,
+                }
+            );
+            gifCache.set(prodCacheKey, gifBuffer, 60000);
+            res.set('X-Cache', 'MISS');
+        }
 
         res.set({
             'Content-Type':  'image/gif',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma':        'no-cache',
-            'Expires':       '0',
+            'Cache-Control': 'public, max-age=30, s-maxage=60',
         });
         res.send(gifBuffer);
 

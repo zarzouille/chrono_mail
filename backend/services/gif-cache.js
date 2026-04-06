@@ -1,12 +1,13 @@
 /**
- * gif-cache.js — Cache LRU en mémoire pour les GIFs preview
+ * gif-cache.js — Cache LRU en mémoire pour les GIFs (preview + production)
  * Chemin : backend/services/gif-cache.js
  *
- * Évite de régénérer un GIF identique à chaque frappe.
- * Taille max : 50 entrées (chaque GIF preview ~30-80kb)
+ * - Preview : cache sans TTL (évite de régénérer à chaque frappe)
+ * - Production /gif/:id : cache avec TTL de 60s (le GIF change chaque minute)
+ * Taille max : 200 entrées (~30-80kb chacune ≈ 6-16 MB max)
  */
 
-const MAX_SIZE = 50;
+const MAX_SIZE = 200;
 const cache    = new Map();
 
 /**
@@ -22,20 +23,28 @@ function makeCacheKey(params) {
 
 function get(key) {
     if (!cache.has(key)) return null;
+    const entry = cache.get(key);
+    // Vérifie le TTL si défini
+    if (entry.expiresAt && Date.now() > entry.expiresAt) {
+        cache.delete(key);
+        return null;
+    }
     // LRU : déplace en fin de Map
-    const val = cache.get(key);
     cache.delete(key);
-    cache.set(key, val);
-    return val;
+    cache.set(key, entry);
+    return entry.buffer;
 }
 
-function set(key, buffer) {
+function set(key, buffer, ttlMs) {
     // Évince la plus ancienne entrée si plein
     if (cache.size >= MAX_SIZE) {
         const oldest = cache.keys().next().value;
         cache.delete(oldest);
     }
-    cache.set(key, buffer);
+    cache.set(key, {
+        buffer,
+        expiresAt: ttlMs ? Date.now() + ttlMs : null,
+    });
 }
 
 function size() { return cache.size; }
