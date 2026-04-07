@@ -106,7 +106,10 @@ router.post('/auth/resend-verification', requireAuth, async (req, res) => {
             data:  { emailVerifyToken },
         });
 
-        await sendVerifyEmail(user.email, user.name, emailVerifyToken);
+        const result = await sendVerifyEmail(user.email, user.name, emailVerifyToken);
+        if (!result) {
+            return res.status(500).json({ error: "L'email n'a pas pu être envoyé. Vérifiez la configuration Resend." });
+        }
         res.json({ success: true });
     } catch (err) {
         console.error('Erreur resend-verification :', err);

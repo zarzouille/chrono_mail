@@ -65,7 +65,7 @@ async function send(to, subject, html) {
         console.log(`📧 [EMAIL OK] "${subject}" → ${to}`);
         return result;
     } catch (err) {
-        console.error(`📧 [EMAIL ERR] "${subject}" → ${to} :`, err.message);
+        console.error(`📧 [EMAIL ERR] "${subject}" → ${to} :`, err.message, err.statusCode || '', JSON.stringify(err.body || err.response || ''));
         return null;
     }
 }
