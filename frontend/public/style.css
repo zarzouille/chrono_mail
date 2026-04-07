@@ -220,6 +220,12 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .cd-card-add:hover .cd-card-add-icon { background:var(--accent-b); }
 
 /* SKELETON LOADER */
+/* Settings page */
+.settings-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-l); padding:24px; margin-bottom:16px; }
+.settings-section-title { margin:0 0 16px; font-size:16px; font-weight:700; color:var(--text); }
+.settings-form { display:flex; flex-direction:column; gap:12px; max-width:400px; }
+.settings-danger { border-color:#fecaca; }
+
 /* Auth success message */
 .auth-success { background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; padding:10px 14px; border-radius:var(--radius); font-size:13px; line-height:1.5; margin-bottom:12px; }
 

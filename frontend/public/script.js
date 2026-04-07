@@ -126,7 +126,7 @@ function closeMobileNav() {
 // 2. NAVIGATION — Routage SPA
 // ============================================================
 function showPage(name) {
-    if (['dashboard','create','analytics'].includes(name) && !isLoggedIn()) {
+    if (['dashboard','create','analytics','settings'].includes(name) && !isLoggedIn()) {
         showPage('login');
         return;
     }
@@ -138,6 +138,7 @@ function showPage(name) {
     window.scrollTo(0, 0);
     if (name === 'dashboard') loadDashboard();
     if (name === 'analytics') loadAnalytics();
+    if (name === 'settings')  loadSettings();
     if (name === 'pricing')   renderPricing();
     if (name === 'create')    { _resetCreateForm(); applyPlanGates(); updateExpiredUI(); goToStep(1); }
 }
@@ -1424,6 +1425,64 @@ async function openBillingPortal() {
 })();
 
 
+// ── Settings / Profil ────────────────────────────────────────────
+function loadSettings() {
+    const user = getUser();
+    if (!user) return;
+    document.getElementById('settings-name').value = user.name || '';
+    document.getElementById('settings-email').value = user.email || '';
+    // Masquer le form mot de passe si Google OAuth
+    const isGoogle = user.password === 'google_oauth';
+    const pwForm   = document.getElementById('settings-password-form');
+    const notice   = document.getElementById('settings-google-notice');
+    if (pwForm) pwForm.style.display = isGoogle ? 'none' : 'flex';
+    if (notice) notice.style.display = isGoogle ? 'block' : 'none';
+    // Plan chip
+    const chip = document.getElementById('sidebar-plan-chip-s');
+    if (chip) chip.textContent = user.plan || 'Free';
+}
+
+async function saveProfile(btn) {
+    const name   = document.getElementById('settings-name').value.trim();
+    const errEl  = document.getElementById('settings-error');
+    const okEl   = document.getElementById('settings-success');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+    btn.textContent = '⏳ ...'; btn.disabled = true;
+    try {
+        const res  = await authFetch('/auth/profile', { method: 'PUT', body: JSON.stringify({ name }) });
+        const data = await res.json();
+        if (res.ok) {
+            const user = getUser();
+            user.name = data.name;
+            localStorage.setItem('cm_user', JSON.stringify(user));
+            updateNavAuth();
+            okEl.textContent = 'Profil mis à jour !'; okEl.style.display = 'block';
+        } else { errEl.textContent = data.error || 'Erreur'; errEl.style.display = 'block'; }
+    } catch { errEl.textContent = 'Erreur réseau'; errEl.style.display = 'block'; }
+    finally { btn.textContent = 'Enregistrer'; btn.disabled = false; }
+}
+
+async function changePassword(btn) {
+    const current = document.getElementById('settings-current-password').value;
+    const newPwd  = document.getElementById('settings-new-password').value;
+    const errEl   = document.getElementById('password-error');
+    const okEl    = document.getElementById('password-success');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+    if (!current || !newPwd) { errEl.textContent = 'Remplissez les deux champs'; errEl.style.display = 'block'; return; }
+    if (newPwd.length < 8) { errEl.textContent = '8 caractères minimum'; errEl.style.display = 'block'; return; }
+    btn.textContent = '⏳ ...'; btn.disabled = true;
+    try {
+        const res  = await authFetch('/auth/password', { method: 'PUT', body: JSON.stringify({ currentPassword: current, newPassword: newPwd }) });
+        const data = await res.json();
+        if (res.ok) {
+            okEl.textContent = 'Mot de passe changé !'; okEl.style.display = 'block';
+            document.getElementById('settings-current-password').value = '';
+            document.getElementById('settings-new-password').value = '';
+        } else { errEl.textContent = data.error || 'Erreur'; errEl.style.display = 'block'; }
+    } catch { errEl.textContent = 'Erreur réseau'; errEl.style.display = 'block'; }
+    finally { btn.textContent = 'Changer le mot de passe'; btn.disabled = false; }
+}
+
 // Retour vérification email
 (function handleVerifyReturn() {
     const params = new URLSearchParams(window.location.search);
@@ -1640,7 +1699,7 @@ updateNavAuth();
 
     const rawHash = window.location.hash.replace('#', '');
     const hash = rawHash.split('?')[0]; // strip query params (ex: reset-password?token=xxx)
-    const validPages = ['landing','login','register','forgot-password','reset-password','dashboard','create','analytics','pricing',
+    const validPages = ['landing','login','register','forgot-password','reset-password','dashboard','create','analytics','settings','pricing',
                         'legal-mentions','legal-privacy','legal-cgu','legal-cgv','legal-cookies','contact','404'];
     if (hash && validPages.includes(hash)) {
         showPage(hash);

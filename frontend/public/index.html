@@ -1279,7 +1279,7 @@
                 <div class="sidebar-item active" onclick="showPage('dashboard')">▦ Mes countdowns</div>
                 <div class="sidebar-item" onclick="showPage('create')">＋ Créer</div>
                 <div class="sidebar-item" onclick="showPage('analytics')">↗ Analytiques</div>
-                <div class="sidebar-item">⚙ Paramètres</div>
+                <div class="sidebar-item" onclick="showPage('settings')">⚙ Paramètres</div>
             </div>
             <div class="sidebar-spacer"></div>
             <div class="sidebar-plan-box">
@@ -1324,7 +1324,7 @@
                 <div class="sidebar-item" onclick="showPage('dashboard')">▦ Mes countdowns</div>
                 <div class="sidebar-item" onclick="showPage('create')">＋ Créer</div>
                 <div class="sidebar-item active" onclick="showPage('analytics')">↗ Analytiques</div>
-                <div class="sidebar-item">⚙ Paramètres</div>
+                <div class="sidebar-item" onclick="showPage('settings')">⚙ Paramètres</div>
             </div>
             <div class="sidebar-spacer"></div>
             <div class="sidebar-plan-box">
@@ -1385,6 +1385,82 @@
                         <tbody></tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     SETTINGS PAGE
+     ============================================================ -->
+<div id="page-settings" class="page">
+    <div class="app-layout">
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Navigation</div>
+                <div class="sidebar-item" onclick="showPage('dashboard')">▦ Mes countdowns</div>
+                <div class="sidebar-item" onclick="showPage('create')">＋ Créer</div>
+                <div class="sidebar-item" onclick="showPage('analytics')">↗ Analytiques</div>
+                <div class="sidebar-item active" onclick="showPage('settings')">⚙ Paramètres</div>
+            </div>
+            <div class="sidebar-spacer"></div>
+            <div class="sidebar-plan-box">
+                <div class="sidebar-plan-name">Plan Free <span class="plan-chip" id="sidebar-plan-chip-s">Free</span></div>
+                <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:8px" onclick="upgradePlan('pro_monthly')">Passer à Pro ↗</button>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="page-header">
+                <div>
+                    <div class="page-title">Paramètres</div>
+                    <div class="page-subtitle">Gérez votre profil et votre compte</div>
+                </div>
+            </div>
+
+            <!-- Profil -->
+            <div class="settings-section">
+                <h3 class="settings-section-title">Profil</h3>
+                <div id="settings-error" class="auth-error" style="display:none"></div>
+                <div id="settings-success" class="auth-success" style="display:none"></div>
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label class="form-label">Nom</label>
+                        <input type="text" class="form-input" id="settings-name" placeholder="Votre nom">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="settings-email" disabled style="opacity:0.6;cursor:not-allowed">
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="saveProfile(this)">Enregistrer</button>
+                </div>
+            </div>
+
+            <!-- Mot de passe -->
+            <div class="settings-section">
+                <h3 class="settings-section-title">Changer le mot de passe</h3>
+                <div id="password-error" class="auth-error" style="display:none"></div>
+                <div id="password-success" class="auth-success" style="display:none"></div>
+                <div class="settings-form" id="settings-password-form">
+                    <div class="form-group">
+                        <label class="form-label">Mot de passe actuel</label>
+                        <input type="password" class="form-input" id="settings-current-password" placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nouveau mot de passe <span class="optional">(8 caractères min.)</span></label>
+                        <input type="password" class="form-input" id="settings-new-password" placeholder="••••••••">
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="changePassword(this)">Changer le mot de passe</button>
+                </div>
+                <div id="settings-google-notice" style="display:none;color:var(--muted);font-size:13px;margin-top:8px">
+                    Connecté via Google — le mot de passe ne peut pas être modifié ici.
+                </div>
+            </div>
+
+            <!-- Zone danger -->
+            <div class="settings-section settings-danger">
+                <h3 class="settings-section-title" style="color:var(--red,#dc2626)">Zone dangereuse</h3>
+                <p style="font-size:13px;color:var(--muted);margin:0 0 12px">La suppression est irréversible. Tous vos countdowns et données seront définitivement effacés.</p>
+                <button class="btn btn-sm" style="color:#dc2626;border-color:#dc2626" onclick="confirmDeleteAccount()">Supprimer mon compte</button>
             </div>
         </div>
     </div>

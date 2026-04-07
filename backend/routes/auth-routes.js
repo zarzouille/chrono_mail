@@ -114,6 +114,45 @@ router.post('/auth/resend-verification', requireAuth, async (req, res) => {
     }
 });
 
+// ── Mise à jour du profil ────────────────────────────────────────
+router.put('/auth/profile', requireAuth, async (req, res) => {
+    try {
+        const { name } = req.body;
+        const user = await prisma.user.update({
+            where: { id: req.user.id },
+            data:  { name: name || null },
+            select: { id: true, email: true, name: true, plan: true, emailVerified: true },
+        });
+        res.json(user);
+    } catch (err) {
+        console.error('Erreur update profil :', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// ── Changement de mot de passe ──────────────────────────────────
+router.put('/auth/password', requireAuth, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Mot de passe actuel et nouveau requis' });
+        if (newPassword.length < 8) return res.status(400).json({ error: 'Nouveau mot de passe trop court (8 caractères minimum)' });
+
+        const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+        if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+        if (user.password === 'google_oauth') return res.status(400).json({ error: 'Compte Google — utilisez Google pour vous connecter' });
+
+        const valid = await verifyPassword(currentPassword, user.password);
+        if (!valid) return res.status(401).json({ error: 'Mot de passe actuel incorrect' });
+
+        const hashed = await hashPassword(newPassword);
+        await prisma.user.update({ where: { id: user.id }, data: { password: hashed } });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Erreur changement mdp :', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
 // ── Mot de passe oublié — envoi du lien ──────────────────────────
 router.post('/auth/forgot-password', async (req, res) => {
     try {
