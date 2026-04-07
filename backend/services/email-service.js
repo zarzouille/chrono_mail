@@ -99,6 +99,31 @@ async function sendVerifyEmail(email, name, token) {
 }
 
 /**
+ * 0b. Réinitialisation mot de passe
+ */
+function buildResetPasswordHtml(name, email, resetUrl) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
+    return layout(`
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
+            Réinitialiser votre mot de passe
+        </h1>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            Bonjour ${displayName}, vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour en choisir un nouveau.
+        </p>
+        ${btn('Réinitialiser mon mot de passe →', resetUrl)}
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px;margin:16px 0">
+            <p style="margin:0;font-size:13px;color:#9a3412;line-height:1.6">
+                Ce lien expire dans <strong>1 heure</strong>. Si vous n'avez pas fait cette demande, ignorez cet email.
+            </p>
+        </div>
+    `);
+}
+async function sendResetPassword(email, name, token) {
+    const resetUrl = `${APP}/#reset-password?token=${token}`;
+    return send(email, 'Réinitialisation de mot de passe — chrono.mail', buildResetPasswordHtml(name, email, resetUrl));
+}
+
+/**
  * 1. Bienvenue — après inscription
  */
 function buildWelcomeHtml(name, email) {
@@ -238,6 +263,7 @@ async function sendCountdownExpired(email, name, countdownName, countdownId) {
 // ── Previews HTML (pour la route /email-preview) ────────────────
 const previews = {
     verify_email: () => buildVerifyEmailHtml('Sophie', 'sophie@exemple.fr', APP + '/auth/verify-email?token=demo_token_123'),
+    reset_password: () => buildResetPasswordHtml('Sophie', 'sophie@exemple.fr', APP + '/#reset-password?token=demo_token_123'),
     welcome:     () => buildWelcomeHtml('Sophie', 'sophie@exemple.fr'),
     upgrade_pro: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'PRO'),
     upgrade_biz: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'BUSINESS'),
@@ -249,6 +275,7 @@ const previews = {
 
 module.exports = {
     sendVerifyEmail,
+    sendResetPassword,
     sendWelcome,
     sendUpgradeConfirmed,
     sendPaymentFailed,

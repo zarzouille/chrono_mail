@@ -4,7 +4,7 @@ const passport = require('../lib/passport');
 const prisma   = require('../lib/prisma');
 const crypto   = require('crypto');
 const { hashPassword, verifyPassword, generateToken, requireAuth } = require('../lib/auth');
-const { sendWelcome, sendVerifyEmail } = require('../services/email-service');
+const { sendWelcome, sendVerifyEmail, sendResetPassword } = require('../services/email-service');
 
 // ── Inscription ───────────────────────────────────────────────────
 router.post('/auth/register', async (req, res) => {
@@ -111,6 +111,59 @@ router.post('/auth/resend-verification', requireAuth, async (req, res) => {
     } catch (err) {
         console.error('Erreur resend-verification :', err);
         res.status(500).json({ error: 'Erreur lors du renvoi' });
+    }
+});
+
+// ── Mot de passe oublié — envoi du lien ──────────────────────────
+router.post('/auth/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: 'Email requis' });
+
+        const user = await prisma.user.findUnique({ where: { email } });
+        // Toujours répondre 200 pour ne pas révéler si l'email existe
+        if (!user || user.password === 'google_oauth') {
+            return res.json({ success: true });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 heure
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data:  { resetToken, resetTokenExpiry },
+        });
+
+        await sendResetPassword(user.email, user.name, resetToken);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Erreur forgot-password :', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// ── Réinitialisation du mot de passe ─────────────────────────────
+router.post('/auth/reset-password', async (req, res) => {
+    try {
+        const { token, password } = req.body;
+        if (!token || !password) return res.status(400).json({ error: 'Token et mot de passe requis' });
+        if (password.length < 8) return res.status(400).json({ error: 'Mot de passe trop court (8 caractères minimum)' });
+
+        const user = await prisma.user.findFirst({
+            where: { resetToken: token, resetTokenExpiry: { gt: new Date() } },
+        });
+        if (!user) return res.status(400).json({ error: 'Lien expiré ou invalide. Refaites une demande.' });
+
+        const hashed = await hashPassword(password);
+        await prisma.user.update({
+            where: { id: user.id },
+            data:  { password: hashed, resetToken: null, resetTokenExpiry: null },
+        });
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Erreur reset-password :', err);
+        res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 

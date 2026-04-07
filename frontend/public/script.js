@@ -144,7 +144,7 @@ function showPage(name) {
 
 
 // ============================================================
-// 3. API AUTH — Login / Register
+// 3. API AUTH — Login / Register / Forgot / Reset
 // ============================================================
 async function login() {
     const btn      = document.getElementById('login-btn');
@@ -186,6 +186,60 @@ async function register() {
     finally { btn.textContent = 'Créer mon compte →'; btn.disabled = false; }
 }
 
+
+async function forgotPassword() {
+    const btn    = document.getElementById('forgot-btn');
+    const email  = document.getElementById('forgot-email').value.trim();
+    const errEl  = document.getElementById('forgot-error');
+    const okEl   = document.getElementById('forgot-success');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+    if (!email) { errEl.textContent = 'Entrez votre email'; errEl.style.display = 'block'; return; }
+    btn.textContent = '⏳ Envoi...'; btn.disabled = true;
+    try {
+        const res = await fetch('/auth/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+        if (res.ok) {
+            okEl.textContent = 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé. Vérifiez votre boîte de réception.';
+            okEl.style.display = 'block';
+        } else {
+            const data = await res.json();
+            errEl.textContent = data.error || 'Erreur'; errEl.style.display = 'block';
+        }
+    } catch { errEl.textContent = 'Erreur réseau'; errEl.style.display = 'block'; }
+    finally { btn.textContent = 'Envoyer le lien'; btn.disabled = false; }
+}
+
+async function resetPassword() {
+    const btn       = document.getElementById('reset-btn');
+    const password  = document.getElementById('reset-password').value;
+    const confirm   = document.getElementById('reset-password-confirm').value;
+    const errEl     = document.getElementById('reset-error');
+    const okEl      = document.getElementById('reset-success');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+
+    if (!password || !confirm) { errEl.textContent = 'Remplissez les deux champs'; errEl.style.display = 'block'; return; }
+    if (password.length < 8) { errEl.textContent = 'Mot de passe trop court (8 caractères minimum)'; errEl.style.display = 'block'; return; }
+    if (password !== confirm) { errEl.textContent = 'Les mots de passe ne correspondent pas'; errEl.style.display = 'block'; return; }
+
+    // Extraire le token depuis le hash : #reset-password?token=xxx
+    const hashParts = window.location.hash.split('?');
+    const params    = new URLSearchParams(hashParts[1] || '');
+    const token     = params.get('token');
+    if (!token) { errEl.textContent = 'Lien invalide — refaites une demande'; errEl.style.display = 'block'; return; }
+
+    btn.textContent = '⏳ Réinitialisation...'; btn.disabled = true;
+    try {
+        const res  = await fetch('/auth/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, password }) });
+        const data = await res.json();
+        if (res.ok) {
+            okEl.textContent = 'Mot de passe réinitialisé ! Vous pouvez vous connecter.';
+            okEl.style.display = 'block';
+            setTimeout(() => showPage('login'), 2000);
+        } else {
+            errEl.textContent = data.error || 'Erreur'; errEl.style.display = 'block';
+        }
+    } catch { errEl.textContent = 'Erreur réseau'; errEl.style.display = 'block'; }
+    finally { btn.textContent = 'Réinitialiser'; btn.disabled = false; }
+}
 
 // ============================================================
 // 4. FETCH AUTHENTIFIÉ
@@ -1584,8 +1638,9 @@ updateNavAuth();
     if (params.get('token')) return; // géré ailleurs
     if (params.get('checkout')) { if (isLoggedIn()) { showPage('dashboard'); return; } }
 
-    const hash = window.location.hash.replace('#', '');
-    const validPages = ['landing','login','register','dashboard','create','analytics','pricing',
+    const rawHash = window.location.hash.replace('#', '');
+    const hash = rawHash.split('?')[0]; // strip query params (ex: reset-password?token=xxx)
+    const validPages = ['landing','login','register','forgot-password','reset-password','dashboard','create','analytics','pricing',
                         'legal-mentions','legal-privacy','legal-cgu','legal-cgv','legal-cookies','contact','404'];
     if (hash && validPages.includes(hash)) {
         showPage(hash);
@@ -1598,7 +1653,7 @@ updateNavAuth();
 })();
 
 window.addEventListener('hashchange', () => {
-    const hash = window.location.hash.replace('#', '');
+    const hash = window.location.hash.replace('#', '').split('?')[0];
     if (hash) showPage(hash);
 });
 
