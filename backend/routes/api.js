@@ -251,6 +251,52 @@ router.delete('/countdown/:id', requireAuth, async (req, res) => {
     }
 });
 
+// ── Dupliquer un countdown ────────────────────────────────────
+router.post('/countdown/:id/duplicate', requireAuth, async (req, res) => {
+    try {
+        const plan = req.user.plan;
+        const cd = await prisma.countdown.findUnique({ where: { id: req.params.id } });
+        if (!cd) return res.status(404).json({ error: 'Countdown introuvable' });
+        if (cd.userId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' });
+
+        // Limite Free : 3 countdowns max
+        if (plan === 'FREE') {
+            const count = await prisma.countdown.count({ where: { userId: req.user.id } });
+            if (count >= 3) {
+                return res.status(403).json({
+                    error: 'Limite atteinte',
+                    message: 'Le plan Free est limité à 3 countdowns. Passez à Pro pour en créer davantage.',
+                });
+            }
+        }
+
+        // Nouvelle endDate : même durée restante ou +24h si expiré
+        const newEndDate = new Date(cd.endDate) > new Date()
+            ? cd.endDate
+            : new Date(Date.now() + 86400000);
+
+        const { id, userId, createdAt, updatedAt, expiredNotified, ...fields } = cd;
+        const duplicate = await prisma.countdown.create({
+            data: {
+                ...fields,
+                userId: req.user.id,
+                name: `${cd.name} (copie)`,
+                endDate: newEndDate,
+                expiredNotified: false,
+            },
+        });
+
+        res.json({
+            id: duplicate.id,
+            gifUrl: buildGifUrl(req, duplicate.id),
+            countdown: duplicate,
+        });
+    } catch (err) {
+        console.error('Erreur duplication :', err);
+        res.status(500).json({ error: 'Erreur lors de la duplication' });
+    }
+});
+
 // ── GIF depuis la base ─────────────────────────────────────────
 router.get('/gif/:id', async (req, res) => {
     try {

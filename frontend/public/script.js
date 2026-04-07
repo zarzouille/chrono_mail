@@ -1171,6 +1171,21 @@ async function confirmDelete() {
 }
 
 
+async function duplicateCountdown(id) {
+    const cd = cdMap[id];
+    if (!cd) return;
+    try {
+        const res = await authFetch(`/countdown/${id}/duplicate`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('Countdown dupliqué !');
+            loadDashboard();
+        } else {
+            showToast('❌ ' + (data.error || data.message || 'Erreur'));
+        }
+    } catch { showToast('❌ Erreur réseau'); }
+}
+
 // 15. DASHBOARD — Chargement et rendu des countdowns
 // ============================================================
 async function loadDashboard() {
@@ -1257,6 +1272,7 @@ function buildCard(cd) {
     </div>
     <div class="cd-card-actions">
       <button class="cd-action-btn" onclick="editCountdown('${cd.id}')">Modifier</button>
+      <button class="cd-action-btn" onclick="duplicateCountdown('${cd.id}')">Dupliquer</button>
       <button class="cd-action-btn cd-action-delete" onclick="deleteCountdown('${cd.id}')">Supprimer</button>
     </div>`;
     return card;
