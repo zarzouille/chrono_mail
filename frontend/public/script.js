@@ -181,7 +181,7 @@ async function register() {
         if (!res.ok) { errEl.textContent = data.error || "Erreur lors de l'inscription"; errEl.style.display = 'block'; return; }
         saveAuth(data.token, data.user);
         showPage('dashboard');
-        showToast('🎉 Compte créé, bienvenue !');
+        showToast('🎉 Compte créé ! Vérifiez votre email.');
     } catch (err) { errEl.textContent = 'Erreur réseau, réessayez'; errEl.style.display = 'block'; }
     finally { btn.textContent = 'Créer mon compte →'; btn.disabled = false; }
 }
@@ -1119,6 +1119,7 @@ async function confirmDelete() {
 // 15. DASHBOARD — Chargement et rendu des countdowns
 // ============================================================
 async function loadDashboard() {
+    updateVerifyBanner();
     const grid = document.getElementById('cards-grid');
     if (!grid) return;
     grid.innerHTML = Array(3).fill(`<div class="skeleton-card">
@@ -1368,6 +1369,38 @@ async function openBillingPortal() {
     }
 })();
 
+
+// Retour vérification email
+(function handleVerifyReturn() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('verified') === '1') {
+        window.history.replaceState({}, document.title, '/');
+        // Mettre à jour le user local
+        const user = getUser();
+        if (user) { user.emailVerified = true; localStorage.setItem('cm_user', JSON.stringify(user)); }
+        showToast('✅ Email vérifié avec succès !');
+        if (isLoggedIn()) showPage('dashboard');
+    }
+})();
+
+// ── Bannière vérification email ──────────────────────────────
+function updateVerifyBanner() {
+    const banner = document.getElementById('email-verify-banner');
+    if (!banner) return;
+    const user = getUser();
+    banner.style.display = (user && !user.emailVerified) ? 'flex' : 'none';
+}
+
+async function resendVerification(btn) {
+    btn.textContent = '⏳ Envoi...'; btn.disabled = true;
+    try {
+        const res = await authFetch('/auth/resend-verification', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) showToast('📧 Email de vérification renvoyé !');
+        else showToast('❌ ' + (data.error || 'Erreur'));
+    } catch { showToast('❌ Erreur réseau'); }
+    finally { btn.textContent = 'Renvoyer'; btn.disabled = false; }
+}
 
 // ============================================================
 // 19. TOAST

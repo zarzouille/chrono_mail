@@ -76,6 +76,29 @@ async function send(to, subject, html) {
 // ================================================================
 
 /**
+ * 0. Vérification email — après inscription
+ */
+function buildVerifyEmailHtml(name, email, verifyUrl) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
+    return layout(`
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
+            Vérifiez votre email
+        </h1>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            Bonjour ${displayName}, cliquez sur le bouton ci-dessous pour confirmer votre adresse email et activer votre compte chrono.mail.
+        </p>
+        ${btn('Vérifier mon email →', verifyUrl)}
+        <p style="margin:0;font-size:13px;color:#8a877f;line-height:1.7">
+            Si vous n'avez pas créé de compte, ignorez simplement cet email.
+        </p>
+    `);
+}
+async function sendVerifyEmail(email, name, token) {
+    const verifyUrl = `${APP}/auth/verify-email?token=${token}`;
+    return send(email, 'Confirmez votre adresse email — chrono.mail', buildVerifyEmailHtml(name, email, verifyUrl));
+}
+
+/**
  * 1. Bienvenue — après inscription
  */
 function buildWelcomeHtml(name, email) {
@@ -214,6 +237,7 @@ async function sendCountdownExpired(email, name, countdownName, countdownId) {
 
 // ── Previews HTML (pour la route /email-preview) ────────────────
 const previews = {
+    verify_email: () => buildVerifyEmailHtml('Sophie', 'sophie@exemple.fr', APP + '/auth/verify-email?token=demo_token_123'),
     welcome:     () => buildWelcomeHtml('Sophie', 'sophie@exemple.fr'),
     upgrade_pro: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'PRO'),
     upgrade_biz: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'BUSINESS'),
@@ -224,6 +248,7 @@ const previews = {
 };
 
 module.exports = {
+    sendVerifyEmail,
     sendWelcome,
     sendUpgradeConfirmed,
     sendPaymentFailed,

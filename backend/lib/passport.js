@@ -26,6 +26,7 @@ passport.use(new GoogleStrategy({
                         name,
                         password: 'google_oauth', // pas de mot de passe pour les comptes Google
                         plan: 'FREE',
+                        emailVerified: true, // Google a déjà vérifié l'email
                     },
                 });
                 isNewUser = true;

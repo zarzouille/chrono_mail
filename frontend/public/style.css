@@ -220,6 +220,12 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .cd-card-add:hover .cd-card-add-icon { background:var(--accent-b); }
 
 /* SKELETON LOADER */
+/* Verification banner */
+.verify-banner { display:flex; align-items:center; gap:12px; padding:14px 18px; background:#eff4ff; border:1px solid rgba(37,99,235,0.2); border-radius:var(--radius-l); margin-bottom:16px; }
+.verify-banner-icon { font-size:24px; flex-shrink:0; }
+.verify-banner-text { flex:1; font-size:13px; color:#1d4ed8; line-height:1.5; }
+.verify-banner-text strong { font-weight:700; }
+
 @keyframes skeleton-pulse { 0%,100% { opacity:0.4; } 50% { opacity:1; } }
 .skeleton { background:var(--surface2); border-radius:var(--radius); animation:skeleton-pulse 1.2s ease-in-out infinite; }
 .skeleton-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-l); padding:20px; min-height:180px; display:flex; flex-direction:column; gap:12px; }

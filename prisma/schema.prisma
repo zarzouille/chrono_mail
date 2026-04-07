@@ -13,6 +13,9 @@ model User {
   password String
   plan     Plan    @default(FREE)
 
+  emailVerified    Boolean @default(false)
+  emailVerifyToken String?
+
   stripeCustomerId       String?   @unique
   stripeSubscriptionId   String?   @unique
   stripePriceId          String?

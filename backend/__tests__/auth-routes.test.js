@@ -17,6 +17,7 @@ jest.mock('../lib/prisma', () => ({
 // Mock email service
 jest.mock('../services/email-service', () => ({
     sendWelcome: jest.fn().mockResolvedValue({}),
+    sendVerifyEmail: jest.fn().mockResolvedValue({}),
 }));
 
 // Mock passport (évite la config Google OAuth)

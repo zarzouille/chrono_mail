@@ -1238,6 +1238,14 @@
             <button class="btn btn-sm" style="width:100%;justify-content:center;margin-top:8px;color:var(--muted);font-size:11px" onclick="confirmDeleteAccount()">Supprimer mon compte</button>
         </div>
         <div class="main-content">
+            <!-- Bannière vérification email -->
+            <div id="email-verify-banner" class="verify-banner" style="display:none">
+                <div class="verify-banner-icon">✉</div>
+                <div class="verify-banner-text">
+                    <strong>Vérifiez votre email</strong> — Un email de confirmation a été envoyé. Vérifiez votre boîte de réception (et vos spams).
+                </div>
+                <button class="btn btn-sm" onclick="resendVerification(this)" style="white-space:nowrap">Renvoyer</button>
+            </div>
             <div class="page-header">
                 <div>
                     <div class="page-title">Mes Countdowns</div>
