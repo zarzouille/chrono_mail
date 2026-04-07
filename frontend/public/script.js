@@ -26,6 +26,28 @@
 
 
 // ============================================================
+// 0. THEME — Mode sombre / clair
+// ============================================================
+function toggleTheme() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const theme  = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cm_theme', theme);
+    document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☾' : '☀';
+}
+
+(function initTheme() {
+    const saved = localStorage.getItem('cm_theme');
+    const prefer = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const theme  = saved || prefer;
+    if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = theme === 'dark' ? '☾' : '☀';
+})();
+
+// ============================================================
 // 1. AUTH — Token JWT et session utilisateur
 // ============================================================
 function getToken()   { return localStorage.getItem('cm_token'); }
