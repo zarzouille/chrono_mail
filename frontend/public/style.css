@@ -1137,7 +1137,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .contact-card-icon { font-size:24px; margin-bottom:12px; }
 .contact-card-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:6px; }
 .contact-card-desc { font-size:13px; color:var(--muted); line-height:1.6; flex:1; }
-.contact-card-cta { display:flex; justify-content:center; align-items:center; width:100%; margin-top:14px; text-align:center; }
+.contact-card-cta { display:flex; justify-content:center; align-items:center; width:100%; margin-top:14px; text-align:center; white-space:normal; padding:10px 20px; }
 
 /* ── RESPONSIVE: TABLET (≤768px) ── */
 @media (max-width:768px) {
