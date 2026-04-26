@@ -67,6 +67,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .nav-links a { color:var(--muted); text-decoration:none; font-size:14px; font-weight:500; padding:6px 12px; border-radius:var(--radius-s); transition:all .15s; }
 .nav-links a:hover { color:var(--text); background:var(--surface2); }
 .nav-cta { display:flex; gap:8px; align-items:center; }
+.nav-cta .btn { white-space:nowrap; }
 
 /* NAV BURGER (hidden on desktop) */
 .nav-burger { display:none; background:none; border:none; cursor:pointer; padding:6px; flex-direction:column; gap:4px; }
@@ -86,7 +87,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 .mobile-nav-cta { display:flex; flex-direction:column; gap:8px; padding:8px 0; }
 
 /* BUTTONS */
-.btn { padding:9px 18px; border-radius:var(--radius); font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; border:none; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; text-decoration:none; }
+.btn { padding:9px 18px; border-radius:var(--radius); font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; border:none; display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
 .btn-sm { padding:6px 14px; font-size:13px; border-radius:var(--radius-s); }
 .btn-lg { padding:11px 22px; font-size:15px; }
 .btn-xl { padding:14px 28px; font-size:15px; border-radius:var(--radius-l); }
