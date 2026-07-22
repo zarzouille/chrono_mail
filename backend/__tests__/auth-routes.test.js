@@ -10,6 +10,7 @@ jest.mock('../lib/prisma', () => ({
     user: {
         findUnique: jest.fn(),
         create:     jest.fn(),
+        update:     jest.fn(),
         delete:     jest.fn(),
     },
 }));
@@ -18,6 +19,7 @@ jest.mock('../lib/prisma', () => ({
 jest.mock('../services/email-service', () => ({
     sendWelcome: jest.fn().mockResolvedValue({}),
     sendVerifyEmail: jest.fn().mockResolvedValue({}),
+    sendResetPassword: jest.fn().mockResolvedValue({}),
 }));
 
 // Mock passport (évite la config Google OAuth)
@@ -27,6 +29,7 @@ jest.mock('../lib/passport', () => {
 });
 
 const prisma = require('../lib/prisma');
+const emailService = require('../services/email-service');
 const bcrypt = require('bcrypt');
 const authRoutes = require('../routes/auth-routes');
 
@@ -159,5 +162,48 @@ describe('DELETE /auth/account', () => {
         const res = await request(app).delete('/auth/account').set(authHeader());
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
+    });
+});
+
+// ── Forgot password ────────────────────────────────────────────────
+describe('POST /auth/forgot-password', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    test('email inexistant → 200 succès (pas d\'énumération)', async () => {
+        prisma.user.findUnique.mockResolvedValue(null);
+        const res = await request(app).post('/auth/forgot-password').send({ email: 'inconnu@test.com' });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    test('compte Google OAuth → 200 succès identique (pas d\'énumération)', async () => {
+        prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'g@test.com', password: 'google_oauth' });
+        const res = await request(app).post('/auth/forgot-password').send({ email: 'g@test.com' });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    test('compte existant, envoi réussi → 200 succès', async () => {
+        prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'A', password: 'hash' });
+        prisma.user.update.mockResolvedValue({});
+        emailService.sendResetPassword.mockResolvedValue({ id: 'email_1' });
+        const res = await request(app).post('/auth/forgot-password').send({ email: 'a@b.com' });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    test('compte existant, échec d\'envoi (Resend down) → réponse identique au cas réussi, mais loggée', async () => {
+        const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'A', password: 'hash' });
+        prisma.user.update.mockResolvedValue({});
+        emailService.sendResetPassword.mockResolvedValue(null); // échec d'envoi, pas d'exception
+        const res = await request(app).post('/auth/forgot-password').send({ email: 'a@b.com' });
+        // La réponse ne doit PAS trahir l'échec : même statut/body que le cas réussi,
+        // sinon un attaquant peut distinguer les comptes existants pendant une panne Resend.
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        // Mais l'échec doit être visible côté serveur, distinctement d'un email non critique.
+        expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('a@b.com'));
+        errSpy.mockRestore();
     });
 });

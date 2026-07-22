@@ -176,7 +176,15 @@ router.post('/auth/forgot-password', async (req, res) => {
             data:  { resetToken, resetTokenExpiry },
         });
 
-        await sendResetPassword(user.email, user.name, resetToken);
+        const result = await sendResetPassword(user.email, user.name, resetToken);
+        if (!result) {
+            // La réponse au client reste identique (200, succès) pour ne pas
+            // révéler l'existence du compte — mais un échec d'envoi ici est
+            // critique : sans cet email, l'utilisateur n'a plus aucun moyen
+            // de récupérer son compte. À distinguer clairement d'un simple
+            // email non prioritaire (bienvenue, etc.) dans les logs/alertes.
+            console.error(`🚨 Échec envoi reset password pour ${user.email} — utilisateur potentiellement bloqué sans recours`);
+        }
         res.json({ success: true });
     } catch (err) {
         console.error('Erreur forgot-password :', err);
