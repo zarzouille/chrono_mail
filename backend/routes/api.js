@@ -3,6 +3,7 @@ const router   = express.Router();
 const { generateCountdownGif } = require('../services/countdown-generator');
 const prisma   = require('../lib/prisma');
 const { requireAuth } = require('../lib/auth');
+const { zonedTimeToUtc } = require('../lib/tz');
 const gifCache       = require('../services/gif-cache');
 const { sendCountdownExpired } = require('../services/email-service');
 
@@ -59,7 +60,12 @@ router.post('/countdown', requireAuth, async (req, res) => {
         } = req.body;
 
         if (!endDate) return res.status(400).json({ error: 'endDate est requis' });
-        const parsedEndDate = new Date(endDate);
+        let parsedEndDate;
+        try {
+            parsedEndDate = zonedTimeToUtc(endDate, timezone);
+        } catch (err) {
+            return res.status(400).json({ error: 'timezone invalide' });
+        }
         if (isNaN(parsedEndDate.getTime())) return res.status(400).json({ error: 'endDate invalide' });
         if (parsedEndDate <= new Date()) return res.status(400).json({ error: 'endDate doit être dans le futur' });
 
@@ -200,11 +206,22 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
         const finalPerpetual        = plan === 'BUSINESS' && perpetual !== undefined ? !!perpetual : undefined;
         const finalPerpetualSeconds = plan === 'BUSINESS' && perpetualSeconds !== undefined ? Math.max(3600, parseInt(perpetualSeconds) || 86400) : undefined;
 
+        let finalEndDate;
+        if (endDate !== undefined) {
+            const effectiveTimezone = timezone !== undefined ? timezone : cd.timezone;
+            try {
+                finalEndDate = zonedTimeToUtc(endDate, effectiveTimezone);
+            } catch (err) {
+                return res.status(400).json({ error: 'timezone invalide' });
+            }
+            if (isNaN(finalEndDate.getTime())) return res.status(400).json({ error: 'endDate invalide' });
+        }
+
         const updated = await prisma.countdown.update({
             where: { id: req.params.id },
             data: {
                 ...(name       !== undefined && { name }),
-                ...(endDate    !== undefined && { endDate: new Date(endDate) }),
+                ...(finalEndDate !== undefined && { endDate: finalEndDate }),
                 ...(bgColor    !== undefined && { bgColor }),
                 ...(textColor  !== undefined && { textColor }),
                 ...(fontSize   !== undefined && { fontSize: Math.max(16, Math.min(50, parseInt(fontSize) || 36)) }),

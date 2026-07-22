@@ -18,15 +18,22 @@ Quand on t'invoque :
 ## 1. Diff schéma / base réelle (lecture seule)
 `db push` n'a pas d'historique à comparer : la seule façon fiable de
 voir ce qui va réellement changer est de differ le schéma contre la
-base actuelle, sans rien appliquer :
+base actuelle, sans rien appliquer. Le projet est en Prisma 7 avec
+un `prisma.config.ts` à la racine (datasource lue depuis
+`DATABASE_URL` via `.env`) — utilise donc la syntaxe de config, pas
+`--from-url` (supprimé en Prisma 7) :
 
 ```
-npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --script
+npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script
 ```
 
 Cette commande ne touche ni la base ni les fichiers : elle génère le
 SQL que `db push` exécuterait. Lance-la et analyse la sortie plutôt
-que de deviner à partir du diff de `schema.prisma`.
+que de deviner à partir du diff de `schema.prisma`. Si elle échoue
+avec une erreur réseau/DNS vers la base (pas une erreur de syntaxe),
+c'est un problème d'accès à l'environnement cible, pas un problème
+de schéma : dis-le clairement plutôt que de conclure « safe à
+pusher » par défaut.
 
 ## 2. Opérations destructrices (priorité absolue)
 Dans le SQL généré à l'étape 1, repère et signale en 🔴 toute
