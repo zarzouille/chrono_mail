@@ -215,22 +215,32 @@ router.get('/auth/google',
 );
 
 // ── Google OAuth — étape 2 : callback après authentification ─────
-router.get('/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/?error=google', session: false }),
-    (req, res) => {
+router.get('/auth/google/callback', (req, res, next) => {
+    // Callback personnalisé plutôt que failureRedirect : failureRedirect ne
+    // rattrape que les échecs d'authentification (fail()), pas les erreurs
+    // de transport/protocole (TokenError si Google rejette un code
+    // invalide/expiré/déjà utilisé) qui, sinon, remontent à Express et
+    // exposent la stack trace complète dans la réponse HTTP.
+    passport.authenticate('google', { session: false }, (err, user) => {
+        if (err) {
+            console.error('Erreur OAuth Google :', err.message);
+            return res.redirect('/?error=google');
+        }
+        if (!user) return res.redirect('/?error=google');
+
         // Générer un JWT et rediriger vers le frontend avec le token en query param
-        const token = generateToken(req.user);
-        const user  = encodeURIComponent(JSON.stringify({
-            id:    req.user.id,
-            email: req.user.email,
-            name:  req.user.name,
-            plan:  req.user.plan,
-            emailVerified: req.user.emailVerified,
+        const token = generateToken(user);
+        const payload = encodeURIComponent(JSON.stringify({
+            id:    user.id,
+            email: user.email,
+            name:  user.name,
+            plan:  user.plan,
+            emailVerified: user.emailVerified,
         }));
         // Rediriger vers le frontend — le JS récupère le token depuis l'URL
-        res.redirect(`/?token=${token}&user=${user}`);
-    }
-);
+        res.redirect(`/?token=${token}&user=${payload}`);
+    })(req, res, next);
+});
 
 // ── Suppression de compte (RGPD) ────────────────────────────────
 router.delete('/auth/account', requireAuth, async (req, res) => {
