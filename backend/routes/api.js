@@ -423,6 +423,7 @@ router.get('/gif', async (req, res) => {
         }
         const {
             endDate      = new Date(Date.now() + 86400000).toISOString(),
+            timezone     = 'Europe/Paris',
             bgColor      = '#ffffff',
             textColor    = '#2563eb',
             fontSize     = 36,
@@ -441,9 +442,15 @@ router.get('/gif', async (req, res) => {
             labelSeconds = 'SEC',
         } = req.query;
 
-        if (isNaN(new Date(endDate).getTime())) return res.status(400).json({ error: 'endDate invalide' });
+        let parsedEndDate;
+        try {
+            parsedEndDate = zonedTimeToUtc(endDate, timezone);
+        } catch (err) {
+            return res.status(400).json({ error: 'timezone invalide' });
+        }
+        if (isNaN(parsedEndDate.getTime())) return res.status(400).json({ error: 'endDate invalide' });
 
-        const gifBuffer = await generateCountdownGif(endDate, bgColor, textColor, fontSize, width, {
+        const gifBuffer = await generateCountdownGif(parsedEndDate, bgColor, textColor, fontSize, width, {
             fontFamily,
             fontLabels:      fontLabels     || null,
             blockBgColor:    blockBgColor   || null,

@@ -376,6 +376,7 @@ function refreshPreview() {
 
     const params = new URLSearchParams({
         endDate,
+        timezone:     document.getElementById('cd-timezone')?.value || 'Europe/Paris',
         bgColor:      currentBg,
         textColor:    currentColor,
         blockBgColor:   currentBlockBg  || '',
