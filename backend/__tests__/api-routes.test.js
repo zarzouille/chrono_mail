@@ -47,9 +47,10 @@ function createApp() {
 
 const app = createApp();
 
-// Helper : token JWT pour un user
+// Helper : token JWT pour un user + stub du lookup fait par requireAuth
 function authHeader(overrides = {}) {
     const user = { id: 'user_1', email: 'test@test.com', plan: 'FREE', ...overrides };
+    prisma.user.findUnique.mockResolvedValue(user);
     return { Authorization: `Bearer ${generateToken(user)}` };
 }
 

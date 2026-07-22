@@ -1,3 +1,11 @@
+// ── Mock Prisma ──────────────────────────────────────────────────
+jest.mock('../lib/prisma', () => ({
+    user: {
+        findUnique: jest.fn(),
+    },
+}));
+
+const prisma = require('../lib/prisma');
 const { hashPassword, verifyPassword, generateToken, verifyToken, requireAuth, requirePlan } = require('../lib/auth');
 
 // ── hashPassword / verifyPassword ────────────────────────────────
@@ -40,31 +48,49 @@ describe('requireAuth', () => {
         return res;
     };
 
-    test('pas de header → 401', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    test('pas de header → 401', async () => {
         const req = { headers: {} };
         const res = mockRes();
         const next = jest.fn();
-        requireAuth(req, res, next);
+        await requireAuth(req, res, next);
         expect(res.statusCode).toBe(401);
         expect(next).not.toHaveBeenCalled();
     });
 
-    test('token valide → next() avec req.user', () => {
+    test('token valide + utilisateur existant → next() avec req.user à jour', async () => {
         const user  = { id: 'u1', email: 'a@b.com', plan: 'FREE' };
         const token = generateToken(user);
         const req   = { headers: { authorization: `Bearer ${token}` } };
         const res   = mockRes();
         const next  = jest.fn();
-        requireAuth(req, res, next);
+        // Le plan a changé en base depuis l'émission du token (ex. upgrade Stripe) :
+        // requireAuth doit relire la valeur actuelle, pas celle du JWT.
+        prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'a@b.com', plan: 'PRO' });
+        await requireAuth(req, res, next);
         expect(next).toHaveBeenCalled();
         expect(req.user.id).toBe('u1');
+        expect(req.user.plan).toBe('PRO');
     });
 
-    test('token expiré/invalide → 401', () => {
+    test('token valide mais utilisateur supprimé en base → 401', async () => {
+        const user  = { id: 'u_deleted', email: 'gone@b.com', plan: 'FREE' };
+        const token = generateToken(user);
+        const req   = { headers: { authorization: `Bearer ${token}` } };
+        const res   = mockRes();
+        const next  = jest.fn();
+        prisma.user.findUnique.mockResolvedValue(null);
+        await requireAuth(req, res, next);
+        expect(res.statusCode).toBe(401);
+        expect(next).not.toHaveBeenCalled();
+    });
+
+    test('token expiré/invalide → 401', async () => {
         const req  = { headers: { authorization: 'Bearer token_invalide' } };
         const res  = mockRes();
         const next = jest.fn();
-        requireAuth(req, res, next);
+        await requireAuth(req, res, next);
         expect(res.statusCode).toBe(401);
         expect(next).not.toHaveBeenCalled();
     });

@@ -1,5 +1,6 @@
 const jwt    = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const prisma = require('./prisma');
 
 const JWT_SECRET  = process.env.JWT_SECRET || 'dev_secret_change_in_production';
 const JWT_EXPIRES = '7d';
@@ -30,7 +31,7 @@ function verifyToken(token) {
 }
 
 // ── Middleware Express : protège les routes ───────────────────────
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
     const header = req.headers.authorization;
 
     if (!header || !header.startsWith('Bearer ')) {
@@ -39,12 +40,28 @@ function requireAuth(req, res, next) {
 
     const token = header.slice(7);
 
+    let payload;
     try {
-        const payload = verifyToken(token);
-        req.user = payload; // { id, email, plan }
-        next();
+        payload = verifyToken(token);
     } catch (err) {
         return res.status(401).json({ error: 'Token invalide ou expiré' });
+    }
+
+    try {
+        // Le JWT peut survivre jusqu'à 7 jours à un compte supprimé ou à un
+        // changement de plan (upgrade/downgrade Stripe) : on revérifie
+        // l'existence de l'utilisateur et on relit son plan actuel en base
+        // plutôt que de faire confiance aveuglément au payload signé.
+        const user = await prisma.user.findUnique({
+            where:  { id: payload.id },
+            select: { id: true, email: true, plan: true },
+        });
+        if (!user) return res.status(401).json({ error: 'Compte introuvable' });
+        req.user = user; // { id, email, plan } à jour
+        next();
+    } catch (err) {
+        console.error('Erreur requireAuth :', err);
+        res.status(500).json({ error: 'Erreur serveur' });
     }
 }
 
