@@ -16,6 +16,8 @@ model User {
   emailVerified    Boolean @default(false)
   emailVerifyToken String?
 
+  quotaNotified Boolean @default(false)
+
   resetToken       String?
   resetTokenExpiry DateTime?
 

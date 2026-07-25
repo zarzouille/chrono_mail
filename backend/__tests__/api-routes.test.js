@@ -21,6 +21,7 @@ jest.mock('../lib/prisma', () => ({
     },
     user: {
         findUnique: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
 }));
 
@@ -32,6 +33,7 @@ jest.mock('../services/countdown-generator', () => ({
 // Mock email service
 jest.mock('../services/email-service', () => ({
     sendCountdownExpired: jest.fn(),
+    sendQuotaReached:     jest.fn(),
 }));
 
 const prisma = require('../lib/prisma');

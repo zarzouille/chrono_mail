@@ -217,6 +217,8 @@ router.post('/stripe/webhook',
                             stripeSubscriptionId:   null,
                             stripePriceId:          null,
                             stripeCurrentPeriodEnd: null,
+                            // Réarme l'email de quota pour ce retour au plan Free
+                            quotaNotified:          false,
                         },
                     });
                     console.log(`🔄 Abonnement supprimé → FREE pour customer ${sub.customer}`);

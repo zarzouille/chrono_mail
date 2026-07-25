@@ -54,10 +54,10 @@ async function requireAuth(req, res, next) {
         // plutôt que de faire confiance aveuglément au payload signé.
         const user = await prisma.user.findUnique({
             where:  { id: payload.id },
-            select: { id: true, email: true, plan: true },
+            select: { id: true, email: true, name: true, plan: true },
         });
         if (!user) return res.status(401).json({ error: 'Compte introuvable' });
-        req.user = user; // { id, email, plan } à jour
+        req.user = user; // { id, email, name, plan } à jour
         next();
     } catch (err) {
         console.error('Erreur requireAuth :', err);

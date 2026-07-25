@@ -147,6 +147,34 @@ async function sendWelcome(email, name) {
 }
 
 /**
+ * 1b. Quota Free atteint — au refus de création d'un 4e countdown
+ */
+function buildQuotaReachedHtml(name, email) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
+    return layout(`
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
+            Vous avez atteint la limite du plan Free
+        </h1>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            Bonjour ${displayName}, vos <strong>3 countdowns</strong> sont utilisés. Bonne nouvelle : c'est le signe que vos campagnes tournent.
+        </p>
+        <div style="background:#eff4ff;border:1px solid rgba(37,99,235,0.15);border-radius:10px;padding:16px;margin:16px 0">
+            <p style="margin:0;font-size:13px;color:#1d4ed8;font-weight:600">En passant à Pro :</p>
+            <p style="margin:6px 0 0;font-size:13px;color:#3d3b37;line-height:1.7">
+                Countdowns illimités, 10 styles, image de fond, analytics avancées
+            </p>
+        </div>
+        ${btn('Voir les offres →', APP + '/#pricing')}
+        <p style="margin:0;font-size:13px;color:#8a877f;line-height:1.7">
+            Vos countdowns actuels restent actifs. Vous pouvez aussi en supprimer un pour libérer une place.
+        </p>
+    `);
+}
+async function sendQuotaReached(email, name) {
+    return send(email, 'Vous avez atteint la limite du plan Free', buildQuotaReachedHtml(name, email));
+}
+
+/**
  * 2. Upgrade confirmé — après checkout.session.completed
  */
 function buildUpgradeHtml(name, email, plan) {
@@ -265,6 +293,7 @@ const previews = {
     verify_email: () => buildVerifyEmailHtml('Sophie', 'sophie@exemple.fr', APP + '/auth/verify-email?token=demo_token_123'),
     reset_password: () => buildResetPasswordHtml('Sophie', 'sophie@exemple.fr', APP + '/#reset-password?token=demo_token_123'),
     welcome:     () => buildWelcomeHtml('Sophie', 'sophie@exemple.fr'),
+    quota_reached: () => buildQuotaReachedHtml('Sophie', 'sophie@exemple.fr'),
     upgrade_pro: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'PRO'),
     upgrade_biz: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'BUSINESS'),
     payment_failed:    () => buildPaymentFailedHtml('Sophie', 'sophie@exemple.fr', 1),
@@ -277,6 +306,7 @@ module.exports = {
     sendVerifyEmail,
     sendResetPassword,
     sendWelcome,
+    sendQuotaReached,
     sendUpgradeConfirmed,
     sendPaymentFailed,
     sendDowngraded,
