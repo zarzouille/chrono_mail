@@ -72,4 +72,7 @@ app.use(express.static(path.join(__dirname, '../frontend/public')));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Serveur démarré sur http://localhost:${PORT}`);
+    // Jobs planifiés (relance d'activation) — après le listen pour ne pas
+    // retarder le démarrage, et pour que Render voie le port ouvert au plus tôt
+    require('./lib/scheduler').start();
 });
