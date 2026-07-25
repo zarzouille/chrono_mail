@@ -60,6 +60,18 @@ function btn(text, url) {
 </td></tr></table>`;
 }
 
+// ── Helper : salutation ──────────────────────────────────────────
+// Pas de repli sur le préfixe de l'adresse : « Bonjour xavier.dupont+test2 »
+// ou « Bonjour contact » se lisent plus mal qu'une salutation sans nom.
+// Un nom vide ou fait d'espaces est traité comme absent.
+function prenom(name) {
+    return (name || '').trim() || null;
+}
+function bonjour(name) {
+    const p = prenom(name);
+    return p ? `Bonjour ${p}` : 'Bonjour';
+}
+
 // ── Envoi sécurisé (non bloquant, log en cas d'erreur) ───────────
 async function send(to, subject, html) {
     if (!resend) {
@@ -85,13 +97,13 @@ async function send(to, subject, html) {
  * 0. Vérification email — après inscription
  */
 function buildVerifyEmailHtml(name, email, verifyUrl) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const salut = bonjour(name);
     return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Vérifiez votre email
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            Bonjour ${displayName}, cliquez sur le bouton ci-dessous pour confirmer votre adresse email et activer votre compte chrono.mail.
+            ${salut}, cliquez sur le bouton ci-dessous pour confirmer votre adresse email et activer votre compte chrono.mail.
         </p>
         ${btn('Vérifier mon email →', verifyUrl)}
         <p style="margin:0;font-size:13px;color:#8a877f;line-height:1.7">
@@ -108,13 +120,13 @@ async function sendVerifyEmail(email, name, token) {
  * 0b. Réinitialisation mot de passe
  */
 function buildResetPasswordHtml(name, email, resetUrl) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const salut = bonjour(name);
     return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Réinitialiser votre mot de passe
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            Bonjour ${displayName}, vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour en choisir un nouveau.
+            ${salut}, vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour en choisir un nouveau.
         </p>
         ${btn('Réinitialiser mon mot de passe →', resetUrl)}
         <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px;margin:16px 0">
@@ -133,10 +145,10 @@ async function sendResetPassword(email, name, token) {
  * 1. Bienvenue — après inscription
  */
 function buildWelcomeHtml(name, email) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const p = prenom(name);
     return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
-            Bienvenue, ${displayName} !
+            Bienvenue${p ? `, ${p}` : ''} !
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
             Votre compte chrono.mail est prêt. Vous pouvez dès maintenant créer votre premier countdown GIF et l'intégrer dans vos emails marketing.
@@ -156,13 +168,13 @@ async function sendWelcome(email, name) {
  * 1a. Relance d'activation — compte créé mais aucun countdown après 48h
  */
 function buildActivationNudgeHtml(name, email) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const salut = bonjour(name);
     return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Votre premier countdown vous attend
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            Bonjour ${displayName}, votre compte chrono.mail est prêt mais aucun countdown n'a encore été créé. Il n'y a que trois choses à choisir.
+            ${salut}, votre compte chrono.mail est prêt mais aucun countdown n'a encore été créé. Il n'y a que trois choses à choisir.
         </p>
         <div style="background:#f3f2ef;border:1px solid #e2e0db;border-radius:10px;padding:16px;margin:16px 0">
             <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.9">
@@ -185,13 +197,13 @@ async function sendActivationNudge(email, name) {
  * 1b. Quota Free atteint — au refus de création d'un 4e countdown
  */
 function buildQuotaReachedHtml(name, email) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const salut = bonjour(name);
     return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Vous avez atteint la limite du plan Free
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            Bonjour ${displayName}, vos <strong>3 countdowns</strong> sont utilisés. Bonne nouvelle : c'est le signe que vos campagnes tournent.
+            ${salut}, vos <strong>3 countdowns</strong> sont utilisés. Bonne nouvelle : c'est le signe que vos campagnes tournent.
         </p>
         <div style="background:#eff4ff;border:1px solid rgba(37,99,235,0.15);border-radius:10px;padding:16px;margin:16px 0">
             <p style="margin:0;font-size:13px;color:#1d4ed8;font-weight:600">En passant à Pro :</p>
@@ -213,14 +225,14 @@ async function sendQuotaReached(email, name) {
  * 2. Upgrade confirmé — après checkout.session.completed
  */
 function buildUpgradeHtml(name, email, plan) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const p = prenom(name);
     const planLabel = plan === 'BUSINESS' ? 'Business' : 'Pro';
     const features = plan === 'BUSINESS'
         ? 'Countdowns illimités, 11 styles, timer perpétuel, analytics, support dédié'
         : 'Countdowns illimités, 10 styles, image de fond, analytics avancées';
     return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
-            Merci, ${displayName} !
+            Merci${p ? `, ${p}` : ''} !
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
             Votre abonnement <strong style="color:#2563eb">${planLabel}</strong> est maintenant actif. Vous avez accès à toutes les fonctionnalités incluses.
@@ -244,7 +256,7 @@ async function sendUpgradeConfirmed(email, name, plan) {
  * 3. Échec de paiement — après invoice.payment_failed
  */
 function buildPaymentFailedHtml(name, email, attempt) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const salut = bonjour(name);
     const urgency = attempt >= 3
         ? '⚠️ C\'est la dernière tentative. Sans action de votre part, votre abonnement sera annulé.'
         : 'Pas de panique, Stripe réessaiera automatiquement dans quelques jours.';
@@ -253,7 +265,7 @@ function buildPaymentFailedHtml(name, email, attempt) {
             Paiement échoué
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            Bonjour ${displayName}, nous n'avons pas pu traiter votre dernier paiement (tentative ${attempt}).
+            ${salut}, nous n'avons pas pu traiter votre dernier paiement (tentative ${attempt}).
         </p>
         <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px;margin:16px 0">
             <p style="margin:0;font-size:13px;color:#9a3412;line-height:1.7">${urgency}</p>
@@ -274,7 +286,7 @@ async function sendPaymentFailed(email, name, attempt) {
  *     le downgrade effectif fera l'objet d'un second email.
  */
 function buildCancellationHtml(name, email, periodEnd) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const salut = bonjour(name);
     const dateLabel = periodEnd
         ? new Date(periodEnd).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
         : null;
@@ -283,7 +295,7 @@ function buildCancellationHtml(name, email, periodEnd) {
             Votre annulation est confirmée
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            Bonjour ${displayName}, votre abonnement ne sera pas renouvelé. ${
+            ${salut}, votre abonnement ne sera pas renouvelé. ${
                 dateLabel
                     ? `Vous gardez l'accès à toutes vos fonctionnalités jusqu'au <strong>${dateLabel}</strong>.`
                     : `Vous gardez l'accès à toutes vos fonctionnalités jusqu'à la fin de votre période en cours.`
@@ -308,13 +320,13 @@ async function sendCancellationConfirmed(email, name, periodEnd) {
  * 4. Downgrade vers Free — après customer.subscription.deleted
  */
 function buildDowngradedHtml(name, email) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const salut = bonjour(name);
     return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Abonnement terminé
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            Bonjour ${displayName}, votre abonnement est arrivé à son terme. Votre compte est maintenant sur le plan <strong>Free</strong>.
+            ${salut}, votre abonnement est arrivé à son terme. Votre compte est maintenant sur le plan <strong>Free</strong>.
         </p>
         <div style="background:#f3f2ef;border:1px solid #e2e0db;border-radius:10px;padding:16px;margin:16px 0">
             <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.7">
@@ -335,13 +347,13 @@ async function sendDowngraded(email, name) {
  * 5. Countdown expiré — quand un countdown atteint sa date de fin
  */
 function buildCountdownExpiredHtml(name, email, countdownName) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const salut = bonjour(name);
     return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Countdown expiré
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            Bonjour ${displayName}, votre countdown <strong>"${countdownName}"</strong> a atteint sa date de fin.
+            ${salut}, votre countdown <strong>"${countdownName}"</strong> a atteint sa date de fin.
         </p>
         <div style="background:#f3f2ef;border:1px solid #e2e0db;border-radius:10px;padding:16px;margin:16px 0">
             <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.7">
@@ -364,13 +376,13 @@ async function sendCountdownExpired(email, name, countdownName, countdownId) {
  *    ⚠️ Email marketing : lien de désinscription obligatoire.
  */
 function buildWinbackHtml(name, email, unsubscribeUrl) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const salut = bonjour(name);
     return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             Vos countdowns vous attendent
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            Bonjour ${displayName}, on ne vous a pas vu depuis deux semaines. Vos countdowns et vos statistiques sont toujours là, exactement comme vous les avez laissés.
+            ${salut}, on ne vous a pas vu depuis deux semaines. Vos countdowns et vos statistiques sont toujours là, exactement comme vous les avez laissés.
         </p>
         <div style="background:#f3f2ef;border:1px solid #e2e0db;border-radius:10px;padding:16px;margin:16px 0">
             <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.7">
@@ -389,13 +401,13 @@ async function sendWinback(email, name, unsubscribeUrl) {
  *    ⚠️ Email marketing : lien de désinscription obligatoire.
  */
 function buildReactivationHtml(name, email, unsubscribeUrl) {
-    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const salut = bonjour(name);
     return layout(`
         <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
             On vous garde une place
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            Bonjour ${displayName}, cela fait un mois. Si chrono.mail n'a pas trouvé sa place dans vos campagnes, c'est utile à savoir — répondez à cet email, on lit tout.
+            ${salut}, cela fait un mois. Si chrono.mail n'a pas trouvé sa place dans vos campagnes, c'est utile à savoir — répondez à cet email, on lit tout.
         </p>
         <div style="background:#eff4ff;border:1px solid rgba(37,99,235,0.15);border-radius:10px;padding:16px;margin:16px 0">
             <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.7">
