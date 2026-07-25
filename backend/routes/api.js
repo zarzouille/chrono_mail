@@ -5,7 +5,7 @@ const prisma   = require('../lib/prisma');
 const { requireAuth } = require('../lib/auth');
 const { zonedTimeToUtc } = require('../lib/tz');
 const gifCache       = require('../services/gif-cache');
-const { sendCountdownExpired } = require('../services/email-service');
+const { sendCountdownExpired, sendQuotaReached } = require('../services/email-service');
 
 /**
  * Construit l'URL publique d'un GIF.
@@ -20,6 +20,21 @@ function buildGifUrl(req, countdownId) {
     const proto = req.get('X-Forwarded-Proto') || req.protocol;
     const host  = req.get('X-Forwarded-Host')  || req.get('host');
     return `${proto}://${host}/gif/${countdownId}`;
+}
+
+/**
+ * Notifie une seule fois qu'un utilisateur Free a atteint sa limite.
+ * Le updateMany conditionnel sert de verrou : si deux requêtes arrivent
+ * en parallèle, une seule voit count === 1 et envoie l'email.
+ * Le flag est remis à false lors d'un retour au plan Free (webhook Stripe).
+ */
+function notifyQuotaReached(user) {
+    prisma.user.updateMany({
+        where: { id: user.id, quotaNotified: false },
+        data:  { quotaNotified: true },
+    }).then(result => {
+        if (result.count === 1) return sendQuotaReached(user.email, user.name);
+    }).catch(err => console.error('Erreur notification quota :', err));
 }
 
 // ── Santé ──────────────────────────────────────────────────────
@@ -73,6 +88,7 @@ router.post('/countdown', requireAuth, async (req, res) => {
         if (plan === 'FREE') {
             const count = await prisma.countdown.count({ where: { userId: req.user.id } });
             if (count >= 3) {
+                notifyQuotaReached(req.user);
                 return res.status(403).json({
                     error: 'Limite atteinte',
                     message: 'Le plan Free est limité à 3 countdowns. Passez à Pro pour en créer davantage.',
@@ -280,6 +296,7 @@ router.post('/countdown/:id/duplicate', requireAuth, async (req, res) => {
         if (plan === 'FREE') {
             const count = await prisma.countdown.count({ where: { userId: req.user.id } });
             if (count >= 3) {
+                notifyQuotaReached(req.user);
                 return res.status(403).json({
                     error: 'Limite atteinte',
                     message: 'Le plan Free est limité à 3 countdowns. Passez à Pro pour en créer davantage.',
