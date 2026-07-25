@@ -49,8 +49,13 @@ app.use('/', apiRouter);
 app.use('/', stripeRoutes);
 
 // ── Email preview (dev only) ─────────────────────────────────
+// Garde « fail-closed » : la route n'existe que si EMAIL_PREVIEW=true est
+// explicitement défini. Tester NODE_ENV !== 'production' aurait suffi en
+// théorie, mais laisserait la route ouverte partout où la variable n'est
+// pas renseignée — c'est exactement ainsi qu'elle s'est retrouvée publique.
 const { previews } = require('./services/email-service');
-app.get('/email-preview/:template?', (req, res) => {
+app.get('/email-preview/:template?', (req, res, next) => {
+    if (process.env.EMAIL_PREVIEW !== 'true') return next();
     const name = req.params.template;
     if (!name || !previews[name]) {
         const list = Object.keys(previews).map(k =>
