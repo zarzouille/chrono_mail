@@ -2,6 +2,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const prisma = require('./prisma');
 const { sendWelcome } = require('../services/email-service');
+const { touchLastLogin } = require('./retention');
 
 passport.use(new GoogleStrategy({
         clientID:     process.env.GOOGLE_CLIENT_ID,
@@ -34,6 +35,9 @@ passport.use(new GoogleStrategy({
 
             // Email de bienvenue pour les nouveaux inscrits Google (non bloquant)
             if (isNewUser) sendWelcome(user.email, user.name).catch(() => {});
+
+            // Signal d'activité + réarmement du cycle de rétention (non bloquant)
+            touchLastLogin(user.id);
 
             return done(null, user);
         } catch (err) {

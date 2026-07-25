@@ -15,7 +15,13 @@ const FROM = process.env.MAIL_FROM || 'chrono.mail <noreply@chrono.mail>';
 const APP  = process.env.APP_URL   || 'http://localhost:3000';
 
 // ── Helper : base HTML layout ────────────────────────────────────
-function layout(content) {
+// opts.unsubscribeUrl : ajoute le lien de désinscription. Obligatoire
+// pour les emails marketing (relances de rétention), à omettre pour les
+// transactionnels — un utilisateur ne peut pas se désabonner d'un reçu.
+function layout(content, opts = {}) {
+    const unsubscribe = opts.unsubscribeUrl
+        ? `<br><a href="${opts.unsubscribeUrl}" style="color:#8a877f;text-decoration:underline">Ne plus recevoir ces relances</a>`
+        : '';
     return `<!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -37,7 +43,7 @@ function layout(content) {
             chrono.mail — Des countdowns GIF pour vos emails marketing.<br>
             <a href="${APP}" style="color:#2563eb;text-decoration:none">chrono.mail</a> ·
             <a href="${APP}/#legal-privacy" style="color:#8a877f;text-decoration:none">Confidentialité</a> ·
-            <a href="${APP}/#legal-cgu" style="color:#8a877f;text-decoration:none">CGU</a>
+            <a href="${APP}/#legal-cgu" style="color:#8a877f;text-decoration:none">CGU</a>${unsubscribe}
         </p>
     </td></tr>
 </table>
@@ -317,6 +323,60 @@ async function sendCountdownExpired(email, name, countdownName, countdownId) {
 }
 
 
+/**
+ * 6. Win-back — compte silencieux depuis 14 jours
+ *    ⚠️ Email marketing : lien de désinscription obligatoire.
+ */
+function buildWinbackHtml(name, email, unsubscribeUrl) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
+    return layout(`
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
+            Vos countdowns vous attendent
+        </h1>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            Bonjour ${displayName}, on ne vous a pas vu depuis deux semaines. Vos countdowns et vos statistiques sont toujours là, exactement comme vous les avez laissés.
+        </p>
+        <div style="background:#f3f2ef;border:1px solid #e2e0db;border-radius:10px;padding:16px;margin:16px 0">
+            <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.7">
+                Une prochaine campagne en tête ? Dupliquer un countdown existant prend quelques secondes : la date change, le reste est déjà réglé.
+            </p>
+        </div>
+        ${btn('Revenir au dashboard →', APP + '/#dashboard')}
+    `, { unsubscribeUrl });
+}
+async function sendWinback(email, name, unsubscribeUrl) {
+    return send(email, 'Vos countdowns vous attendent', buildWinbackHtml(name, email, unsubscribeUrl));
+}
+
+/**
+ * 7. Offre de réactivation — toujours silencieux 30 jours après le win-back
+ *    ⚠️ Email marketing : lien de désinscription obligatoire.
+ */
+function buildReactivationHtml(name, email, unsubscribeUrl) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
+    return layout(`
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
+            On vous garde une place
+        </h1>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            Bonjour ${displayName}, cela fait un mois. Si chrono.mail n'a pas trouvé sa place dans vos campagnes, c'est utile à savoir — répondez à cet email, on lit tout.
+        </p>
+        <div style="background:#eff4ff;border:1px solid rgba(37,99,235,0.15);border-radius:10px;padding:16px;margin:16px 0">
+            <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.7">
+                Votre compte et vos countdowns restent intacts. Rien n'est supprimé, vous pouvez reprendre quand vous voulez.
+            </p>
+        </div>
+        ${btn('Reprendre où j\'en étais →', APP + '/#dashboard')}
+        <p style="margin:0;font-size:13px;color:#8a877f;line-height:1.7">
+            C'est la dernière relance que nous vous envoyons.
+        </p>
+    `, { unsubscribeUrl });
+}
+async function sendReactivation(email, name, unsubscribeUrl) {
+    return send(email, 'On vous garde une place', buildReactivationHtml(name, email, unsubscribeUrl));
+}
+
+
 // ── Previews HTML (pour la route /email-preview) ────────────────
 const previews = {
     verify_email: () => buildVerifyEmailHtml('Sophie', 'sophie@exemple.fr', APP + '/auth/verify-email?token=demo_token_123'),
@@ -330,6 +390,8 @@ const previews = {
     payment_failed_3:  () => buildPaymentFailedHtml('Sophie', 'sophie@exemple.fr', 3),
     downgraded:  () => buildDowngradedHtml('Sophie', 'sophie@exemple.fr'),
     expired:     () => buildCountdownExpiredHtml('Sophie', 'sophie@exemple.fr', 'Vente Flash — Été 2026'),
+    winback:      () => buildWinbackHtml('Sophie', 'sophie@exemple.fr', APP + '/unsubscribe?token=demo_token_123'),
+    reactivation: () => buildReactivationHtml('Sophie', 'sophie@exemple.fr', APP + '/unsubscribe?token=demo_token_123'),
 };
 
 module.exports = {
@@ -342,5 +404,7 @@ module.exports = {
     sendPaymentFailed,
     sendDowngraded,
     sendCountdownExpired,
+    sendWinback,
+    sendReactivation,
     previews,
 };
