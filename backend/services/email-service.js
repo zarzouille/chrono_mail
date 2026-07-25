@@ -269,6 +269,42 @@ async function sendPaymentFailed(email, name, attempt) {
 }
 
 /**
+ * 3b. Annulation volontaire confirmée — cancel_at_period_end passé à true
+ *     L'abonnement reste actif jusqu'à la fin de la période payée ;
+ *     le downgrade effectif fera l'objet d'un second email.
+ */
+function buildCancellationHtml(name, email, periodEnd) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
+    const dateLabel = periodEnd
+        ? new Date(periodEnd).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+        : null;
+    return layout(`
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
+            Votre annulation est confirmée
+        </h1>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            Bonjour ${displayName}, votre abonnement ne sera pas renouvelé. ${
+                dateLabel
+                    ? `Vous gardez l'accès à toutes vos fonctionnalités jusqu'au <strong>${dateLabel}</strong>.`
+                    : `Vous gardez l'accès à toutes vos fonctionnalités jusqu'à la fin de votre période en cours.`
+            }
+        </p>
+        <div style="background:#f3f2ef;border:1px solid #e2e0db;border-radius:10px;padding:16px;margin:16px 0">
+            <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.7">
+                <strong>Ensuite :</strong> votre compte repassera au plan Free. Vous conserverez vos 3 countdowns les plus récents ; les autres seront désactivés, jamais supprimés.
+            </p>
+        </div>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            Vous avez changé d'avis ? Réactiver avant cette date annule la résiliation, sans nouveau paiement.
+        </p>
+        ${btn('Gérer mon abonnement →', APP + '/#dashboard')}
+    `);
+}
+async function sendCancellationConfirmed(email, name, periodEnd) {
+    return send(email, 'Votre annulation est confirmée', buildCancellationHtml(name, email, periodEnd));
+}
+
+/**
  * 4. Downgrade vers Free — après customer.subscription.deleted
  */
 function buildDowngradedHtml(name, email) {
@@ -386,6 +422,8 @@ const previews = {
     quota_reached: () => buildQuotaReachedHtml('Sophie', 'sophie@exemple.fr'),
     upgrade_pro: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'PRO'),
     upgrade_biz: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'BUSINESS'),
+    cancellation:      () => buildCancellationHtml('Sophie', 'sophie@exemple.fr', new Date(Date.now() + 18 * 86400000)),
+    cancellation_nodate: () => buildCancellationHtml('Sophie', 'sophie@exemple.fr', null),
     payment_failed:    () => buildPaymentFailedHtml('Sophie', 'sophie@exemple.fr', 1),
     payment_failed_3:  () => buildPaymentFailedHtml('Sophie', 'sophie@exemple.fr', 3),
     downgraded:  () => buildDowngradedHtml('Sophie', 'sophie@exemple.fr'),
@@ -402,6 +440,7 @@ module.exports = {
     sendQuotaReached,
     sendUpgradeConfirmed,
     sendPaymentFailed,
+    sendCancellationConfirmed,
     sendDowngraded,
     sendCountdownExpired,
     sendWinback,

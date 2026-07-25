@@ -4,7 +4,7 @@ const Stripe  = require('stripe');
 const stripe  = new Stripe(process.env.STRIPE_SECRET_KEY);
 const prisma  = require('../lib/prisma');
 const { requireAuth } = require('../lib/auth');
-const { sendUpgradeConfirmed, sendPaymentFailed, sendDowngraded } = require('../services/email-service');
+const { sendUpgradeConfirmed, sendPaymentFailed, sendCancellationConfirmed, sendDowngraded } = require('../services/email-service');
 
 const PRICES = {
     pro_monthly:      process.env.STRIPE_PRO_PRICE_MONTHLY,
@@ -189,6 +189,16 @@ router.post('/stripe/webhook',
                         // L'utilisateur a demandé l'annulation — l'abonnement reste actif
                         // jusqu'à la fin de la période, puis Stripe enverra subscription.deleted
                         console.log(`⏳ Annulation programmée pour customer ${sub.customer} (fin : ${periodEnd?.toISOString()})`);
+
+                        // Email de confirmation, uniquement sur la TRANSITION false → true.
+                        // cancel_at_period_end reste à true sur tous les subscription.updated
+                        // suivants (renouvellements, changements de moyen de paiement) :
+                        // sans ce garde, l'email partirait en boucle. previous_attributes ne
+                        // contient que les champs réellement modifiés par cet événement.
+                        const venaitDEtreAnnule = event.data.previous_attributes?.cancel_at_period_end === false;
+                        if (venaitDEtreAnnule) {
+                            sendCancellationConfirmed(user.email, user.name, periodEnd).catch(() => {});
+                        }
                     } else {
                         // Changement de plan (upgrade/downgrade) ou réactivation après annulation
                         await prisma.user.update({
