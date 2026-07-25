@@ -147,6 +147,35 @@ async function sendWelcome(email, name) {
 }
 
 /**
+ * 1a. Relance d'activation — compte créé mais aucun countdown après 48h
+ */
+function buildActivationNudgeHtml(name, email) {
+    const displayName = name || (email ? email.split('@')[0] : 'there');
+    return layout(`
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
+            Votre premier countdown vous attend
+        </h1>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            Bonjour ${displayName}, votre compte chrono.mail est prêt mais aucun countdown n'a encore été créé. Il n'y a que trois choses à choisir.
+        </p>
+        <div style="background:#f3f2ef;border:1px solid #e2e0db;border-radius:10px;padding:16px;margin:16px 0">
+            <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.9">
+                <strong>1.</strong> Une date de fin<br>
+                <strong>2.</strong> Un style parmi ceux disponibles<br>
+                <strong>3.</strong> Copier le tag HTML dans votre email
+            </p>
+        </div>
+        ${btn('Créer mon premier countdown →', APP + '/#create')}
+        <p style="margin:0;font-size:13px;color:#8a877f;line-height:1.7">
+            Le GIF se met à jour tout seul à chaque ouverture de votre email, sans rien à réinstaller.
+        </p>
+    `);
+}
+async function sendActivationNudge(email, name) {
+    return send(email, 'Votre premier countdown vous attend', buildActivationNudgeHtml(name, email));
+}
+
+/**
  * 1b. Quota Free atteint — au refus de création d'un 4e countdown
  */
 function buildQuotaReachedHtml(name, email) {
@@ -293,6 +322,7 @@ const previews = {
     verify_email: () => buildVerifyEmailHtml('Sophie', 'sophie@exemple.fr', APP + '/auth/verify-email?token=demo_token_123'),
     reset_password: () => buildResetPasswordHtml('Sophie', 'sophie@exemple.fr', APP + '/#reset-password?token=demo_token_123'),
     welcome:     () => buildWelcomeHtml('Sophie', 'sophie@exemple.fr'),
+    activation_nudge: () => buildActivationNudgeHtml('Sophie', 'sophie@exemple.fr'),
     quota_reached: () => buildQuotaReachedHtml('Sophie', 'sophie@exemple.fr'),
     upgrade_pro: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'PRO'),
     upgrade_biz: () => buildUpgradeHtml('Sophie', 'sophie@exemple.fr', 'BUSINESS'),
@@ -306,6 +336,7 @@ module.exports = {
     sendVerifyEmail,
     sendResetPassword,
     sendWelcome,
+    sendActivationNudge,
     sendQuotaReached,
     sendUpgradeConfirmed,
     sendPaymentFailed,
