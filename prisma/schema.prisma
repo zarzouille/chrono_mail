@@ -19,6 +19,15 @@ model User {
   quotaNotified    Boolean @default(false)
   activationNudged Boolean @default(false)
 
+  // Rétention — remis à zéro à chaque connexion (cf. lib/retention.js)
+  lastLoginAt          DateTime?
+  winbackNotified      Boolean   @default(false)
+  reactivationNotified Boolean   @default(false)
+
+  // Emails marketing (relances de rétention) — les transactionnels ignorent ce flag
+  marketingOptOut  Boolean @default(false)
+  unsubscribeToken String? @unique
+
   resetToken       String?
   resetTokenExpiry DateTime?
 

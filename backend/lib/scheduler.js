@@ -21,11 +21,31 @@
  */
 const cron   = require('node-cron');
 const prisma = require('./prisma');
-const { sendActivationNudge } = require('../services/email-service');
+const { sendActivationNudge, sendWinback, sendReactivation } = require('../services/email-service');
+const { unsubscribeUrlFor } = require('./retention');
 
 const TIMEZONE           = process.env.CRON_TIMEZONE || 'Europe/Paris';
 const ACTIVATION_CRON    = process.env.CRON_ACTIVATION_NUDGE || '0 10 * * *';
+const WINBACK_CRON       = process.env.CRON_WINBACK || '15 10 * * *';
+const REACTIVATION_CRON  = process.env.CRON_REACTIVATION || '30 10 * * *';
 const ACTIVATION_DELAY_H = 48;
+const WINBACK_DELAY_D      = 14;
+const REACTIVATION_DELAY_D = 30;
+
+/**
+ * Filtre « inactif depuis N jours ».
+ *
+ * lastLoginAt est nul pour les comptes antérieurs à son introduction :
+ * on retombe alors sur createdAt, sinon ces comptes seraient soit
+ * ignorés à vie, soit relancés à tort dès le premier passage.
+ */
+function inactiveSince(days) {
+    const cutoff = new Date(Date.now() - days * 24 * 3600 * 1000);
+    return [
+        { lastLoginAt: { lt: cutoff } },
+        { AND: [{ lastLoginAt: null }, { createdAt: { lt: cutoff } }] },
+    ];
+}
 
 /**
  * Relance les comptes créés il y a plus de 48h qui n'ont créé aucun
@@ -65,6 +85,77 @@ async function runActivationNudge() {
 }
 
 /**
+ * Win-back — comptes silencieux depuis 14 jours.
+ *
+ * Réservé à ceux qui ont déjà créé au moins un countdown : un compte
+ * sans countdown relève de la relance d'activation, lui écrire deux
+ * fois le même « revenez » n'apporte rien.
+ *
+ * Email marketing : les désabonnés sont exclus et le lien de
+ * désinscription est obligatoire.
+ */
+async function runWinback() {
+    const candidates = await prisma.user.findMany({
+        where: {
+            winbackNotified: false,
+            marketingOptOut: false,
+            emailVerified:   true,
+            countdowns:      { some: {} },
+            OR:              inactiveSince(WINBACK_DELAY_D),
+        },
+        select: { id: true, email: true, name: true, unsubscribeToken: true },
+    });
+
+    let sent = 0;
+    for (const user of candidates) {
+        const claimed = await prisma.user.updateMany({
+            where: { id: user.id, winbackNotified: false },
+            data:  { winbackNotified: true },
+        });
+        if (claimed.count !== 1) continue;
+
+        await sendWinback(user.email, user.name, await unsubscribeUrlFor(user));
+        sent++;
+    }
+
+    return { candidates: candidates.length, sent };
+}
+
+/**
+ * Offre de réactivation — toujours silencieux 30 jours après.
+ *
+ * Exige winbackNotified : c'est la seconde et dernière relance du
+ * cycle, elle ne doit jamais arriver seule. Une reconnexion remet les
+ * deux flags à zéro (cf. retention.js), le cycle peut donc reprendre.
+ */
+async function runReactivation() {
+    const candidates = await prisma.user.findMany({
+        where: {
+            winbackNotified:      true,
+            reactivationNotified: false,
+            marketingOptOut:      false,
+            emailVerified:        true,
+            OR:                   inactiveSince(REACTIVATION_DELAY_D),
+        },
+        select: { id: true, email: true, name: true, unsubscribeToken: true },
+    });
+
+    let sent = 0;
+    for (const user of candidates) {
+        const claimed = await prisma.user.updateMany({
+            where: { id: user.id, reactivationNotified: false },
+            data:  { reactivationNotified: true },
+        });
+        if (claimed.count !== 1) continue;
+
+        await sendReactivation(user.email, user.name, await unsubscribeUrlFor(user));
+        sent++;
+    }
+
+    return { candidates: candidates.length, sent };
+}
+
+/**
  * Enregistre les jobs. Appelé une fois au démarrage du serveur.
  * Renvoie les tâches créées (utile en test / pour un arrêt propre).
  */
@@ -74,17 +165,29 @@ function start() {
         return [];
     }
 
-    const activationTask = cron.schedule(ACTIVATION_CRON, async () => {
-        try {
-            const { candidates, sent } = await runActivationNudge();
-            console.log(`⏱️  [CRON] relance activation — ${candidates} candidat(s), ${sent} envoi(s)`);
-        } catch (err) {
-            console.error('⏱️  [CRON] Erreur relance activation :', err.message);
-        }
-    }, { timezone: TIMEZONE, name: 'activation-nudge', noOverlap: true });
+    // Les trois jobs sont décalés de 15 min pour ne pas ouvrir trois
+    // séries d'envois simultanées vers Resend.
+    const jobs = [
+        ['activation-nudge', ACTIVATION_CRON,   runActivationNudge, 'relance activation'],
+        ['winback',          WINBACK_CRON,      runWinback,         'win-back'],
+        ['reactivation',     REACTIVATION_CRON, runReactivation,    'réactivation'],
+    ];
 
-    console.log(`⏱️  [CRON] relance activation planifiée — "${ACTIVATION_CRON}" (${TIMEZONE})`);
-    return [activationTask];
+    const tasks = jobs.map(([name, expression, run, label]) => {
+        const task = cron.schedule(expression, async () => {
+            try {
+                const { candidates, sent } = await run();
+                console.log(`⏱️  [CRON] ${label} — ${candidates} candidat(s), ${sent} envoi(s)`);
+            } catch (err) {
+                console.error(`⏱️  [CRON] Erreur ${label} :`, err.message);
+            }
+        }, { timezone: TIMEZONE, name, noOverlap: true });
+
+        console.log(`⏱️  [CRON] ${label} planifiée — "${expression}" (${TIMEZONE})`);
+        return task;
+    });
+
+    return tasks;
 }
 
-module.exports = { start, runActivationNudge };
+module.exports = { start, runActivationNudge, runWinback, runReactivation };

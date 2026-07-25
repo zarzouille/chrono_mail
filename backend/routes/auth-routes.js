@@ -5,6 +5,7 @@ const prisma   = require('../lib/prisma');
 const crypto   = require('crypto');
 const { hashPassword, verifyPassword, generateToken, requireAuth } = require('../lib/auth');
 const { sendWelcome, sendVerifyEmail, sendResetPassword } = require('../services/email-service');
+const { touchLastLogin } = require('../lib/retention');
 
 // ── Inscription ───────────────────────────────────────────────────
 router.post('/auth/register', async (req, res) => {
@@ -51,6 +52,9 @@ router.post('/auth/login', async (req, res) => {
         const token = generateToken(user);
         res.json({ token, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, emailVerified: user.emailVerified } });
 
+        // Signal d'activité + réarmement du cycle de rétention (non bloquant)
+        touchLastLogin(user.id);
+
     } catch (err) {
         console.error('Erreur login :', err);
         res.status(500).json({ error: 'Erreur lors de la connexion' });
@@ -90,6 +94,27 @@ router.get('/auth/verify-email', async (req, res) => {
     } catch (err) {
         console.error('Erreur verify-email :', err);
         res.status(500).json({ error: 'Erreur lors de la vérification' });
+    }
+});
+
+// ── Désinscription des relances marketing ────────────────────────
+// Volontairement sans authentification : le lien est cliqué depuis une
+// boîte mail, souvent sur un autre appareil. Le token fait foi.
+router.get('/unsubscribe', async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) return res.status(400).send('Lien de désinscription invalide.');
+
+        const result = await prisma.user.updateMany({
+            where: { unsubscribeToken: token },
+            data:  { marketingOptOut: true },
+        });
+        if (result.count === 0) return res.status(400).send('Lien de désinscription invalide ou expiré.');
+
+        res.redirect('/?unsubscribed=1');
+    } catch (err) {
+        console.error('Erreur unsubscribe :', err);
+        res.status(500).send('Erreur lors de la désinscription.');
     }
 });
 
