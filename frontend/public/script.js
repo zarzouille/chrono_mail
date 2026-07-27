@@ -925,7 +925,7 @@ const UPGRADE_MODAL_CONTENT = {
     },
     perpetual: {
         title: 'Timer perpétuel', subtitle: 'Exclusif au plan Business',
-        desc: 'Le countdown redémarre automatiquement à la fin de chaque cycle — idéal pour les offres récurrentes et les promotions continues.',
+        desc: 'Le décompte démarre au moment où chaque destinataire ouvre votre email, et non à une date fixe. Deux lecteurs qui ouvrent à trois jours d\'intervalle voient le même temps restant — idéal pour les séquences automatisées.',
     },
     colors: {
         title: 'Couleurs avancées', subtitle: 'Disponible à partir du plan Pro',
@@ -1656,7 +1656,7 @@ const FAQ_PRO = [
 ];
 const FAQ_BUSINESS = [
     { q:'Comment gérer ma facturation ?',      a:'Accédez au portail Stripe via "Gérer mon abonnement" pour consulter vos factures et gérer votre moyen de paiement.' },
-    { q:'Comment fonctionne le timer perpétuel ?', a:"Activez-le à l'étape Expiration et choisissez la durée d'un cycle (de 1 heure à 1 an). À la fin de chaque cycle, le décompte repart automatiquement du début — sans rien changer à votre email." },
+    { q:'Comment fonctionne le timer perpétuel ?', a:"Activez-le à l'étape Expiration et choisissez une durée (de 1 heure à 1 an). Le décompte démarre alors au moment où chaque destinataire ouvre votre email : quelqu'un qui l'ouvre trois jours après l'envoi voit le même temps restant que le premier lecteur. La date cible n'est plus utilisée dans ce mode." },
     { q:"À quoi sert le style Neon ?",         a:"C'est le style exclusif au plan Business : chiffres lumineux sur fond sombre, pour les campagnes qui doivent ressortir dans la boîte de réception." },
     { q:"Comment annuler mon abonnement ?",    a:'Depuis le portail de facturation Stripe, cliquez sur "Annuler l\'abonnement". Vous conservez l\'accès Business jusqu\'à la fin de la période payée.' },
 ];
