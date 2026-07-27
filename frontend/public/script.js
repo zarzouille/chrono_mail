@@ -419,6 +419,75 @@ function refreshPreview() {
     newImg.src = url;
 }
 
+// ============================================================
+// FUSEAUX HORAIRES
+// ============================================================
+// Le HTML n'en proposait que cinq, avec des décalages écrits en dur
+// (« Europe/Paris (UTC+1) ») donc faux la moitié de l'année. Le backend
+// accepte n'importe quel identifiant IANA — il passe par Intl, qui gère
+// l'heure d'été — la liste peut donc s'élargir sans rien changer côté
+// serveur, et les décalages sont recalculés à chaque affichage.
+const TIMEZONES = {
+    'Europe': [
+        'Europe/Paris', 'Europe/London', 'Europe/Lisbon', 'Europe/Madrid',
+        'Europe/Berlin', 'Europe/Rome', 'Europe/Amsterdam', 'Europe/Brussels',
+        'Europe/Zurich', 'Europe/Stockholm', 'Europe/Athens', 'Europe/Moscow',
+    ],
+    'Amériques': [
+        'America/New_York', 'America/Toronto', 'America/Chicago', 'America/Denver',
+        'America/Los_Angeles', 'America/Mexico_City', 'America/Bogota',
+        'America/Sao_Paulo', 'America/Buenos_Aires',
+    ],
+    'Afrique et Moyen-Orient': [
+        'Africa/Casablanca', 'Africa/Algiers', 'Africa/Tunis', 'Africa/Lagos',
+        'Africa/Cairo', 'Africa/Johannesburg', 'Asia/Jerusalem', 'Asia/Dubai',
+    ],
+    'Asie et Pacifique': [
+        'Asia/Karachi', 'Asia/Kolkata', 'Asia/Bangkok', 'Asia/Singapore',
+        'Asia/Hong_Kong', 'Asia/Shanghai', 'Asia/Tokyo', 'Asia/Seoul',
+        'Australia/Sydney', 'Pacific/Auckland',
+    ],
+    'Autre': ['UTC'],
+};
+
+function tzOffsetLabel(tz) {
+    try {
+        const part = new Intl.DateTimeFormat('fr-FR', { timeZone: tz, timeZoneName: 'longOffset' })
+            .formatToParts(new Date())
+            .find(p => p.type === 'timeZoneName');
+        return part ? part.value : '';
+    } catch { return ''; }
+}
+
+function buildTimezoneOptions() {
+    const sel = document.getElementById('cd-timezone');
+    if (!sel) return;
+    const selected = sel.value || 'Europe/Paris';
+    sel.innerHTML = Object.entries(TIMEZONES).map(([region, zones]) =>
+        `<optgroup label="${region}">` + zones.map(tz => {
+            const ville  = tz.split('/').pop().replace(/_/g, ' ');
+            const offset = tzOffsetLabel(tz);
+            const label  = (!offset || ville === 'UTC') ? ville : `${ville} — ${offset}`;
+            return `<option value="${tz}">${label}</option>`;
+        }).join('') + '</optgroup>'
+    ).join('');
+    setTimezone(selected);
+}
+
+/**
+ * Sélectionne un fuseau, en l'ajoutant à la liste s'il n'y figure pas —
+ * cas d'un countdown créé avec une valeur retirée depuis.
+ */
+function setTimezone(tz) {
+    const sel = document.getElementById('cd-timezone');
+    if (!sel || !tz) return;
+    sel.value = tz;
+    if (sel.value !== tz) {
+        const opt = new Option(`${tz}${tzOffsetLabel(tz) ? ' — ' + tzOffsetLabel(tz) : ''}`, tz, true, true);
+        sel.insertBefore(opt, sel.firstChild);
+    }
+}
+
 function getShowUnits() {
     const units = Object.entries(labelVisible)
         .filter(([, v]) => v)
@@ -1058,7 +1127,7 @@ function _resetCreateForm() {
     const dateEl = document.getElementById('cd-date');
     if (dateEl) dateEl.value = new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16);
     const tzEl = document.getElementById('cd-timezone');
-    if (tzEl) tzEl.value = 'Europe/Paris';
+    if (tzEl) setTimezone('Europe/Paris');
 
     const colorMainEl = document.getElementById('color-main');
     if (colorMainEl) colorMainEl.value = '#2563eb';
@@ -1165,7 +1234,7 @@ function editCountdown(id) {
     }
 
     const tzEl = document.getElementById('cd-timezone');
-    if (tzEl) tzEl.value = cd.timezone || 'Europe/Paris';
+    if (tzEl) setTimezone(cd.timezone || 'Europe/Paris');
 
     const colorMainEl = document.getElementById('color-main');
     if (colorMainEl) colorMainEl.value = cd.textColor;
@@ -1900,6 +1969,8 @@ function renderAnalyticsTable(countdowns, total) {
 updateNavAuth();
 
 // Restaure la page depuis le hash ou les query params
+buildTimezoneOptions();
+
 (function initRoute() {
     const params = new URLSearchParams(window.location.search);
     // Gestion retour OAuth / Stripe

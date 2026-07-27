@@ -786,12 +786,11 @@
                     </div>
                     <div class="fg">
                         <label class="fl">Timezone</label>
+                        <!-- Options construites par buildTimezoneOptions() : les
+                             décalages sont calculés à l'affichage, sans quoi ils
+                             seraient faux la moitié de l'année (heure d'été). -->
                         <select class="fi" id="cd-timezone" onchange="schedulePreview()">
-                            <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
-                            <option value="Europe/London">Europe/London (UTC+0)</option>
-                            <option value="America/New_York">America/New_York (UTC−5)</option>
-                            <option value="America/Los_Angeles">America/Los_Angeles (UTC−8)</option>
-                            <option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</option>
+                            <option value="Europe/Paris">Paris</option>
                         </select>
                     </div>
                     <div class="step-nav">
