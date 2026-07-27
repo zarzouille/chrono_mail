@@ -37,9 +37,10 @@ function toggleTheme() {
 }
 
 (function initTheme() {
-    const saved = localStorage.getItem('cm_theme');
-    const prefer = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const theme  = saved || prefer;
+    // Le clair est la présentation par défaut du site : la préférence système
+    // n'est plus consultée. Seul un choix explicite de l'utilisateur, mémorisé
+    // dans cm_theme par le bouton de bascule, peut activer le sombre.
+    const theme = localStorage.getItem('cm_theme') || 'light';
     if (theme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
     }
