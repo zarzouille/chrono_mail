@@ -1361,17 +1361,10 @@ async function loadDashboard() {
         const fill       = document.getElementById('quota-fill');
         const text       = document.getElementById('quota-text');
         const sub        = document.getElementById('dash-subtitle');
-        const chip       = document.getElementById('sidebar-plan-chip');
-        const upgradeBtn = document.getElementById('upgrade-btn');
         if (fill) fill.style.width = pct + '%';
         if (text) text.textContent = `${total} / ${maxCountdowns} countdowns`;
         if (sub)  sub.textContent  = `${active} actif${active!==1?'s':''} · ${expired} expiré${expired!==1?'s':''}`;
-        if (chip) { chip.textContent = plan; chip.className = 'plan-chip plan-chip-' + plan.toLowerCase(); }
-        if (upgradeBtn) {
-            if (plan === 'FREE')      { upgradeBtn.textContent = 'Passer à Pro ↗'; upgradeBtn.onclick = () => upgradePlan('pro_monthly'); upgradeBtn.style.display = 'block'; }
-            else if (plan === 'PRO') { upgradeBtn.textContent = 'Gérer mon abonnement'; upgradeBtn.onclick = openBillingPortal; upgradeBtn.style.display = 'block'; }
-            else                      { upgradeBtn.style.display = 'none'; }
-        }
+        renderPlanBox('', plan);
         grid.innerHTML = '';
         data.forEach(cd => { cdMap[cd.id] = cd; grid.appendChild(buildCard(cd)); });
         if (plan === 'FREE' && total < 3) {
@@ -1593,6 +1586,36 @@ async function openBillingPortal() {
 
 
 // ── Settings / Profil ────────────────────────────────────────────
+/**
+ * Synchronise l'encart de plan d'une barre latérale. Les trois pages de
+ * l'espace connecté en ont un, avec des identifiants suffixés ('' pour le
+ * dashboard, '-a' pour les analytiques, '-s' pour les paramètres).
+ *
+ * Un abonné Pro ou Business est renvoyé vers le portail Stripe : lui
+ * proposer « Passer à Pro » ouvrirait un second abonnement, facturé en
+ * parallèle du premier.
+ */
+function renderPlanBox(suffix, plan) {
+    const name = document.getElementById('sidebar-plan-name' + suffix);
+    const chip = document.getElementById('sidebar-plan-chip' + suffix);
+    const btn  = document.getElementById('upgrade-btn' + suffix);
+
+    if (name && name.firstChild) {
+        name.firstChild.nodeValue = 'Plan ' + plan.charAt(0) + plan.slice(1).toLowerCase() + ' ';
+    }
+    if (chip) { chip.textContent = plan; chip.className = 'plan-chip plan-chip-' + plan.toLowerCase(); }
+    if (btn) {
+        btn.style.display = 'block';
+        if (plan === 'FREE') {
+            btn.textContent = 'Passer à Pro ↗';
+            btn.onclick = () => upgradePlan('pro_monthly');
+        } else {
+            btn.textContent = 'Gérer mon abonnement';
+            btn.onclick = openBillingPortal;
+        }
+    }
+}
+
 function loadSettings() {
     const user = getUser();
     if (!user) return;
@@ -1604,9 +1627,22 @@ function loadSettings() {
     const notice   = document.getElementById('settings-google-notice');
     if (pwForm) pwForm.style.display = isGoogle ? 'none' : 'flex';
     if (notice) notice.style.display = isGoogle ? 'block' : 'none';
-    // Plan chip
-    const chip = document.getElementById('sidebar-plan-chip-s');
-    if (chip) chip.textContent = user.plan || 'Free';
+    const plan = user.plan || 'FREE';
+    renderPlanBox('-s', plan);
+
+    // Bloc facturation — les CGV article 5 désignent cet écran comme le
+    // chemin pour consulter ses factures et résilier.
+    const chip = document.getElementById('settings-plan-chip');
+    const desc = document.getElementById('settings-billing-desc');
+    const btn  = document.getElementById('settings-billing-btn');
+    if (chip) { chip.textContent = plan; chip.className = 'plan-chip plan-chip-' + plan.toLowerCase(); }
+    if (plan === 'FREE') {
+        if (desc) desc.textContent = 'Le plan Free est limité à 3 countdowns actifs. Aucun moyen de paiement n\'est enregistré.';
+        if (btn)  { btn.textContent = 'Passer à Pro ↗'; btn.onclick = () => upgradePlan('pro_monthly'); }
+    } else {
+        if (desc) desc.textContent = 'Vos factures, votre moyen de paiement et la résiliation se gèrent depuis le portail sécurisé de Stripe. La résiliation prend effet à la fin de la période déjà payée.';
+        if (btn)  { btn.textContent = 'Gérer mon abonnement ↗'; btn.onclick = openBillingPortal; }
+    }
 }
 
 async function saveProfile(btn) {
@@ -1704,15 +1740,7 @@ async function loadAnalytics() {
     const gate    = document.getElementById('analytics-gate');
     const content = document.getElementById('analytics-content');
 
-    // Sync sidebar plan box (analytics page)
-    const chipA = document.getElementById('sidebar-plan-chip-a');
-    const upgradeA = document.getElementById('upgrade-btn-a');
-    if (chipA) { chipA.textContent = plan; chipA.className = 'plan-chip plan-chip-' + plan.toLowerCase(); }
-    if (upgradeA) {
-        if (plan === 'FREE')      { upgradeA.textContent = 'Passer à Pro ↗'; upgradeA.onclick = () => upgradePlan('pro_monthly'); upgradeA.style.display = 'block'; }
-        else if (plan === 'PRO') { upgradeA.textContent = 'Gérer mon abonnement'; upgradeA.onclick = openBillingPortal; upgradeA.style.display = 'block'; }
-        else                      { upgradeA.style.display = 'none'; }
-    }
+    renderPlanBox('-a', plan);
 
     if (plan === 'FREE') {
         gate.style.display = 'block';
