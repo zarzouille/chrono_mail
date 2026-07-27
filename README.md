@@ -1,4 +1,4 @@
-# chrono.mail
+# Chronomail
 
 Outil en ligne pour générer des countdowns GIF à intégrer dans des emails marketing.
 

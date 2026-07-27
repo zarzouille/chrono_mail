@@ -1,5 +1,5 @@
 /**
- * scheduler.js — Jobs planifiés chrono.mail
+ * scheduler.js — Jobs planifiés Chronomail
  * ============================================================
  * Contrairement aux emails déclenchés par une route (bienvenue, quota,
  * countdown expiré), certains envois doivent partir *sans* action de

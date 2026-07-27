@@ -7,8 +7,8 @@ async function setup() {
 
     // ── Plan PRO ──────────────────────────────────────────────────
     const pro = await stripe.products.create({
-        name:        'chrono.mail Pro',
-        description: 'Countdowns illimités, analytiques avancées, personnalisation complète',
+        name:        'Chronomail Pro',
+        description: 'Countdowns illimités, 10 styles, labels personnalisés, image de fond, analytiques',
     });
 
     const proPriceMonthly = await stripe.prices.create({
@@ -29,8 +29,8 @@ async function setup() {
 
     // ── Plan BUSINESS ─────────────────────────────────────────────
     const business = await stripe.products.create({
-        name:        'chrono.mail Business',
-        description: 'Tout Pro + équipes, white-label, API, support prioritaire',
+        name:        'Chronomail Business',
+        description: 'Tout Pro + timer perpétuel et style Neon',
     });
 
     const businessPriceMonthly = await stripe.prices.create({
