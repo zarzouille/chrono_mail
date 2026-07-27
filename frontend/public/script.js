@@ -1383,6 +1383,20 @@ async function loadDashboard() {
     }
 }
 
+/**
+ * Échappe une chaîne avant injection en innerHTML.
+ *
+ * Les noms de countdown sont saisis librement par l'utilisateur : sans
+ * échappement, un nom contenant `<img src=x onerror=...>` s'exécute au
+ * rendu de la carte. La portée est limitée — on ne s'attaque que
+ * soi-même — mais le jeton JWT est dans le localStorage du même domaine.
+ */
+function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[c]);
+}
+
 function buildCard(cd) {
     const isActive = new Date(cd.endDate) > new Date();
     const diff     = new Date(cd.endDate) - new Date();
@@ -1398,7 +1412,7 @@ function buildCard(cd) {
     if (!isActive) card.style.opacity = '0.65';
     card.innerHTML = `
     <div class="cd-card-header">
-      <div><div class="cd-card-name">${cd.name}</div><div class="cd-card-date">${isActive?'Expire le':'Expiré le'} ${dateStr}</div></div>
+      <div><div class="cd-card-name">${escapeHtml(cd.name)}</div><div class="cd-card-date">${isActive?'Expire le':'Expiré le'} ${dateStr}</div></div>
       <div class="status-pill ${isActive?'active':'expired'}"><div class="status-pill-dot"></div>${isActive?'Actif':'Expiré'}</div>
     </div>
     <div class="cd-mini">
@@ -1868,7 +1882,7 @@ function renderAnalyticsTable(countdowns, total) {
         const pct = total > 0 ? Math.round(cd.count / total * 100) : 0;
         const barW = Math.round(cd.count / maxCount * 100);
         return `<tr>
-            <td style="font-weight:600">${cd.name}</td>
+            <td style="font-weight:600">${escapeHtml(cd.name)}</td>
             <td style="font-family:'JetBrains Mono',monospace;font-size:13px">${cd.count.toLocaleString('fr-FR')}</td>
             <td style="min-width:120px">
                 <div style="display:flex;align-items:center;gap:8px">
