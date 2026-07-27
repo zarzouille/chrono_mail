@@ -1334,6 +1334,11 @@ function editCountdown(id) {
         if (btn) btn.textContent = '✦ Mettre à jour';
     });
 
+    // Le countdown est déjà publié : son code d'intégration est connu, on
+    // l'affiche sans attendre une republication.
+    currentGifUrl = `${window.location.origin}/gif/${cd.id}`;
+    displayCode(currentGifUrl);
+
     // Après hydratation : un countdown créé du temps où le compte était Pro
     // porte encore ses libellés personnalisés, que le serveur refusera.
     applyPlanGates();
@@ -1453,6 +1458,32 @@ async function loadDashboard() {
 }
 
 /**
+ * Construit la balise d'intégration d'un countdown déjà publié.
+ *
+ * Même format que celui proposé après publication : une balise <img>
+ * autonome, sans dépendance à l'état du formulaire de création.
+ */
+function embedSnippetFor(cd) {
+    const url = `${window.location.origin}/gif/${cd.id}`;
+    return `<img src="${url}" alt="Offre expire dans..." width="${cd.width}" border="0" style="display:block" />`;
+}
+
+/**
+ * Copie la balise d'un countdown depuis le dashboard.
+ *
+ * Sans ça, récupérer le code d'un countdown existant obligeait à ouvrir
+ * « Modifier » puis à le republier — editCountdown() n'affiche pas la
+ * section code, qui n'apparaît qu'après une publication.
+ */
+function copyEmbedCode(id) {
+    const cd = cdMap[id];
+    if (!cd) { showToast('❌ Countdown introuvable'); return; }
+    navigator.clipboard.writeText(embedSnippetFor(cd))
+        .then(() => showToast('📋 Code HTML copié !'))
+        .catch(() => showToast('❌ Copie impossible'));
+}
+
+/**
  * Échappe une chaîne avant injection en innerHTML.
  *
  * Les noms de countdown sont saisis librement par l'utilisateur : sans
@@ -1496,6 +1527,7 @@ function buildCard(cd) {
       <div class="cd-stat"><strong><a href="/gif/${cd.id}" target="_blank" style="color:var(--accent);text-decoration:none">Voir GIF →</a></strong></div>
     </div>
     <div class="cd-card-actions">
+      <button class="cd-action-btn" onclick="copyEmbedCode('${cd.id}')">Copier le code</button>
       <button class="cd-action-btn" onclick="editCountdown('${cd.id}')">Modifier</button>
       <button class="cd-action-btn" onclick="duplicateCountdown('${cd.id}')">Dupliquer</button>
       <button class="cd-action-btn cd-action-delete" onclick="deleteCountdown('${cd.id}')">Supprimer</button>
