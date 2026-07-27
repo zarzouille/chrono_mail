@@ -276,6 +276,34 @@ async function authFetch(url, options = {}) {
 }
 
 
+/**
+ * Rafraîchit le profil en cache depuis le serveur.
+ *
+ * Le plan affiché — et surtout les verrous d'applyPlanGates() — viennent
+ * du localStorage, écrit à la connexion et jamais réactualisé. Or le plan
+ * change hors de l'application : dans le portail Stripe, ou par webhook
+ * (paiement échoué, fin d'abonnement). Sans ce rafraîchissement, un
+ * client qui vient de payer Business garde l'interface Pro, timer
+ * perpétuel verrouillé, jusqu'à sa prochaine reconnexion.
+ *
+ * Fusion et non remplacement : /auth/me ne renvoie pas le marqueur
+ * `password`, dont dépend l'affichage du formulaire de mot de passe pour
+ * les comptes Google.
+ */
+async function refreshUser() {
+    if (!isLoggedIn()) return null;
+    try {
+        const res = await authFetch('/auth/me');
+        if (!res.ok) return null;
+        const fresh  = await res.json();
+        const merged = { ...(getUser() || {}), ...fresh };
+        localStorage.setItem('cm_user', JSON.stringify(merged));
+        updateNavAuth();
+        return merged;
+    } catch { return null; }
+}
+
+
 // ============================================================
 // 5. HERO TIMER — Timer animé landing page (fictif)
 // ============================================================
@@ -2002,6 +2030,24 @@ updateNavAuth();
 
 // Restaure la page depuis le hash ou les query params
 buildTimezoneOptions();
+
+/**
+ * Au chargement, on redemande le profil au serveur : c'est le seul moment
+ * où l'application peut apprendre un changement de plan survenu ailleurs —
+ * retour du portail Stripe, fin d'abonnement, échec de paiement.
+ *
+ * Si le plan a bougé, la page courante est re-rendue pour que les verrous
+ * et l'encart d'abonnement suivent, sans imposer une reconnexion.
+ */
+(async function refreshUserOnLoad() {
+    const avant = getUser()?.plan;
+    const user  = await refreshUser();
+    if (!user || user.plan === avant) return;
+
+    const active = document.querySelector('.page.active')?.id?.replace('page-', '');
+    if (active) showPage(active);
+    showToast(`Votre plan est maintenant ${user.plan}`);
+})();
 
 (function initRoute() {
     const params = new URLSearchParams(window.location.search);
