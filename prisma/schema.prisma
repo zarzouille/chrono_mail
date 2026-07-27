@@ -76,6 +76,10 @@ model Countdown {
   expiredText     String?
   expiredRedirect String?
 
+  // Affichage des séparateurs « : » entre les blocs. Non restreint par
+  // plan, contrairement à sepColor qui n'en fixe que la couleur.
+  showSeparators Boolean @default(true)
+
   // Apparence avancée (Pro)
   blockBgColor String?
   fontLabels   String?

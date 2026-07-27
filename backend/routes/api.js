@@ -70,6 +70,7 @@ router.post('/countdown', requireAuth, async (req, res) => {
             blockBgColor     = null,
             fontLabels       = null,
             sepColor         = null,
+            showSeparators   = true,
             perpetual        = false,
             perpetualSeconds = 86400,
         } = req.body;
@@ -140,6 +141,7 @@ router.post('/countdown', requireAuth, async (req, res) => {
                 style:            finalStyle,
                 orientation,
                 showUnits,
+                showSeparators:   showSeparators !== false && showSeparators !== '0',
                 ...finalLabels,
                 expiredBehavior:  finalExpiredBehavior,
                 expiredText,
@@ -194,7 +196,7 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
             labelDays, labelHours, labelMinutes, labelSeconds,
             expiredBehavior, expiredText, expiredRedirect,
             bgImageUrl,
-            blockBgColor, fontLabels, sepColor,
+            blockBgColor, fontLabels, sepColor, showSeparators,
             perpetual, perpetualSeconds,
         } = req.body;
 
@@ -247,6 +249,7 @@ router.put('/countdown/:id', requireAuth, async (req, res) => {
                 ...(finalStyle !== undefined && { style: finalStyle }),
                 ...(orientation !== undefined && { orientation }),
                 ...(showUnits  !== undefined && { showUnits }),
+                ...(showSeparators !== undefined && { showSeparators: showSeparators !== false && showSeparators !== '0' }),
                 ...finalLabels,
                 expiredBehavior: finalExpiredBehavior,
                 ...(expiredText !== undefined && { expiredText }),
@@ -406,6 +409,7 @@ router.get('/gif/:id', async (req, res) => {
                     blockBgColor:     countdown.blockBgColor,
                     fontLabels:       countdown.fontLabels,
                     sepColor:         countdown.sepColor,
+                    showSeparators:   countdown.showSeparators,
                     perpetual:        countdown.perpetual,
                     perpetualSeconds: countdown.perpetualSeconds,
                 }

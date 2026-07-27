@@ -641,14 +641,19 @@ function isLightColor(hex) {
 }
 
 // == Separateurs =========================================
-function toggleSeparators(el) {
-    showSeparators = !showSeparators;
-    el.classList.toggle('on',  showSeparators);
-    el.classList.toggle('off', !showSeparators);
+/** Applique l'état des séparateurs à l'interface, sans le basculer. */
+function renderSeparatorsToggle() {
+    const el = document.getElementById('sep-toggle');
+    if (el) { el.classList.toggle('on', showSeparators); el.classList.toggle('off', !showSeparators); }
     const icon = document.getElementById('sep-toggle-icon');
     if (icon) icon.textContent = showSeparators ? '✓' : '';
     const inp = document.getElementById('color-sep');
     if (inp) inp.style.opacity = showSeparators ? '1' : '0.35';
+}
+
+function toggleSeparators() {
+    showSeparators = !showSeparators;
+    renderSeparatorsToggle();
     schedulePreview();
 }
 
@@ -1027,6 +1032,7 @@ async function publishCountdown() {
                 style:           currentStyle,
                 orientation:     currentOrientation,
                 showUnits,
+                showSeparators,
                 labelDays:    labelVisible.days    ? (document.getElementById('cd-label-days')?.value    || 'JOURS')  : '',
                 labelHours:   labelVisible.hours   ? (document.getElementById('cd-label-hours')?.value   || 'HEURES') : '',
                 labelMinutes: labelVisible.minutes ? (document.getElementById('cd-label-minutes')?.value || 'MIN')    : '',
@@ -1142,6 +1148,7 @@ function _resetCreateForm() {
     currentBlockBg     = null;
     currentSepColor    = null;
     showSeparators     = true;
+    renderSeparatorsToggle();
     currentFontDigits  = "'JetBrains Mono',monospace";
     currentFontLabels  = "'Inter',sans-serif";
     currentStyle       = 'rounded';
@@ -1323,6 +1330,8 @@ function editCountdown(id) {
     if (flEl) flEl.value = cd.fontLabels || '';   // '' → option « Par défaut »
     currentBlockBg  = cd.blockBgColor || null;
     currentSepColor = cd.sepColor || null;
+    showSeparators  = cd.showSeparators !== false;
+    renderSeparatorsToggle();
     currentFontLabels = cd.fontLabels || null;
     renderAdvancedColorsUI();
 
