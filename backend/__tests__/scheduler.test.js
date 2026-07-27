@@ -7,6 +7,9 @@ jest.mock('../lib/prisma', () => ({
         findMany:   jest.fn(),
         updateMany: jest.fn(),
     },
+    impression: {
+        deleteMany: jest.fn(),
+    },
 }));
 
 jest.mock('../services/email-service', () => ({
@@ -21,7 +24,7 @@ jest.mock('../lib/retention', () => ({
 
 const prisma = require('../lib/prisma');
 const { sendActivationNudge, sendWinback, sendReactivation } = require('../services/email-service');
-const { runActivationNudge, runWinback, runReactivation } = require('../lib/scheduler');
+const { runActivationNudge, runWinback, runReactivation, runPurgeImpressions } = require('../lib/scheduler');
 
 const USER = { id: 'user_1', email: 'sophie@exemple.fr', name: 'Sophie' };
 
@@ -185,5 +188,24 @@ describe('runReactivation', () => {
             'sophie@exemple.fr', 'Sophie', 'https://app/unsubscribe?token=tok',
         );
         expect(result).toEqual({ candidates: 1, sent: 1 });
+    });
+});
+
+describe('runPurgeImpressions', () => {
+    test('supprime les impressions de plus de 12 mois', async () => {
+        prisma.impression.deleteMany.mockResolvedValue({ count: 42 });
+
+        const result = await runPurgeImpressions();
+
+        const cutoff = prisma.impression.deleteMany.mock.calls[0][0].where.createdAt.lt;
+        const ageJours = (Date.now() - cutoff.getTime()) / (24 * 3600 * 1000);
+        expect(ageJours).toBeCloseTo(365, 0);
+        expect(result).toEqual({ deleted: 42 });
+    });
+
+    test('ne supprime rien quand aucune impression n\'a expiré', async () => {
+        prisma.impression.deleteMany.mockResolvedValue({ count: 0 });
+
+        expect(await runPurgeImpressions()).toEqual({ deleted: 0 });
     });
 });

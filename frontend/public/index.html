@@ -215,7 +215,7 @@
                 <div class="feature-card">
                     <div class="feature-icon">📊</div>
                     <div class="feature-title">Analytiques temps réel</div>
-                    <div class="feature-desc">Impressions, vues uniques, pics de trafic. Suivez la performance de chaque countdown.</div>
+                    <div class="feature-desc">Impressions par jour, pics de trafic, classement de vos countdowns. Suivez la performance de chaque campagne.</div>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">✉️</div>
@@ -1484,7 +1484,7 @@
         <div class="legal-header">
             <div class="legal-eyebrow">Légal</div>
             <h1 class="legal-title">Politique de confidentialité</h1>
-            <div class="legal-date">Dernière mise à jour : mars 2026</div>
+            <div class="legal-date">Dernière mise à jour : juillet 2026</div>
         </div>
         <div class="legal-body">
 
@@ -1503,7 +1503,7 @@
                 <ul>
                     <li><strong>Données de compte</strong> — adresse e-mail, nom (optionnel), mot de passe hashé (bcrypt). En cas de connexion Google, nous recevons votre adresse e-mail et votre nom depuis Google.</li>
                     <li><strong>Données de countdown</strong> — nom, date cible, paramètres de style (couleurs, police, etc.), comportement à l'expiration.</li>
-                    <li><strong>Données d'impression</strong> — adresse IP (non stockée en clair, utilisée pour la géolocalisation approximative), User-Agent, horodatage, à chaque affichage d'un GIF.</li>
+                    <li><strong>Données d'impression</strong> — à chaque affichage d'un GIF, nous enregistrons uniquement le countdown concerné et l'horodatage. <strong>Ni adresse IP, ni User-Agent, ni cookie</strong> : les destinataires de vos campagnes ne sont pas identifiables, ni traçables d'un email à l'autre.</li>
                     <li><strong>Données de facturation</strong> — gérées exclusivement par Stripe. Nous ne stockons aucun numéro de carte bancaire.</li>
                 </ul>
             </div>
@@ -1513,9 +1513,10 @@
                 <ul>
                     <li><strong>Fourniture du service</strong> — exécution du contrat (article 6.1.b RGPD)</li>
                     <li><strong>Gestion de la facturation</strong> — exécution du contrat</li>
-                    <li><strong>Statistiques d'impression</strong> — intérêt légitime (amélioration du service, article 6.1.f RGPD)</li>
+                    <li><strong>Statistiques d'impression</strong> — exécution du contrat : le comptage des affichages est une fonctionnalité du service, restituée dans votre tableau de bord</li>
                     <li><strong>Sécurité et prévention des abus</strong> — intérêt légitime</li>
-                    <li><strong>Communications transactionnelles</strong> — exécution du contrat (confirmation d'inscription, factures)</li>
+                    <li><strong>Communications transactionnelles</strong> — exécution du contrat (confirmation d'inscription, réinitialisation de mot de passe, factures, alertes d'abonnement)</li>
+                    <li><strong>Relances par e-mail</strong> — intérêt légitime (article 6.1.f RGPD). Si votre compte reste inactif, nous pouvons vous écrire pour vous proposer de reprendre. Chacun de ces messages comporte un <strong>lien de désinscription</strong> qui met fin définitivement à ces envois, sans affecter les messages transactionnels liés à votre compte.</li>
                 </ul>
             </div>
 
@@ -1524,7 +1525,7 @@
                 <ul>
                     <li><strong>Données de compte</strong> — conservées pendant la durée de vie du compte, puis supprimées dans un délai de 3 ans après la résiliation.</li>
                     <li><strong>Données de countdown</strong> — conservées jusqu'à suppression par l'utilisateur ou clôture du compte.</li>
-                    <li><strong>Données d'impression</strong> — conservées 12 mois glissants.</li>
+                    <li><strong>Données d'impression</strong> — conservées 12 mois glissants : une tâche automatique supprime chaque nuit les enregistrements plus anciens. Elles sont également effacées avec le countdown auquel elles se rattachent.</li>
                     <li><strong>Données de facturation</strong> — conservées 10 ans conformément aux obligations comptables légales (gérées par Stripe).</li>
                 </ul>
             </div>
@@ -1536,6 +1537,7 @@
                     <li><strong>Stripe</strong> (paiement) — <a href="https://stripe.com/fr/privacy" target="_blank">politique de confidentialité Stripe</a></li>
                     <li><strong>Render</strong> (hébergement backend) — serveurs situés aux États-Unis, couvert par des clauses contractuelles types.</li>
                     <li><strong>Supabase</strong> (base de données) — hébergement PostgreSQL, données chiffrées au repos.</li>
+                    <li><strong>Resend</strong> (envoi des e-mails) — reçoit votre adresse e-mail et votre nom pour acheminer les messages du service — <a href="https://resend.com/legal/privacy-policy" target="_blank">politique de confidentialité Resend</a></li>
                     <li><strong>Google</strong> (authentification OAuth, optionnel) — <a href="https://policies.google.com/privacy" target="_blank">politique de confidentialité Google</a></li>
                 </ul>
             </div>
@@ -1756,6 +1758,7 @@
                 <ul>
                     <li><strong>cm_token</strong> — jeton d'authentification JWT. Expiré automatiquement, supprimé à la déconnexion.</li>
                     <li><strong>cm_user</strong> — informations de profil en cache (nom, email, plan). Supprimé à la déconnexion.</li>
+                    <li><strong>cm_theme</strong> — votre préférence d'affichage, clair ou sombre. Aucune donnée personnelle, conservée jusqu'à ce que vous vidiez le stockage de votre navigateur.</li>
                 </ul>
                 <p>Ces données restent sur votre appareil et ne sont jamais transmises à des tiers hormis nos propres serveurs lors des appels API.</p>
             </div>

@@ -15,9 +15,10 @@
  * envoyer deux fois : une seule voit count === 1.
  *
  * Env :
- *   DISABLE_CRON=true      désactive tous les jobs
- *   CRON_TIMEZONE          défaut Europe/Paris
- *   CRON_ACTIVATION_NUDGE  expression cron, défaut tous les jours à 10h
+ *   DISABLE_CRON=true         désactive tous les jobs
+ *   CRON_TIMEZONE             défaut Europe/Paris
+ *   CRON_ACTIVATION_NUDGE     expression cron, défaut tous les jours à 10h
+ *   CRON_PURGE_IMPRESSIONS    expression cron, défaut tous les jours à 3h45
  */
 const cron   = require('node-cron');
 const prisma = require('./prisma');
@@ -28,9 +29,11 @@ const TIMEZONE           = process.env.CRON_TIMEZONE || 'Europe/Paris';
 const ACTIVATION_CRON    = process.env.CRON_ACTIVATION_NUDGE || '0 10 * * *';
 const WINBACK_CRON       = process.env.CRON_WINBACK || '15 10 * * *';
 const REACTIVATION_CRON  = process.env.CRON_REACTIVATION || '30 10 * * *';
+const PURGE_CRON         = process.env.CRON_PURGE_IMPRESSIONS || '45 3 * * *';
 const ACTIVATION_DELAY_H = 48;
 const WINBACK_DELAY_D      = 14;
 const REACTIVATION_DELAY_D = 30;
+const IMPRESSION_RETENTION_D = 365;
 
 /**
  * Filtre « inactif depuis N jours ».
@@ -156,6 +159,26 @@ async function runReactivation() {
 }
 
 /**
+ * Purge des impressions de plus de 12 mois.
+ *
+ * La politique de confidentialité annonce une conservation « 12 mois
+ * glissants » : sans ce job la promesse serait fausse, et la table
+ * grossirait indéfiniment puisque rien d'autre ne supprime une
+ * impression — hormis la cascade à la suppression du countdown.
+ *
+ * Contrairement aux relances, aucune réservation n'est nécessaire :
+ * deleteMany est idempotent, deux exécutions concurrentes suppriment
+ * le même ensemble et la seconde ne trouve plus rien.
+ */
+async function runPurgeImpressions() {
+    const cutoff = new Date(Date.now() - IMPRESSION_RETENTION_D * 24 * 3600 * 1000);
+    const { count } = await prisma.impression.deleteMany({
+        where: { createdAt: { lt: cutoff } },
+    });
+    return { deleted: count };
+}
+
+/**
  * Enregistre les jobs. Appelé une fois au démarrage du serveur.
  * Renvoie les tâches créées (utile en test / pour un arrêt propre).
  */
@@ -165,19 +188,23 @@ function start() {
         return [];
     }
 
-    // Les trois jobs sont décalés de 15 min pour ne pas ouvrir trois
-    // séries d'envois simultanées vers Resend.
+    // Les trois relances sont décalées de 15 min pour ne pas ouvrir trois
+    // séries d'envois simultanées vers Resend. La purge tourne de nuit,
+    // à l'écart : elle n'envoie rien mais peut supprimer beaucoup de lignes.
+    const sendReport  = r => `${r.candidates} candidat(s), ${r.sent} envoi(s)`;
+    const purgeReport = r => `${r.deleted} impression(s) supprimée(s)`;
+
     const jobs = [
-        ['activation-nudge', ACTIVATION_CRON,   runActivationNudge, 'relance activation'],
-        ['winback',          WINBACK_CRON,      runWinback,         'win-back'],
-        ['reactivation',     REACTIVATION_CRON, runReactivation,    'réactivation'],
+        ['activation-nudge',  ACTIVATION_CRON,   runActivationNudge,   'relance activation', sendReport],
+        ['winback',           WINBACK_CRON,      runWinback,           'win-back',           sendReport],
+        ['reactivation',      REACTIVATION_CRON, runReactivation,      'réactivation',       sendReport],
+        ['purge-impressions', PURGE_CRON,        runPurgeImpressions,  'purge impressions',  purgeReport],
     ];
 
-    const tasks = jobs.map(([name, expression, run, label]) => {
+    const tasks = jobs.map(([name, expression, run, label, report]) => {
         const task = cron.schedule(expression, async () => {
             try {
-                const { candidates, sent } = await run();
-                console.log(`⏱️  [CRON] ${label} — ${candidates} candidat(s), ${sent} envoi(s)`);
+                console.log(`⏱️  [CRON] ${label} — ${report(await run())}`);
             } catch (err) {
                 console.error(`⏱️  [CRON] Erreur ${label} :`, err.message);
             }
@@ -190,4 +217,4 @@ function start() {
     return tasks;
 }
 
-module.exports = { start, runActivationNudge, runWinback, runReactivation };
+module.exports = { start, runActivationNudge, runWinback, runReactivation, runPurgeImpressions };

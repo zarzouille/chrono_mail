@@ -106,9 +106,10 @@ model Impression {
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Volontairement réduit au strict nécessaire : ni IP ni User-Agent.
+  // Le GIF est chargé par les destinataires des campagnes de nos clients,
+  // et ces champs n'alimentaient aucune fonctionnalité.
   createdAt DateTime @default(now())
-  userAgent String?
-  ip        String?
 
   @@index([countdownId])
   @@index([userId])
