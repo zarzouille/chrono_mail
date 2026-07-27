@@ -351,13 +351,15 @@ router.get('/gif/:id', async (req, res) => {
             }
         }
 
-        // Log impression (arrière-plan)
+        // Log impression (arrière-plan).
+        // Ni IP ni User-Agent : le GIF est chargé par les destinataires des
+        // campagnes de nos clients, avec qui nous n'avons aucun lien. Ces deux
+        // champs n'étaient lus par aucun code — les compter aurait été
+        // collecter des données personnelles de tiers sans finalité.
         prisma.impression.create({
             data: {
                 countdownId: countdown.id,
                 userId:      countdown.userId,
-                userAgent:   req.get('User-Agent') || null,
-                ip:          req.ip || null,
             },
         }).catch(err => console.error('Erreur log impression :', err));
 
