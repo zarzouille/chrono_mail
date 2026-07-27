@@ -868,6 +868,10 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:0
 
 /* ── PLAN GATE badge & overlay ── */
 .plan-gate-badge { background: var(--accent); color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 100px; margin-left: 6px; vertical-align: middle; }
+/* Contrôle dont la valeur est réservée à un plan supérieur : il reste lisible
+   et cliquable — le clic ouvre la modale d'upgrade — mais plus modifiable. */
+.plan-locked { cursor: pointer; opacity: 0.6; }
+input.lbl-inp.plan-locked, select.plan-locked { background: var(--surface2); color: var(--muted); }
 .plan-gate-overlay { position: absolute; inset: 0; background: rgba(248,247,244,0.88); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; border-radius: inherit; }
 .plan-gate-msg { font-size: 12px; font-weight: 600; color: var(--text2); text-align: center; }
 

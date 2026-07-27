@@ -1,4 +1,4 @@
-# Chrono.mail — Résumé de projet
+# Chronomail — Résumé de projet
 > **Document préparé par Claude (chat) pour passation à Claude Code**
 > Dernière mise à jour : mars 2026
 
@@ -6,7 +6,7 @@
 
 ## 🎯 Concept
 
-**Chrono.mail** est un SaaS de génération de timers GIF animés pour emails marketing.
+**Chronomail** est un SaaS de génération de timers GIF animés pour emails marketing.
 L'utilisateur configure un countdown (date cible, couleurs, style, orientation…), le serveur génère un GIF animé hébergé, et l'utilisateur colle une balise `<img>` dans son outil d'emailing (Klaviyo, Mailchimp, Brevo…).
 
 ---

@@ -1,9 +1,9 @@
 /**
- * email-service.js — Emails transactionnels chrono.mail
+ * email-service.js — Emails transactionnels Chronomail
  * ============================================================
  * Provider : Resend (https://resend.com)
  * Env var  : RESEND_API_KEY
- * From     : MAIL_FROM (default: "chrono.mail <noreply@chrono.mail>")
+ * From     : MAIL_FROM (default: "Chronomail <noreply@chrono-mail.app>")
  */
 const { Resend } = require('resend');
 
@@ -11,7 +11,7 @@ const resend = process.env.RESEND_API_KEY
     ? new Resend(process.env.RESEND_API_KEY)
     : null;
 
-const FROM = process.env.MAIL_FROM || 'chrono.mail <noreply@chrono.mail>';
+const FROM = process.env.MAIL_FROM || 'Chronomail <noreply@chrono-mail.app>';
 const APP  = process.env.APP_URL   || 'http://localhost:3000';
 
 // ── Helper : base HTML layout ────────────────────────────────────
@@ -40,8 +40,8 @@ function layout(content, opts = {}) {
     <!-- Footer -->
     <tr><td style="padding:16px 32px 28px;border-top:1px solid #e2e0db;text-align:center">
         <p style="margin:0;font-size:12px;color:#8a877f;line-height:1.6">
-            chrono.mail — Des countdowns GIF pour vos emails marketing.<br>
-            <a href="${APP}" style="color:#2563eb;text-decoration:none">chrono.mail</a> ·
+            Chronomail — Des countdowns GIF pour vos emails marketing.<br>
+            <a href="${APP}" style="color:#2563eb;text-decoration:none">Chronomail</a> ·
             <a href="${APP}/#legal-privacy" style="color:#8a877f;text-decoration:none">Confidentialité</a> ·
             <a href="${APP}/#legal-cgu" style="color:#8a877f;text-decoration:none">CGU</a>${unsubscribe}
         </p>
@@ -103,7 +103,7 @@ function buildVerifyEmailHtml(name, email, verifyUrl) {
             Vérifiez votre email
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            ${salut}, cliquez sur le bouton ci-dessous pour confirmer votre adresse email et activer votre compte chrono.mail.
+            ${salut}, cliquez sur le bouton ci-dessous pour confirmer votre adresse email et activer votre compte Chronomail.
         </p>
         ${btn('Vérifier mon email →', verifyUrl)}
         <p style="margin:0;font-size:13px;color:#8a877f;line-height:1.7">
@@ -113,7 +113,7 @@ function buildVerifyEmailHtml(name, email, verifyUrl) {
 }
 async function sendVerifyEmail(email, name, token) {
     const verifyUrl = `${APP}/auth/verify-email?token=${token}`;
-    return send(email, 'Confirmez votre adresse email — chrono.mail', buildVerifyEmailHtml(name, email, verifyUrl));
+    return send(email, 'Confirmez votre adresse email — Chronomail', buildVerifyEmailHtml(name, email, verifyUrl));
 }
 
 /**
@@ -138,7 +138,7 @@ function buildResetPasswordHtml(name, email, resetUrl) {
 }
 async function sendResetPassword(email, name, token) {
     const resetUrl = `${APP}/#reset-password?token=${token}`;
-    return send(email, 'Réinitialisation de mot de passe — chrono.mail', buildResetPasswordHtml(name, email, resetUrl));
+    return send(email, 'Réinitialisation de mot de passe — Chronomail', buildResetPasswordHtml(name, email, resetUrl));
 }
 
 /**
@@ -151,7 +151,7 @@ function buildWelcomeHtml(name, email) {
             Bienvenue${p ? `, ${p}` : ''} !
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            Votre compte chrono.mail est prêt. Vous pouvez dès maintenant créer votre premier countdown GIF et l'intégrer dans vos emails marketing.
+            Votre compte Chronomail est prêt. Vous pouvez dès maintenant créer votre premier countdown GIF et l'intégrer dans vos emails marketing.
         </p>
         <p style="margin:0 0 4px;font-size:14px;color:#8a877f">Votre plan actuel : <strong style="color:#1a1916">Free</strong> (3 countdowns)</p>
         ${btn('Créer mon premier countdown →', APP + '/#create')}
@@ -161,7 +161,7 @@ function buildWelcomeHtml(name, email) {
     `);
 }
 async function sendWelcome(email, name) {
-    return send(email, 'Bienvenue sur chrono.mail !', buildWelcomeHtml(name, email));
+    return send(email, 'Bienvenue sur Chronomail !', buildWelcomeHtml(name, email));
 }
 
 /**
@@ -174,7 +174,7 @@ function buildActivationNudgeHtml(name, email) {
             Votre premier countdown vous attend
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            ${salut}, votre compte chrono.mail est prêt mais aucun countdown n'a encore été créé. Il n'y a que trois choses à choisir.
+            ${salut}, votre compte Chronomail est prêt mais aucun countdown n'a encore été créé. Il n'y a que trois choses à choisir.
         </p>
         <div style="background:#f3f2ef;border:1px solid #e2e0db;border-radius:10px;padding:16px;margin:16px 0">
             <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.9">
@@ -272,7 +272,7 @@ function buildPaymentFailedHtml(name, email, attempt) {
         </div>
         ${btn('Mettre à jour mon moyen de paiement →', APP + '/#dashboard')}
         <p style="margin:0;font-size:13px;color:#8a877f;line-height:1.7">
-            Besoin d'aide ? Contactez-nous à <a href="mailto:billing@chrono.mail" style="color:#2563eb;text-decoration:none">billing@chrono.mail</a>.
+            Besoin d'aide ? Contactez-nous à <a href="mailto:contact@chrono-mail.app" style="color:#2563eb;text-decoration:none">contact@chrono-mail.app</a>.
         </p>
     `);
 }
@@ -407,7 +407,7 @@ function buildReactivationHtml(name, email, unsubscribeUrl) {
             On vous garde une place
         </h1>
         <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
-            ${salut}, cela fait un mois. Si chrono.mail n'a pas trouvé sa place dans vos campagnes, c'est utile à savoir — répondez à cet email, on lit tout.
+            ${salut}, cela fait un mois. Si Chronomail n'a pas trouvé sa place dans vos campagnes, c'est utile à savoir — répondez à cet email, on lit tout.
         </p>
         <div style="background:#eff4ff;border:1px solid rgba(37,99,235,0.15);border-radius:10px;padding:16px;margin:16px 0">
             <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.7">

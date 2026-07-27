@@ -1,5 +1,5 @@
 /**
- * script.js — chrono.mail
+ * script.js — Chronomail
  * ============================================================
  * Sections :
  *   1.  AUTH          — Token JWT, session utilisateur
@@ -385,7 +385,7 @@ function refreshPreview() {
         fontSize:     currentFontSize,
         width:        currentWidth,
         fontFamily:   currentFontDigits,
-        fontLabels:   currentFontLabels,
+        fontLabels:   currentFontLabels || '',   // null → '' : sans ça URLSearchParams enverrait "null"
         style:        currentStyle,
         orientation:  currentOrientation,
         showUnits,
@@ -689,6 +689,115 @@ function applyPlanGates() {
     if (obgimage)   obgimage.style.display   = isPro ? 'none' : 'flex';
     if (optRedir)   optRedir.disabled        = !isPro;
     if (operpetual) operpetual.style.display = isBusiness ? 'none' : 'flex';
+    applyLabelTextGate(isPro);
+    applyProAppearanceGates(isPro);
+}
+
+const DEFAULT_LABELS = { days: 'JOURS', hours: 'HEURES', minutes: 'MIN', seconds: 'SEC' };
+
+/**
+ * Le texte des libellés est réservé au plan Pro : pour un compte Free, le
+ * serveur réécrit labelDays/Hours/Minutes/Seconds avec les valeurs par défaut
+ * (api.js, POST et PUT). Sans ce garde-fou l'utilisateur tape « DAYS », voit
+ * « DAYS » dans l'aperçu, et récupère « JOURS » dans le GIF publié.
+ *
+ * Les toggles restent actifs quel que soit le plan : masquer une unité passe
+ * par showUnits, que le serveur n'a jamais restreint.
+ */
+function applyLabelTextGate(isPro) {
+    const badge = document.getElementById('labels-gate-badge');
+    if (badge) badge.style.display = isPro ? 'none' : 'inline-block';
+
+    Object.entries(DEFAULT_LABELS).forEach(([unit, value]) => {
+        const inp    = document.getElementById('cd-label-' + unit);
+        const expInp = document.getElementById('cd-label-' + unit + '-exp');
+        if (!inp) return;
+        inp.readOnly = !isPro;
+        inp.classList.toggle('plan-locked', !isPro);
+        inp.title    = isPro ? '' : 'Libellés personnalisés — disponible à partir du plan Pro';
+        inp.onclick  = isPro ? null : () => openUpgradeModal('labels');
+        // Remet l'affichage en phase avec ce qui sera publié — cas d'un compte
+        // rétrogradé dont les countdowns portent encore d'anciens libellés.
+        if (!isPro) {
+            inp.value = value;
+            if (expInp) expInp.value = value;
+        }
+    });
+}
+
+/**
+ * Même principe pour les trois réglages d'apparence avancée — fond des blocs,
+ * couleur des séparateurs, police des labels : le serveur les force à null
+ * pour un compte Free (api.js, POST et PUT). On les verrouille et on rétablit
+ * l'état « auto », qui est exactement ce que le GIF publié rendra.
+ *
+ * Le toggle d'affichage des séparateurs, lui, reste ouvert à tous : il ne
+ * touche à aucun champ restreint par plan.
+ */
+function applyProAppearanceGates(isPro) {
+    ['block-gate-badge', 'sep-gate-badge', 'fontlabels-gate-badge'].forEach(id => {
+        const badge = document.getElementById(id);
+        if (badge) badge.style.display = isPro ? 'none' : 'inline-block';
+    });
+
+    // <input type="color"> : preventDefault() sur le clic suffit à empêcher
+    // l'ouverture du sélecteur natif, l'événement continue vers la modale.
+    ['color-block', 'color-sep'].forEach(id => {
+        const inp = document.getElementById(id);
+        if (!inp) return;
+        inp.classList.toggle('plan-locked', !isPro);
+        inp.tabIndex = isPro ? 0 : -1;
+        inp.title    = isPro ? '' : 'Couleurs avancées — disponible à partir du plan Pro';
+        inp.onclick  = isPro ? null : (e) => { e.preventDefault(); openUpgradeModal('colors'); };
+    });
+
+    // <select> : preventDefault() ne ferme pas la liste déroulante. On coupe
+    // donc les pointeurs sur le select et on récupère le clic sur sa cellule.
+    const fontSel  = document.getElementById('cd-font-labels');
+    const fontCell = document.getElementById('ctx-cell-fontlabels');
+    if (fontSel) {
+        fontSel.classList.toggle('plan-locked', !isPro);
+        fontSel.style.pointerEvents = isPro ? '' : 'none';
+        fontSel.tabIndex = isPro ? 0 : -1;
+    }
+    if (fontCell) {
+        fontCell.style.cursor = isPro ? '' : 'pointer';
+        fontCell.onclick      = isPro ? null : () => openUpgradeModal('fontlabels');
+    }
+
+    if (isPro) return;
+
+    currentBlockBg    = null;
+    currentSepColor   = null;
+    currentFontLabels = null;
+    if (fontSel) fontSel.value = '';
+    renderAdvancedColorsUI();
+}
+
+/**
+ * Reporte currentBlockBg / currentSepColor sur les trois éléments qui les
+ * affichent : le sélecteur natif, la pastille et le texte hexadécimal. Ni
+ * pickBlockBg() ni pickSepColor() ne le font entièrement — ils partent du clic
+ * utilisateur, où l'input porte déjà la bonne valeur.
+ *
+ * null = « Auto » : la teinte est calculée par le générateur à partir de la
+ * couleur principale (cf. countdown-generator.js).
+ */
+function renderAdvancedColorsUI() {
+    const blockInp     = document.getElementById('color-block');
+    const blockPreview = document.getElementById('color-block-preview');
+    const blockHex     = document.getElementById('color-block-hex');
+    const sepInp       = document.getElementById('color-sep');
+    const sepPreview   = document.getElementById('color-sep-preview');
+    const sepHex       = document.getElementById('color-sep-hex');
+
+    if (blockInp)     blockInp.value = currentBlockBg || '#dbeafe';
+    if (blockPreview) blockPreview.style.background = currentBlockBg || '#dbeafe';
+    if (blockHex)     blockHex.textContent = currentBlockBg || 'Auto';
+
+    if (sepInp)       sepInp.value = currentSepColor || currentColor;
+    if (sepPreview)   sepPreview.style.background = currentSepColor || currentColor;
+    if (sepHex)       sepHex.textContent = currentSepColor || 'Auto';
 }
 
 
@@ -719,6 +828,14 @@ const UPGRADE_MODAL_CONTENT = {
     perpetual: {
         title: 'Timer perpétuel', subtitle: 'Exclusif au plan Business',
         desc: 'Le countdown redémarre automatiquement à la fin de chaque cycle — idéal pour les offres récurrentes et les promotions continues.',
+    },
+    colors: {
+        title: 'Couleurs avancées', subtitle: 'Disponible à partir du plan Pro',
+        desc: 'Choisissez la couleur de fond des blocs et celle des séparateurs, au lieu des teintes calculées automatiquement depuis votre couleur principale.',
+    },
+    fontlabels: {
+        title: 'Police des labels', subtitle: 'Disponible à partir du plan Pro',
+        desc: 'Donnez aux libellés une police différente de celle des chiffres, pour coller précisément à votre charte typographique.',
     },
 };
 
@@ -949,6 +1066,9 @@ function _resetCreateForm() {
     const colorBgEl = document.getElementById('color-bg');
     if (colorBgEl) colorBgEl.value = '#f8f7f4';
     pickBgMain('#f8f7f4');
+    // Sinon les pastilles gardent les couleurs du countdown précédent alors
+    // que currentBlockBg / currentSepColor viennent de repasser à « Auto ».
+    renderAdvancedColorsUI();
 
     const fsSlider = document.getElementById('cd-fontsize');
     if (fsSlider) fsSlider.value = 36;
@@ -1101,9 +1221,12 @@ function editCountdown(id) {
 
     const fdEl = document.getElementById('cd-font-digits');
     if (fdEl) { fdEl.value = cd.fontFamily; currentFontDigits = cd.fontFamily; }
+    const flEl = document.getElementById('cd-font-labels');
+    if (flEl) flEl.value = cd.fontLabels || '';   // '' → option « Par défaut »
     currentBlockBg  = cd.blockBgColor || null;
     currentSepColor = cd.sepColor || null;
     currentFontLabels = cd.fontLabels || null;
+    renderAdvancedColorsUI();
 
     const activeUnits = (cd.showUnits || 'days,hours,minutes,seconds').split(',');
     ['days', 'hours', 'minutes', 'seconds'].forEach(unit => {
@@ -1142,6 +1265,9 @@ function editCountdown(id) {
         if (btn) btn.textContent = '✦ Mettre à jour';
     });
 
+    // Après hydratation : un countdown créé du temps où le compte était Pro
+    // porte encore ses libellés personnalisés, que le serveur refusera.
+    applyPlanGates();
     schedulePreview();
 }
 
@@ -1342,7 +1468,9 @@ function renderPricingCards(plan) {
     } else if (plan === 'PRO') {
         if (freeCta)     { freeCta.textContent = 'Rétrograder'; freeCta.onclick = openBillingPortal; freeCta.className = 'btn btn-ghost pricing-btn'; }
         if (proCta)      { proCta.textContent  = '✓ Votre plan actuel'; proCta.onclick = null; proCta.className = 'btn btn-surface pricing-btn'; proCta.style.cursor='default'; }
-        if (businessCta) { businessCta.textContent = 'Passer à Business →'; businessCta.onclick = () => handlePricingCta('business'); businessCta.className = 'btn btn-ghost pricing-btn'; }
+        // Portail Stripe, pas un nouveau Checkout : `mode: 'subscription'` créerait
+        // un second abonnement facturé en parallèle du Pro déjà actif.
+        if (businessCta) { businessCta.textContent = 'Passer à Business ↗'; businessCta.onclick = openBillingPortal; businessCta.className = 'btn btn-ghost pricing-btn'; }
     } else if (plan === 'BUSINESS') {
         if (freeCta)     { freeCta.textContent = 'Rétrograder'; freeCta.onclick = openBillingPortal; freeCta.className = 'btn btn-ghost pricing-btn'; }
         if (proCta)      { proCta.textContent  = 'Rétrograder'; proCta.onclick  = openBillingPortal; proCta.className  = 'btn btn-ghost pricing-btn'; }
@@ -1374,26 +1502,26 @@ function handlePricingCta(plan) {
 const FAQ_GUEST = [
     { q:'Puis-je essayer gratuitement ?',                          a:"Oui — le plan Free vous permet de créer jusqu'à 3 countdowns sans carte bancaire." },
     { q:'Les GIFs fonctionnent-ils dans tous les clients email ?', a:'Gmail, Apple Mail, Yahoo, Outlook 2013+, iOS Mail et tous les grands ESP. Outlook 2007-2010 affiche la première frame statique.' },
-    { q:"Que se passe-t-il quand un countdown expire ?",           a:"Par défaut, le GIF affiche 00:00:00:00. Vous pouvez configurer un texte personnalisé ou masquer l'image." },
-    { q:"Y a-t-il un engagement de durée ?",                       a:"Non, tous les plans sont sans engagement. Vous pouvez annuler à tout moment depuis votre espace de facturation." },
+    { q:"Que se passe-t-il quand un countdown expire ?",           a:"Par défaut, le GIF affiche 00:00:00:00. Vous pouvez aussi afficher un texte de votre choix, ou — à partir du plan Pro — rediriger vers une autre page." },
+    { q:"Y a-t-il un engagement de durée ?",                       a:"Non, tous les plans sont sans engagement. Vous pouvez annuler à tout moment depuis le portail de facturation Stripe." },
 ];
 const FAQ_FREE = [
     { q:'Comment passer au plan Pro ?',                  a:'Cliquez sur "Passer à Pro" depuis votre dashboard ou depuis cette page. Le paiement est sécurisé via Stripe.' },
     { q:'Mes countdowns actuels seront-ils conservés ?', a:'Oui, tous vos countdowns existants sont conservés lors d\'un changement de plan.' },
     { q:'Les GIFs fonctionnent-ils dans tous les clients email ?', a:'Gmail, Apple Mail, Yahoo, Outlook 2013+, iOS Mail et tous les grands ESP. Outlook 2007-2010 affiche la première frame statique.' },
-    { q:"Y a-t-il un engagement de durée ?",             a:"Non, vous pouvez annuler à tout moment. Le remboursement est au prorata si vous annulez en cours de mois." },
+    { q:"Y a-t-il un engagement de durée ?",             a:"Non, vous pouvez annuler à tout moment : votre accès est maintenu jusqu'à la fin de la période déjà payée, qui n'est pas remboursée. Une garantie satisfait ou remboursé de 14 jours s'applique à votre première souscription." },
 ];
 const FAQ_PRO = [
     { q:'Comment gérer ma facturation ?',    a:'Cliquez sur "Gérer mon abonnement" pour accéder au portail Stripe — vous y trouverez vos factures et pouvez modifier votre moyen de paiement.' },
-    { q:'Comment passer au plan Business ?', a:'Cliquez sur "Passer à Business" ci-dessus. Le changement est immédiat et le montant est ajusté au prorata.' },
+    { q:'Comment passer au plan Business ?', a:'Depuis "Gérer mon abonnement", changez de formule dans le portail Stripe : votre abonnement Pro est remplacé et le montant déjà payé est déduit au prorata.' },
     { q:"Comment annuler mon abonnement ?",  a:'Depuis le portail de facturation Stripe, cliquez sur "Annuler l\'abonnement". Vous conservez l\'accès Pro jusqu\'à la fin de la période payée.' },
-    { q:"Que se passe-t-il à l'expiration d'un countdown ?", a:"Vous pouvez configurer un texte personnalisé, masquer l'image ou rediriger vers une URL." },
+    { q:"Que se passe-t-il à l'expiration d'un countdown ?", a:"Vous pouvez afficher 00:00:00:00, un texte personnalisé, ou rediriger automatiquement vers l'URL de votre choix." },
 ];
 const FAQ_BUSINESS = [
-    { q:'Comment gérer ma facturation ?',            a:'Accédez au portail Stripe via "Gérer mon abonnement" pour consulter vos factures et gérer votre moyen de paiement.' },
-    { q:"Comment accéder à l'API ?",                 a:'La documentation de l\'API est disponible dans votre dashboard sous "Paramètres → API". Votre clé API est générée automatiquement.' },
-    { q:'Comment ajouter des membres à mon équipe ?',a:'Depuis "Paramètres → Équipe", invitez vos collaborateurs par email. Chaque membre dispose de ses propres accès.' },
-    { q:'Puis-je obtenir une facturation entreprise ?', a:'Oui — contactez-nous à billing@chrono.mail pour recevoir des factures avec numéro de TVA et coordonnées entreprise.' },
+    { q:'Comment gérer ma facturation ?',      a:'Accédez au portail Stripe via "Gérer mon abonnement" pour consulter vos factures et gérer votre moyen de paiement.' },
+    { q:'Comment fonctionne le timer perpétuel ?', a:"Activez-le à l'étape Expiration et choisissez la durée d'un cycle (de 1 heure à 1 an). À la fin de chaque cycle, le décompte repart automatiquement du début — sans rien changer à votre email." },
+    { q:"À quoi sert le style Neon ?",         a:"C'est le style exclusif au plan Business : chiffres lumineux sur fond sombre, pour les campagnes qui doivent ressortir dans la boîte de réception." },
+    { q:"Comment annuler mon abonnement ?",    a:'Depuis le portail de facturation Stripe, cliquez sur "Annuler l\'abonnement". Vous conservez l\'accès Business jusqu\'à la fin de la période payée.' },
 ];
 
 function getFaqByPlan(plan) {
