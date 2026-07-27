@@ -786,12 +786,11 @@
                     </div>
                     <div class="fg">
                         <label class="fl">Timezone</label>
+                        <!-- Options construites par buildTimezoneOptions() : les
+                             décalages sont calculés à l'affichage, sans quoi ils
+                             seraient faux la moitié de l'année (heure d'été). -->
                         <select class="fi" id="cd-timezone" onchange="schedulePreview()">
-                            <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
-                            <option value="Europe/London">Europe/London (UTC+0)</option>
-                            <option value="America/New_York">America/New_York (UTC−5)</option>
-                            <option value="America/Los_Angeles">America/Los_Angeles (UTC−8)</option>
-                            <option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</option>
+                            <option value="Europe/Paris">Paris</option>
                         </select>
                     </div>
                     <div class="step-nav">
@@ -1271,7 +1270,7 @@
             </div>
             <div class="sidebar-spacer"></div>
             <div class="sidebar-plan-box">
-                <div class="sidebar-plan-name">Plan Free <span class="plan-chip" id="sidebar-plan-chip">Free</span></div>
+                <div class="sidebar-plan-name" id="sidebar-plan-name">Plan Free <span class="plan-chip" id="sidebar-plan-chip">Free</span></div>
                 <div class="quota-progress"><div class="quota-fill" id="quota-fill" style="width:0%"></div></div>
                 <div class="quota-text" id="quota-text">0 / 3 countdowns</div>
                 <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:8px" id="upgrade-btn" onclick="upgradePlan('pro_monthly')">Passer à Pro ↗</button>
@@ -1316,7 +1315,7 @@
             </div>
             <div class="sidebar-spacer"></div>
             <div class="sidebar-plan-box">
-                <div class="sidebar-plan-name">Plan Free <span class="plan-chip" id="sidebar-plan-chip-a">Free</span></div>
+                <div class="sidebar-plan-name" id="sidebar-plan-name-a">Plan Free <span class="plan-chip" id="sidebar-plan-chip-a">Free</span></div>
                 <div class="quota-progress"><div class="quota-fill" id="quota-fill-a" style="width:0%"></div></div>
                 <div class="quota-text" id="quota-text-a">0 / 3 countdowns</div>
                 <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:8px" id="upgrade-btn-a" onclick="upgradePlan('pro_monthly')">Passer à Pro ↗</button>
@@ -1393,8 +1392,8 @@
             </div>
             <div class="sidebar-spacer"></div>
             <div class="sidebar-plan-box">
-                <div class="sidebar-plan-name">Plan Free <span class="plan-chip" id="sidebar-plan-chip-s">Free</span></div>
-                <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:8px" onclick="upgradePlan('pro_monthly')">Passer à Pro ↗</button>
+                <div class="sidebar-plan-name" id="sidebar-plan-name-s">Plan Free <span class="plan-chip" id="sidebar-plan-chip-s">Free</span></div>
+                <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:8px" id="upgrade-btn-s" onclick="upgradePlan('pro_monthly')">Passer à Pro ↗</button>
             </div>
         </div>
         <div class="main-content">
@@ -1441,6 +1440,23 @@
                 </div>
                 <div id="settings-google-notice" style="display:none;color:var(--muted);font-size:13px;margin-top:8px">
                     Connecté via Google — le mot de passe ne peut pas être modifié ici.
+                </div>
+            </div>
+
+            <!-- Facturation — les CGV article 5 désignent cet écran comme le
+                 chemin pour consulter ses factures et résilier. -->
+            <div class="settings-section">
+                <h3 class="settings-section-title">Abonnement et facturation</h3>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                    <span style="font-size:13px;color:var(--muted)">Plan actuel</span>
+                    <span class="plan-chip" id="settings-plan-chip">Free</span>
+                </div>
+                <p style="font-size:13px;color:var(--muted);line-height:1.7;margin:0 0 12px" id="settings-billing-desc">
+                    Le plan Free est limité à 3 countdowns actifs.
+                </p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn btn-primary btn-sm" id="settings-billing-btn" onclick="upgradePlan('pro_monthly')">Passer à Pro ↗</button>
+                    <button class="btn btn-ghost btn-sm" onclick="showPage('pricing')">Comparer les plans</button>
                 </div>
             </div>
 

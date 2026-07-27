@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  L'application est une SPA à routage par fragment (#pricing, #legal-cgu…).
+  Les moteurs ignorent la partie située après le #, il n'y a donc qu'une
+  seule URL indexable : la racine. Déclarer les fragments ici n'apporterait
+  rien et créerait des doublons.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://chrono-mail.app/</loc>
+        <lastmod>2026-07-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+</urlset>

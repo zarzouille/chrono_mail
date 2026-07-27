@@ -419,6 +419,75 @@ function refreshPreview() {
     newImg.src = url;
 }
 
+// ============================================================
+// FUSEAUX HORAIRES
+// ============================================================
+// Le HTML n'en proposait que cinq, avec des décalages écrits en dur
+// (« Europe/Paris (UTC+1) ») donc faux la moitié de l'année. Le backend
+// accepte n'importe quel identifiant IANA — il passe par Intl, qui gère
+// l'heure d'été — la liste peut donc s'élargir sans rien changer côté
+// serveur, et les décalages sont recalculés à chaque affichage.
+const TIMEZONES = {
+    'Europe': [
+        'Europe/Paris', 'Europe/London', 'Europe/Lisbon', 'Europe/Madrid',
+        'Europe/Berlin', 'Europe/Rome', 'Europe/Amsterdam', 'Europe/Brussels',
+        'Europe/Zurich', 'Europe/Stockholm', 'Europe/Athens', 'Europe/Moscow',
+    ],
+    'Amériques': [
+        'America/New_York', 'America/Toronto', 'America/Chicago', 'America/Denver',
+        'America/Los_Angeles', 'America/Mexico_City', 'America/Bogota',
+        'America/Sao_Paulo', 'America/Buenos_Aires',
+    ],
+    'Afrique et Moyen-Orient': [
+        'Africa/Casablanca', 'Africa/Algiers', 'Africa/Tunis', 'Africa/Lagos',
+        'Africa/Cairo', 'Africa/Johannesburg', 'Asia/Jerusalem', 'Asia/Dubai',
+    ],
+    'Asie et Pacifique': [
+        'Asia/Karachi', 'Asia/Kolkata', 'Asia/Bangkok', 'Asia/Singapore',
+        'Asia/Hong_Kong', 'Asia/Shanghai', 'Asia/Tokyo', 'Asia/Seoul',
+        'Australia/Sydney', 'Pacific/Auckland',
+    ],
+    'Autre': ['UTC'],
+};
+
+function tzOffsetLabel(tz) {
+    try {
+        const part = new Intl.DateTimeFormat('fr-FR', { timeZone: tz, timeZoneName: 'longOffset' })
+            .formatToParts(new Date())
+            .find(p => p.type === 'timeZoneName');
+        return part ? part.value : '';
+    } catch { return ''; }
+}
+
+function buildTimezoneOptions() {
+    const sel = document.getElementById('cd-timezone');
+    if (!sel) return;
+    const selected = sel.value || 'Europe/Paris';
+    sel.innerHTML = Object.entries(TIMEZONES).map(([region, zones]) =>
+        `<optgroup label="${region}">` + zones.map(tz => {
+            const ville  = tz.split('/').pop().replace(/_/g, ' ');
+            const offset = tzOffsetLabel(tz);
+            const label  = (!offset || ville === 'UTC') ? ville : `${ville} — ${offset}`;
+            return `<option value="${tz}">${label}</option>`;
+        }).join('') + '</optgroup>'
+    ).join('');
+    setTimezone(selected);
+}
+
+/**
+ * Sélectionne un fuseau, en l'ajoutant à la liste s'il n'y figure pas —
+ * cas d'un countdown créé avec une valeur retirée depuis.
+ */
+function setTimezone(tz) {
+    const sel = document.getElementById('cd-timezone');
+    if (!sel || !tz) return;
+    sel.value = tz;
+    if (sel.value !== tz) {
+        const opt = new Option(`${tz}${tzOffsetLabel(tz) ? ' — ' + tzOffsetLabel(tz) : ''}`, tz, true, true);
+        sel.insertBefore(opt, sel.firstChild);
+    }
+}
+
 function getShowUnits() {
     const units = Object.entries(labelVisible)
         .filter(([, v]) => v)
@@ -1058,7 +1127,7 @@ function _resetCreateForm() {
     const dateEl = document.getElementById('cd-date');
     if (dateEl) dateEl.value = new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16);
     const tzEl = document.getElementById('cd-timezone');
-    if (tzEl) tzEl.value = 'Europe/Paris';
+    if (tzEl) setTimezone('Europe/Paris');
 
     const colorMainEl = document.getElementById('color-main');
     if (colorMainEl) colorMainEl.value = '#2563eb';
@@ -1165,7 +1234,7 @@ function editCountdown(id) {
     }
 
     const tzEl = document.getElementById('cd-timezone');
-    if (tzEl) tzEl.value = cd.timezone || 'Europe/Paris';
+    if (tzEl) setTimezone(cd.timezone || 'Europe/Paris');
 
     const colorMainEl = document.getElementById('color-main');
     if (colorMainEl) colorMainEl.value = cd.textColor;
@@ -1265,6 +1334,11 @@ function editCountdown(id) {
         if (btn) btn.textContent = '✦ Mettre à jour';
     });
 
+    // Le countdown est déjà publié : son code d'intégration est connu, on
+    // l'affiche sans attendre une republication.
+    currentGifUrl = `${window.location.origin}/gif/${cd.id}`;
+    displayCode(currentGifUrl);
+
     // Après hydratation : un countdown créé du temps où le compte était Pro
     // porte encore ses libellés personnalisés, que le serveur refusera.
     applyPlanGates();
@@ -1361,17 +1435,10 @@ async function loadDashboard() {
         const fill       = document.getElementById('quota-fill');
         const text       = document.getElementById('quota-text');
         const sub        = document.getElementById('dash-subtitle');
-        const chip       = document.getElementById('sidebar-plan-chip');
-        const upgradeBtn = document.getElementById('upgrade-btn');
         if (fill) fill.style.width = pct + '%';
         if (text) text.textContent = `${total} / ${maxCountdowns} countdowns`;
         if (sub)  sub.textContent  = `${active} actif${active!==1?'s':''} · ${expired} expiré${expired!==1?'s':''}`;
-        if (chip) { chip.textContent = plan; chip.className = 'plan-chip plan-chip-' + plan.toLowerCase(); }
-        if (upgradeBtn) {
-            if (plan === 'FREE')      { upgradeBtn.textContent = 'Passer à Pro ↗'; upgradeBtn.onclick = () => upgradePlan('pro_monthly'); upgradeBtn.style.display = 'block'; }
-            else if (plan === 'PRO') { upgradeBtn.textContent = 'Gérer mon abonnement'; upgradeBtn.onclick = openBillingPortal; upgradeBtn.style.display = 'block'; }
-            else                      { upgradeBtn.style.display = 'none'; }
-        }
+        renderPlanBox('', plan);
         grid.innerHTML = '';
         data.forEach(cd => { cdMap[cd.id] = cd; grid.appendChild(buildCard(cd)); });
         if (plan === 'FREE' && total < 3) {
@@ -1390,6 +1457,46 @@ async function loadDashboard() {
     }
 }
 
+/**
+ * Construit la balise d'intégration d'un countdown déjà publié.
+ *
+ * Même format que celui proposé après publication : une balise <img>
+ * autonome, sans dépendance à l'état du formulaire de création.
+ */
+function embedSnippetFor(cd) {
+    const url = `${window.location.origin}/gif/${cd.id}`;
+    return `<img src="${url}" alt="Offre expire dans..." width="${cd.width}" border="0" style="display:block" />`;
+}
+
+/**
+ * Copie la balise d'un countdown depuis le dashboard.
+ *
+ * Sans ça, récupérer le code d'un countdown existant obligeait à ouvrir
+ * « Modifier » puis à le republier — editCountdown() n'affiche pas la
+ * section code, qui n'apparaît qu'après une publication.
+ */
+function copyEmbedCode(id) {
+    const cd = cdMap[id];
+    if (!cd) { showToast('❌ Countdown introuvable'); return; }
+    navigator.clipboard.writeText(embedSnippetFor(cd))
+        .then(() => showToast('📋 Code HTML copié !'))
+        .catch(() => showToast('❌ Copie impossible'));
+}
+
+/**
+ * Échappe une chaîne avant injection en innerHTML.
+ *
+ * Les noms de countdown sont saisis librement par l'utilisateur : sans
+ * échappement, un nom contenant `<img src=x onerror=...>` s'exécute au
+ * rendu de la carte. La portée est limitée — on ne s'attaque que
+ * soi-même — mais le jeton JWT est dans le localStorage du même domaine.
+ */
+function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[c]);
+}
+
 function buildCard(cd) {
     const isActive = new Date(cd.endDate) > new Date();
     const diff     = new Date(cd.endDate) - new Date();
@@ -1405,7 +1512,7 @@ function buildCard(cd) {
     if (!isActive) card.style.opacity = '0.65';
     card.innerHTML = `
     <div class="cd-card-header">
-      <div><div class="cd-card-name">${cd.name}</div><div class="cd-card-date">${isActive?'Expire le':'Expiré le'} ${dateStr}</div></div>
+      <div><div class="cd-card-name">${escapeHtml(cd.name)}</div><div class="cd-card-date">${isActive?'Expire le':'Expiré le'} ${dateStr}</div></div>
       <div class="status-pill ${isActive?'active':'expired'}"><div class="status-pill-dot"></div>${isActive?'Actif':'Expiré'}</div>
     </div>
     <div class="cd-mini">
@@ -1420,6 +1527,7 @@ function buildCard(cd) {
       <div class="cd-stat"><strong><a href="/gif/${cd.id}" target="_blank" style="color:var(--accent);text-decoration:none">Voir GIF →</a></strong></div>
     </div>
     <div class="cd-card-actions">
+      <button class="cd-action-btn" onclick="copyEmbedCode('${cd.id}')">Copier le code</button>
       <button class="cd-action-btn" onclick="editCountdown('${cd.id}')">Modifier</button>
       <button class="cd-action-btn" onclick="duplicateCountdown('${cd.id}')">Dupliquer</button>
       <button class="cd-action-btn cd-action-delete" onclick="deleteCountdown('${cd.id}')">Supprimer</button>
@@ -1593,6 +1701,36 @@ async function openBillingPortal() {
 
 
 // ── Settings / Profil ────────────────────────────────────────────
+/**
+ * Synchronise l'encart de plan d'une barre latérale. Les trois pages de
+ * l'espace connecté en ont un, avec des identifiants suffixés ('' pour le
+ * dashboard, '-a' pour les analytiques, '-s' pour les paramètres).
+ *
+ * Un abonné Pro ou Business est renvoyé vers le portail Stripe : lui
+ * proposer « Passer à Pro » ouvrirait un second abonnement, facturé en
+ * parallèle du premier.
+ */
+function renderPlanBox(suffix, plan) {
+    const name = document.getElementById('sidebar-plan-name' + suffix);
+    const chip = document.getElementById('sidebar-plan-chip' + suffix);
+    const btn  = document.getElementById('upgrade-btn' + suffix);
+
+    if (name && name.firstChild) {
+        name.firstChild.nodeValue = 'Plan ' + plan.charAt(0) + plan.slice(1).toLowerCase() + ' ';
+    }
+    if (chip) { chip.textContent = plan; chip.className = 'plan-chip plan-chip-' + plan.toLowerCase(); }
+    if (btn) {
+        btn.style.display = 'block';
+        if (plan === 'FREE') {
+            btn.textContent = 'Passer à Pro ↗';
+            btn.onclick = () => upgradePlan('pro_monthly');
+        } else {
+            btn.textContent = 'Gérer mon abonnement';
+            btn.onclick = openBillingPortal;
+        }
+    }
+}
+
 function loadSettings() {
     const user = getUser();
     if (!user) return;
@@ -1604,9 +1742,22 @@ function loadSettings() {
     const notice   = document.getElementById('settings-google-notice');
     if (pwForm) pwForm.style.display = isGoogle ? 'none' : 'flex';
     if (notice) notice.style.display = isGoogle ? 'block' : 'none';
-    // Plan chip
-    const chip = document.getElementById('sidebar-plan-chip-s');
-    if (chip) chip.textContent = user.plan || 'Free';
+    const plan = user.plan || 'FREE';
+    renderPlanBox('-s', plan);
+
+    // Bloc facturation — les CGV article 5 désignent cet écran comme le
+    // chemin pour consulter ses factures et résilier.
+    const chip = document.getElementById('settings-plan-chip');
+    const desc = document.getElementById('settings-billing-desc');
+    const btn  = document.getElementById('settings-billing-btn');
+    if (chip) { chip.textContent = plan; chip.className = 'plan-chip plan-chip-' + plan.toLowerCase(); }
+    if (plan === 'FREE') {
+        if (desc) desc.textContent = 'Le plan Free est limité à 3 countdowns actifs. Aucun moyen de paiement n\'est enregistré.';
+        if (btn)  { btn.textContent = 'Passer à Pro ↗'; btn.onclick = () => upgradePlan('pro_monthly'); }
+    } else {
+        if (desc) desc.textContent = 'Vos factures, votre moyen de paiement et la résiliation se gèrent depuis le portail sécurisé de Stripe. La résiliation prend effet à la fin de la période déjà payée.';
+        if (btn)  { btn.textContent = 'Gérer mon abonnement ↗'; btn.onclick = openBillingPortal; }
+    }
 }
 
 async function saveProfile(btn) {
@@ -1704,15 +1855,7 @@ async function loadAnalytics() {
     const gate    = document.getElementById('analytics-gate');
     const content = document.getElementById('analytics-content');
 
-    // Sync sidebar plan box (analytics page)
-    const chipA = document.getElementById('sidebar-plan-chip-a');
-    const upgradeA = document.getElementById('upgrade-btn-a');
-    if (chipA) { chipA.textContent = plan; chipA.className = 'plan-chip plan-chip-' + plan.toLowerCase(); }
-    if (upgradeA) {
-        if (plan === 'FREE')      { upgradeA.textContent = 'Passer à Pro ↗'; upgradeA.onclick = () => upgradePlan('pro_monthly'); upgradeA.style.display = 'block'; }
-        else if (plan === 'PRO') { upgradeA.textContent = 'Gérer mon abonnement'; upgradeA.onclick = openBillingPortal; upgradeA.style.display = 'block'; }
-        else                      { upgradeA.style.display = 'none'; }
-    }
+    renderPlanBox('-a', plan);
 
     if (plan === 'FREE') {
         gate.style.display = 'block';
@@ -1840,7 +1983,7 @@ function renderAnalyticsTable(countdowns, total) {
         const pct = total > 0 ? Math.round(cd.count / total * 100) : 0;
         const barW = Math.round(cd.count / maxCount * 100);
         return `<tr>
-            <td style="font-weight:600">${cd.name}</td>
+            <td style="font-weight:600">${escapeHtml(cd.name)}</td>
             <td style="font-family:'JetBrains Mono',monospace;font-size:13px">${cd.count.toLocaleString('fr-FR')}</td>
             <td style="min-width:120px">
                 <div style="display:flex;align-items:center;gap:8px">
@@ -1858,6 +2001,8 @@ function renderAnalyticsTable(countdowns, total) {
 updateNavAuth();
 
 // Restaure la page depuis le hash ou les query params
+buildTimezoneOptions();
+
 (function initRoute() {
     const params = new URLSearchParams(window.location.search);
     // Gestion retour OAuth / Stripe

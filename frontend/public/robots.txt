@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Les GIFs sont appelés depuis les boîtes mail des destinataires.
+# Chaque requête compte une impression : laisser un robot les parcourir
+# fausserait les statistiques affichées aux clients.
+Disallow: /gif/
+Disallow: /gif
+
+# Endpoints applicatifs, sans intérêt pour l'indexation.
+Disallow: /auth/
+Disallow: /stripe/
+Disallow: /analytics/
+Disallow: /countdown/
+Disallow: /unsubscribe
+Disallow: /email-preview
+
+Sitemap: https://chrono-mail.app/sitemap.xml
