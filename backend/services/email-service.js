@@ -32,7 +32,7 @@ function layout(content, opts = {}) {
     <!-- Header -->
     <tr><td style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);padding:28px 32px;text-align:center">
         <span style="color:#fff;font-size:20px;font-weight:800;letter-spacing:-0.5px">
-            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff;margin-right:6px;vertical-align:middle"></span>chrono<span style="font-weight:400;opacity:0.6">.mail</span>
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff;margin-right:6px;vertical-align:middle"></span>chrono<span style="font-weight:400;opacity:0.6">mail</span>
         </span>
     </td></tr>
     <!-- Body -->
