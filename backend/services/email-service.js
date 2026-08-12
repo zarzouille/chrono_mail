@@ -6,6 +6,7 @@
  * From     : MAIL_FROM (default: "Chronomail <noreply@chrono-mail.app>")
  */
 const { Resend } = require('resend');
+const { categoryLabel } = require('../lib/support-labels');
 
 const resend = process.env.RESEND_API_KEY
     ? new Resend(process.env.RESEND_API_KEY)
@@ -50,6 +51,22 @@ function layout(content, opts = {}) {
 </td></tr>
 </table>
 </body></html>`;
+}
+
+// ── Helper : échappement HTML ────────────────────────────────────
+// Les tickets de support contiennent du texte saisi librement par le
+// client, réinjecté dans l'email d'alerte et dans l'accusé de réception.
+// Sans échappement, une balise collée dans un message casse le rendu du
+// mail au mieux, et y injecte un lien maquillé au pire.
+function esc(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[c]);
+}
+
+// Texte multiligne → HTML, sauts de ligne préservés.
+function escMultiline(str) {
+    return esc(str).replace(/\r?\n/g, '<br>');
 }
 
 // ── Helper : bouton CTA ──────────────────────────────────────────
@@ -425,6 +442,112 @@ async function sendReactivation(email, name, unsubscribeUrl) {
 }
 
 
+// ================================================================
+//  SUPPORT — Tickets
+// ================================================================
+
+/**
+ * 8. Accusé de réception d'une demande de support
+ *    Transactionnel : pas de lien de désinscription.
+ */
+function buildTicketReceivedHtml(name, ref, category, subject, body) {
+    const salut = bonjour(name);
+    return layout(`
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
+            Nous avons bien reçu votre demande
+        </h1>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            ${salut}, votre demande est enregistrée sous la référence <strong style="color:#2563eb">${esc(ref)}</strong>. Conservez-la : elle nous permet de retrouver votre dossier immédiatement.
+        </p>
+        <div style="background:#f3f2ef;border:1px solid #e2e0db;border-radius:10px;padding:16px;margin:16px 0">
+            <p style="margin:0 0 8px;font-size:12px;color:#8a877f;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">${esc(categoryLabel(category))}</p>
+            <p style="margin:0 0 10px;font-size:14px;color:#1a1916;font-weight:600">${esc(subject)}</p>
+            <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.7">${escMultiline(body)}</p>
+        </div>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            Nous répondons sous <strong>48 heures ouvrées</strong>. Vous pouvez suivre l'avancement et nous répondre depuis votre espace.
+        </p>
+        ${btn('Suivre ma demande →', APP + '/#support')}
+        <p style="margin:0;font-size:13px;color:#8a877f;line-height:1.7">
+            Vous pouvez aussi simplement répondre à cet email.
+        </p>
+    `);
+}
+async function sendTicketReceived(email, name, ref, category, subject, body) {
+    return send(email, `[${ref}] Votre demande a bien été reçue — Chronomail`,
+        buildTicketReceivedHtml(name, ref, category, subject, body));
+}
+
+/**
+ * 9. Réponse du support à un ticket
+ */
+function buildTicketReplyHtml(name, ref, subject, reply) {
+    const salut = bonjour(name);
+    return layout(`
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
+            Réponse à votre demande
+        </h1>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            ${salut}, voici notre réponse concernant <strong>« ${esc(subject)} »</strong> (${esc(ref)}).
+        </p>
+        <div style="background:#eff4ff;border:1px solid rgba(37,99,235,0.15);border-radius:10px;padding:16px;margin:16px 0">
+            <p style="margin:0;font-size:14px;color:#1a1916;line-height:1.8">${escMultiline(reply)}</p>
+        </div>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            Si la réponse ne règle pas votre problème, répondez-nous depuis votre espace : le fil de discussion reste ouvert.
+        </p>
+        ${btn('Répondre →', APP + '/#support')}
+    `);
+}
+async function sendTicketReply(email, name, ref, subject, reply) {
+    return send(email, `[${ref}] Re : ${subject}`, buildTicketReplyHtml(name, ref, subject, reply));
+}
+
+/**
+ * 10. Alerte interne — nouvelle demande ou relance client
+ *     Destinataire : SUPPORT_EMAIL, à défaut la première adresse
+ *     d'ADMIN_EMAILS. Sans l'une ou l'autre, l'alerte est simplement
+ *     ignorée : le ticket reste consultable dans la console.
+ */
+function buildAdminTicketAlertHtml(ticket, message, isNew) {
+    const rows = [
+        ['Référence', ticket.ref],
+        ['Thème',     categoryLabel(ticket.category)],
+        ['Client',    `${ticket.name || 'Sans nom'} <${ticket.email}>`],
+        ['Compte',    ticket.userId ? `${ticket.planAtCreation || 'FREE'} (connecté)` : 'Non connecté'],
+    ].map(([k, v]) => `
+        <tr>
+            <td style="padding:4px 12px 4px 0;font-size:12px;color:#8a877f;white-space:nowrap">${esc(k)}</td>
+            <td style="padding:4px 0;font-size:13px;color:#1a1916">${esc(v)}</td>
+        </tr>`).join('');
+
+    return layout(`
+        <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#1a1916;letter-spacing:-0.5px">
+            ${isNew ? 'Nouvelle demande de support' : 'Nouveau message client'}
+        </h1>
+        <p style="margin:0 0 16px;font-size:15px;color:#3d3b37;line-height:1.7">
+            <strong>${esc(ticket.subject)}</strong>
+        </p>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px">${rows}</table>
+        <div style="background:#f3f2ef;border:1px solid #e2e0db;border-radius:10px;padding:16px;margin:0 0 8px">
+            <p style="margin:0;font-size:13px;color:#3d3b37;line-height:1.7">${escMultiline(message)}</p>
+        </div>
+        ${btn('Ouvrir la console d\'assistance →', APP + '/#admin-support')}
+    `);
+}
+async function sendAdminTicketAlert(ticket, message, isNew = true) {
+    const to = process.env.SUPPORT_EMAIL
+        || (process.env.ADMIN_EMAILS || '').split(',')[0].trim();
+    if (!to) {
+        console.warn(`📧 [EMAIL SKIP] Ni SUPPORT_EMAIL ni ADMIN_EMAILS — alerte ticket ${ticket.ref} non envoyée`);
+        return null;
+    }
+    const prefix = isNew ? 'Nouveau ticket' : 'Relance client';
+    return send(to, `[${ticket.ref}] ${prefix} — ${categoryLabel(ticket.category)} : ${ticket.subject}`,
+        buildAdminTicketAlertHtml(ticket, message, isNew));
+}
+
+
 // ── Previews HTML (pour la route /email-preview) ────────────────
 const previews = {
     verify_email: () => buildVerifyEmailHtml('Sophie', 'sophie@exemple.fr', APP + '/auth/verify-email?token=demo_token_123'),
@@ -442,6 +565,14 @@ const previews = {
     expired:     () => buildCountdownExpiredHtml('Sophie', 'sophie@exemple.fr', 'Vente Flash — Été 2026'),
     winback:      () => buildWinbackHtml('Sophie', 'sophie@exemple.fr', APP + '/unsubscribe?token=demo_token_123'),
     reactivation: () => buildReactivationHtml('Sophie', 'sophie@exemple.fr', APP + '/unsubscribe?token=demo_token_123'),
+    ticket_received: () => buildTicketReceivedHtml('Sophie', 'CM-7X4K2Q', 'TECHNICAL', 'Le GIF ne s\'affiche pas dans Outlook',
+        'Bonjour,\n\nMon countdown s\'affiche bien dans Gmail mais reste vide dans Outlook 2019. J\'ai testé les deux orientations.\n\nMerci d\'avance.'),
+    ticket_reply: () => buildTicketReplyHtml('Sophie', 'CM-7X4K2Q', 'Le GIF ne s\'affiche pas dans Outlook',
+        'Bonjour Sophie,\n\nOutlook 2019 bloque l\'animation des GIF et n\'affiche que la première frame. C\'est un comportement connu du client, pas un problème de votre countdown.\n\nLa parade : configurer un comportement d\'expiration lisible, pour que la première frame reste compréhensible.'),
+    ticket_alert: () => buildAdminTicketAlertHtml({
+        ref: 'CM-7X4K2Q', category: 'BILLING', subject: 'Demande de remboursement',
+        name: 'Sophie', email: 'sophie@exemple.fr', userId: 'usr_123', planAtCreation: 'PRO',
+    }, 'Bonjour, j\'ai souscrit hier par erreur au plan annuel au lieu du mensuel. Puis-je bénéficier de la garantie 14 jours ?', true),
 };
 
 module.exports = {
@@ -457,5 +588,8 @@ module.exports = {
     sendCountdownExpired,
     sendWinback,
     sendReactivation,
+    sendTicketReceived,
+    sendTicketReply,
+    sendAdminTicketAlert,
     previews,
 };

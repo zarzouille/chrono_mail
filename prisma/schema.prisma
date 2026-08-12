@@ -41,6 +41,7 @@ model User {
 
   countdowns  Countdown[]
   impressions Impression[]
+  tickets     SupportTicket[]
 }
 
 model Countdown {
@@ -120,10 +121,86 @@ model Impression {
   @@index([createdAt])
 }
 
+/// Demande de support déposée depuis la page Contact.
+///
+/// Le ticket est rattaché au compte quand la demande vient d'un utilisateur
+/// connecté, mais `userId` reste optionnel : un client qui n'arrive plus à se
+/// connecter — cas de support fréquent — doit pouvoir écrire quand même.
+/// `email` est donc la seule voie de réponse garantie, et n'est pas déduit du
+/// compte : on stocke l'adresse effectivement saisie.
+model SupportTicket {
+  id     String  @id @default(cuid())
+  ref    String  @unique // Référence lisible communiquée au client (ex. CM-7X4K2Q)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  email String
+  name  String?
+
+  category TicketCategory @default(OTHER)
+  subject  String
+  status   TicketStatus   @default(OPEN)
+
+  // Plan au moment de la demande : le plan courant de l'utilisateur peut
+  // avoir changé quand on traite le ticket (upgrade, fin d'abonnement),
+  // or c'est bien le contexte de la demande qui aide à la comprendre.
+  planAtCreation Plan?
+
+  // Date du dernier message, quel qu'en soit l'auteur — sert au tri de la
+  // file d'attente, là où updatedAt bouge aussi sur un simple changement
+  // de statut ou de catégorie.
+  lastMessageAt DateTime @default(now())
+  resolvedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages SupportMessage[]
+
+  @@index([status, category])
+  @@index([userId])
+  @@index([lastMessageAt])
+}
+
+/// Un message dans le fil d'un ticket, du client ou du support.
+model SupportMessage {
+  id       String        @id @default(cuid())
+  ticketId String
+  ticket   SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  author TicketAuthor
+  body   String
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
 enum Plan {
   FREE
   PRO
   BUSINESS
+}
+
+enum TicketCategory {
+  TECHNICAL // Problème technique / aide à l'utilisation
+  BILLING   // Facturation, abonnement, remboursement
+  PRIVACY   // Droits RGPD
+  BUG       // Signalement de bug
+  FEATURE   // Suggestion de fonctionnalité
+  OTHER
+}
+
+enum TicketStatus {
+  OPEN     // Reçu ou relancé par le client — à traiter
+  PENDING  // Réponse envoyée, en attente du client
+  RESOLVED // Traité
+  CLOSED   // Clos sans suite
+}
+
+enum TicketAuthor {
+  CUSTOMER
+  SUPPORT
 }
 
 enum ExpiredBehavior {

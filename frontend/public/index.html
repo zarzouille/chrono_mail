@@ -1270,6 +1270,8 @@
                 <div class="sidebar-item" onclick="showPage('create')">＋ Créer</div>
                 <div class="sidebar-item" onclick="showPage('analytics')">↗ Analytiques</div>
                 <div class="sidebar-item" onclick="showPage('settings')">⚙ Paramètres</div>
+                <div class="sidebar-item" onclick="showPage('support')">✉ Assistance</div>
+                <div class="sidebar-item admin-only" style="display:none" onclick="showPage('admin-support')">🛟 Console support</div>
             </div>
             <div class="sidebar-spacer"></div>
             <div class="sidebar-plan-box">
@@ -1315,6 +1317,8 @@
                 <div class="sidebar-item" onclick="showPage('create')">＋ Créer</div>
                 <div class="sidebar-item active" onclick="showPage('analytics')">↗ Analytiques</div>
                 <div class="sidebar-item" onclick="showPage('settings')">⚙ Paramètres</div>
+                <div class="sidebar-item" onclick="showPage('support')">✉ Assistance</div>
+                <div class="sidebar-item admin-only" style="display:none" onclick="showPage('admin-support')">🛟 Console support</div>
             </div>
             <div class="sidebar-spacer"></div>
             <div class="sidebar-plan-box">
@@ -1392,6 +1396,8 @@
                 <div class="sidebar-item" onclick="showPage('create')">＋ Créer</div>
                 <div class="sidebar-item" onclick="showPage('analytics')">↗ Analytiques</div>
                 <div class="sidebar-item active" onclick="showPage('settings')">⚙ Paramètres</div>
+                <div class="sidebar-item" onclick="showPage('support')">✉ Assistance</div>
+                <div class="sidebar-item admin-only" style="display:none" onclick="showPage('admin-support')">🛟 Console support</div>
             </div>
             <div class="sidebar-spacer"></div>
             <div class="sidebar-plan-box">
@@ -1473,6 +1479,77 @@
     </div>
 </div>
 
+<!-- ============================================================
+     SUPPORT PAGE — Mes demandes (client)
+     ============================================================ -->
+<div id="page-support" class="page">
+    <div class="app-layout">
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Navigation</div>
+                <div class="sidebar-item" onclick="showPage('dashboard')">▦ Mes countdowns</div>
+                <div class="sidebar-item" onclick="showPage('create')">＋ Créer</div>
+                <div class="sidebar-item" onclick="showPage('analytics')">↗ Analytiques</div>
+                <div class="sidebar-item" onclick="showPage('settings')">⚙ Paramètres</div>
+                <div class="sidebar-item active" onclick="showPage('support')">✉ Assistance</div>
+                <div class="sidebar-item admin-only" style="display:none" onclick="showPage('admin-support')">🛟 Console support</div>
+            </div>
+            <div class="sidebar-spacer"></div>
+        </div>
+        <div class="main-content">
+            <div class="page-header">
+                <div>
+                    <div class="page-title">Mes demandes</div>
+                    <div class="page-subtitle" id="support-subtitle">Chargement...</div>
+                </div>
+                <button class="btn btn-primary" onclick="showPage('contact')">+ Nouvelle demande</button>
+            </div>
+            <div id="support-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     ADMIN SUPPORT PAGE — Console d'assistance (ADMIN_EMAILS)
+     ============================================================ -->
+<div id="page-admin-support" class="page">
+    <div class="app-layout">
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Navigation</div>
+                <div class="sidebar-item" onclick="showPage('dashboard')">▦ Mes countdowns</div>
+                <div class="sidebar-item" onclick="showPage('create')">＋ Créer</div>
+                <div class="sidebar-item" onclick="showPage('analytics')">↗ Analytiques</div>
+                <div class="sidebar-item" onclick="showPage('settings')">⚙ Paramètres</div>
+                <div class="sidebar-item" onclick="showPage('support')">✉ Assistance</div>
+                <div class="sidebar-item active admin-only" style="display:none" onclick="showPage('admin-support')">🛟 Console support</div>
+            </div>
+            <div class="sidebar-spacer"></div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Thèmes en cours</div>
+                <div id="admin-category-filters"></div>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="page-header">
+                <div>
+                    <div class="page-title">Console d'assistance</div>
+                    <div class="page-subtitle" id="admin-support-subtitle">Chargement...</div>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="loadAdminSupport()">↻ Rafraîchir</button>
+            </div>
+
+            <div class="admin-toolbar">
+                <div class="admin-status-tabs" id="admin-status-tabs"></div>
+                <input class="ticket-input admin-search" id="admin-search" type="search"
+                       placeholder="Rechercher (référence, objet, email)" onkeydown="if(event.key==='Enter')loadAdminSupport()">
+            </div>
+
+            <div id="admin-ticket-list"></div>
+        </div>
+    </div>
+</div>
+
 <!-- TOAST -->
 <!-- ============================================================
      PAGE LÉGALE — POLITIQUE DE CONFIDENTIALITÉ
@@ -1504,6 +1581,7 @@
                     <li><strong>Données de countdown</strong> — nom, date cible, paramètres de style (couleurs, police, etc.), comportement à l'expiration.</li>
                     <li><strong>Données d'impression</strong> — à chaque affichage d'un GIF, nous enregistrons uniquement le countdown concerné et l'horodatage. <strong>Ni adresse IP, ni User-Agent, ni cookie</strong> : les destinataires de vos campagnes ne sont pas identifiables, ni traçables d'un email à l'autre.</li>
                     <li><strong>Données de facturation</strong> — gérées exclusivement par Stripe. Nous ne stockons aucun numéro de carte bancaire.</li>
+                    <li><strong>Demandes de support</strong> — lorsque vous nous écrivez via le formulaire de contact : votre adresse e-mail, votre nom si vous le renseignez, le thème choisi, l'objet et le contenu de vos messages, ainsi que nos réponses.</li>
                 </ul>
             </div>
 
@@ -1515,6 +1593,7 @@
                     <li><strong>Statistiques d'impression</strong> — exécution du contrat : le comptage des affichages est une fonctionnalité du service, restituée dans votre tableau de bord</li>
                     <li><strong>Sécurité et prévention des abus</strong> — intérêt légitime</li>
                     <li><strong>Communications transactionnelles</strong> — exécution du contrat (confirmation d'inscription, réinitialisation de mot de passe, factures, alertes d'abonnement)</li>
+                    <li><strong>Traitement de vos demandes de support</strong> — exécution du contrat, ou intérêt légitime lorsque la demande émane d'une personne sans compte</li>
                     <li><strong>Relances par e-mail</strong> — intérêt légitime (article 6.1.f RGPD). Si votre compte reste inactif, nous pouvons vous écrire pour vous proposer de reprendre. Chacun de ces messages comporte un <strong>lien de désinscription</strong> qui met fin définitivement à ces envois, sans affecter les messages transactionnels liés à votre compte.</li>
                 </ul>
             </div>
@@ -1526,6 +1605,7 @@
                     <li><strong>Données de countdown</strong> — conservées jusqu'à suppression par l'utilisateur ou clôture du compte.</li>
                     <li><strong>Données d'impression</strong> — conservées 12 mois glissants : une tâche automatique supprime chaque nuit les enregistrements plus anciens. Elles sont également effacées avec le countdown auquel elles se rattachent.</li>
                     <li><strong>Données de facturation</strong> — conservées 10 ans conformément aux obligations comptables légales (gérées par Stripe).</li>
+                    <li><strong>Demandes de support</strong> — conservées 3 ans après la clôture de la demande, à des fins de preuve et de suivi de la qualité du service. Les demandes rattachées à un compte sont supprimées avec lui.</li>
                 </ul>
             </div>
 
@@ -1835,33 +1915,85 @@
         </div>
         <div class="legal-body">
             <div class="legal-intro">
-                Une question, un problème ou une suggestion ? Nous sommes là pour vous aider.
+                Une question, un problème ou une suggestion ? Décrivez votre demande ci-dessous : elle nous arrive avec une référence de suivi, et nous répondons sous 48 heures ouvrées.
             </div>
 
-            <div class="contact-grid">
-                <div class="contact-card">
-                    <div class="contact-card-icon">✉</div>
-                    <div class="contact-card-title">Support général</div>
-                    <div class="contact-card-desc">Questions sur le produit, problèmes techniques, demandes d'aide.</div>
-                    <a href="mailto:contact@chrono-mail.app" class="btn btn-primary contact-card-cta">Contacter le support</a>
+            <!-- Formulaire de demande -->
+            <div class="ticket-form" id="contact-form-box">
+                <div class="ticket-field">
+                    <label class="ticket-label" for="contact-category">Thème de votre demande</label>
+                    <select class="ticket-input" id="contact-category">
+                        <option value="TECHNICAL">Support technique — aide à l'utilisation, affichage du GIF</option>
+                        <option value="BILLING">Facturation — abonnement, facture, remboursement</option>
+                        <option value="BUG">Signalement de bug</option>
+                        <option value="FEATURE">Suggestion de fonctionnalité</option>
+                        <option value="PRIVACY">Données personnelles — droits RGPD</option>
+                        <option value="OTHER">Autre</option>
+                    </select>
                 </div>
-                <div class="contact-card">
-                    <div class="contact-card-icon">💳</div>
-                    <div class="contact-card-title">Facturation</div>
-                    <div class="contact-card-desc">Remboursement, facture, modification d'abonnement.</div>
-                    <a href="mailto:contact@chrono-mail.app?subject=Facturation" class="btn btn-ghost contact-card-cta">Écrire au sujet de la facturation</a>
+
+                <div class="ticket-field-row" id="contact-identity">
+                    <div class="ticket-field">
+                        <label class="ticket-label" for="contact-email">Votre email</label>
+                        <input class="ticket-input" id="contact-email" type="email" placeholder="vous@exemple.fr" autocomplete="email">
+                    </div>
+                    <div class="ticket-field">
+                        <label class="ticket-label" for="contact-name">Votre nom <span class="ticket-optional">(facultatif)</span></label>
+                        <input class="ticket-input" id="contact-name" type="text" placeholder="Sophie" autocomplete="name">
+                    </div>
                 </div>
-                <div class="contact-card">
-                    <div class="contact-card-icon">🔒</div>
-                    <div class="contact-card-title">Données personnelles</div>
-                    <div class="contact-card-desc">Exercice de vos droits RGPD : accès, rectification, suppression.</div>
-                    <a href="mailto:contact@chrono-mail.app?subject=Donnees personnelles" class="btn btn-ghost contact-card-cta">Écrire au sujet de vos données</a>
+
+                <div class="ticket-logged" id="contact-logged" style="display:none">
+                    Vous écrivez depuis votre compte <strong id="contact-logged-email"></strong> — la réponse arrivera à cette adresse.
+                </div>
+
+                <div class="ticket-field">
+                    <label class="ticket-label" for="contact-subject">Objet</label>
+                    <input class="ticket-input" id="contact-subject" type="text" maxlength="150" placeholder="Résumez votre demande en une ligne">
+                </div>
+
+                <div class="ticket-field">
+                    <label class="ticket-label" for="contact-message">Votre message</label>
+                    <textarea class="ticket-input ticket-textarea" id="contact-message" rows="7" maxlength="5000"
+                              placeholder="Décrivez votre demande. Pour un problème d'affichage, précisez votre outil d'emailing (Klaviyo, Mailchimp, Brevo…) et le client mail concerné."
+                              oninput="updateTicketCounter()"></textarea>
+                    <div class="ticket-counter" id="contact-counter">0 / 5000</div>
+                </div>
+
+                <!-- Champ piège anti-robots : masqué, jamais rempli par un humain -->
+                <input type="text" id="contact-website" tabindex="-1" autocomplete="off"
+                       style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" aria-hidden="true">
+
+                <div class="form-error" id="contact-error" style="display:none"></div>
+
+                <button class="btn btn-primary btn-lg" id="contact-submit" onclick="submitTicket()" style="width:100%;justify-content:center">
+                    Envoyer ma demande
+                </button>
+
+                <p class="ticket-consent">
+                    Les informations saisies servent uniquement à traiter votre demande. Voir notre
+                    <a href="javascript:void(0)" onclick="showPage('legal-privacy')">politique de confidentialité</a>.
+                </p>
+            </div>
+
+            <!-- Confirmation après envoi -->
+            <div class="ticket-success" id="contact-success" style="display:none">
+                <div class="ticket-success-icon">✓</div>
+                <div class="ticket-success-title">Votre demande est enregistrée</div>
+                <p class="ticket-success-text">
+                    Référence <strong id="contact-success-ref"></strong> — un accusé de réception vient de partir vers votre boîte mail.
+                    Nous répondons sous 48 heures ouvrées.
+                </p>
+                <div class="ticket-success-actions">
+                    <button class="btn btn-primary" id="contact-success-track" onclick="showPage('support')" style="display:none">Suivre ma demande</button>
+                    <button class="btn btn-ghost" onclick="resetTicketForm()">Envoyer une autre demande</button>
                 </div>
             </div>
 
             <div class="legal-section" style="margin-top:32px">
-                <h2>Délai de réponse</h2>
-                <p>Nous répondons généralement sous <strong>48 heures ouvrées</strong>. Pour les urgences liées à un problème de facturation, précisez « URGENT » dans l'objet de votre email.</p>
+                <h2>Autres moyens de nous joindre</h2>
+                <p>Vous pouvez aussi écrire directement à <a href="mailto:contact@chrono-mail.app">contact@chrono-mail.app</a>. Le formulaire reste préférable : votre demande y est classée par thème et suivie par référence, sans risque de finir dans les indésirables.</p>
+                <p>Pour une urgence de facturation, choisissez le thème <strong>Facturation</strong> et précisez « urgent » dans l'objet.</p>
             </div>
 
         </div>

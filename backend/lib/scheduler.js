@@ -19,6 +19,7 @@
  *   CRON_TIMEZONE             défaut Europe/Paris
  *   CRON_ACTIVATION_NUDGE     expression cron, défaut tous les jours à 10h
  *   CRON_PURGE_IMPRESSIONS    expression cron, défaut tous les jours à 3h45
+ *   CRON_PURGE_TICKETS        expression cron, défaut tous les jours à 4h00
  */
 const cron   = require('node-cron');
 const prisma = require('./prisma');
@@ -30,10 +31,12 @@ const ACTIVATION_CRON    = process.env.CRON_ACTIVATION_NUDGE || '0 10 * * *';
 const WINBACK_CRON       = process.env.CRON_WINBACK || '15 10 * * *';
 const REACTIVATION_CRON  = process.env.CRON_REACTIVATION || '30 10 * * *';
 const PURGE_CRON         = process.env.CRON_PURGE_IMPRESSIONS || '45 3 * * *';
+const PURGE_TICKETS_CRON = process.env.CRON_PURGE_TICKETS || '0 4 * * *';
 const ACTIVATION_DELAY_H = 48;
 const WINBACK_DELAY_D      = 14;
 const REACTIVATION_DELAY_D = 30;
 const IMPRESSION_RETENTION_D = 365;
+const TICKET_RETENTION_D     = 3 * 365;
 
 /**
  * Filtre « inactif depuis N jours ».
@@ -179,6 +182,27 @@ async function runPurgeImpressions() {
 }
 
 /**
+ * Purge les demandes de support closes depuis plus de 3 ans.
+ *
+ * La politique de confidentialité annonce cette durée : sans ce job, des
+ * messages clients — parfois détaillés, parfois nominatifs — resteraient
+ * en base indéfiniment. Les messages partent en cascade avec le ticket.
+ *
+ * Seuls les tickets terminés sont concernés : un ticket encore ouvert
+ * après trois ans signale un oubli, pas une donnée à effacer.
+ */
+async function runPurgeTickets() {
+    const cutoff = new Date(Date.now() - TICKET_RETENTION_D * 24 * 3600 * 1000);
+    const { count } = await prisma.supportTicket.deleteMany({
+        where: {
+            status:     { in: ['RESOLVED', 'CLOSED'] },
+            resolvedAt: { lt: cutoff },
+        },
+    });
+    return { deleted: count };
+}
+
+/**
  * Enregistre les jobs. Appelé une fois au démarrage du serveur.
  * Renvoie les tâches créées (utile en test / pour un arrêt propre).
  */
@@ -199,6 +223,7 @@ function start() {
         ['winback',           WINBACK_CRON,      runWinback,           'win-back',           sendReport],
         ['reactivation',      REACTIVATION_CRON, runReactivation,      'réactivation',       sendReport],
         ['purge-impressions', PURGE_CRON,        runPurgeImpressions,  'purge impressions',  purgeReport],
+        ['purge-tickets',     PURGE_TICKETS_CRON, runPurgeTickets,     'purge tickets',      r => `${r.deleted} ticket(s) supprimé(s)`],
     ];
 
     const tasks = jobs.map(([name, expression, run, label, report]) => {
@@ -217,4 +242,4 @@ function start() {
     return tasks;
 }
 
-module.exports = { start, runActivationNudge, runWinback, runReactivation, runPurgeImpressions };
+module.exports = { start, runActivationNudge, runWinback, runReactivation, runPurgeImpressions, runPurgeTickets };

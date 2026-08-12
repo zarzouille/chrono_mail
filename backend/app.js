@@ -27,6 +27,14 @@ const apiLimiter = rateLimit({
     max: 60,                     // 60 requêtes par IP
     message: { error: 'Trop de requêtes, ralentissez' },
 });
+// Le dépôt d'une demande de support est ouvert aux visiteurs non connectés :
+// sans plafond dédié, le formulaire devient un relais d'envoi d'emails
+// (accusé de réception + alerte interne) actionnable par n'importe qui.
+const ticketLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,   // 1 heure
+    max: 5,                      // 5 demandes par IP
+    message: { error: 'Trop de demandes envoyées, réessayez dans une heure' },
+});
 
 // ⚠️ Le webhook Stripe doit être enregistré AVANT express.json()
 // car il a besoin du body brut pour vérifier la signature
@@ -39,13 +47,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 
 // Routes
-const authRoutes = require('./routes/auth-routes');
-const apiRouter  = require('./routes/api');
+const authRoutes    = require('./routes/auth-routes');
+const apiRouter     = require('./routes/api');
+const supportRoutes = require('./routes/support-routes');
 app.use('/auth', authLimiter);
 app.use('/countdown', apiLimiter);
 app.use('/analytics', apiLimiter);
+app.use('/support', apiLimiter);
+app.post('/support/tickets', ticketLimiter);
 app.use('/', authRoutes);
 app.use('/', apiRouter);
+app.use('/', supportRoutes);
 app.use('/', stripeRoutes);
 
 // ── Email preview (dev only) ─────────────────────────────────

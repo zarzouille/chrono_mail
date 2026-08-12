@@ -73,6 +73,51 @@ async function requireAuth(req, res, next) {
     }
 }
 
+// ── Administrateurs ───────────────────────────────────────────────
+// Liste blanche d'adresses, séparées par des virgules (ADMIN_EMAILS).
+// Aucune valeur par défaut : si la variable est absente, personne n'est
+// administrateur et la console d'assistance reste fermée. Ouvrir l'accès
+// « en attendant de configurer » exposerait les demandes de tous les
+// clients au premier compte créé.
+function adminEmails() {
+    return (process.env.ADMIN_EMAILS || '')
+        .split(',')
+        .map(e => e.trim().toLowerCase())
+        .filter(Boolean);
+}
+
+function isAdmin(email) {
+    if (!email) return false;
+    return adminEmails().includes(email.trim().toLowerCase());
+}
+
+// À chaîner après requireAuth, qui a déjà relu le compte en base.
+function requireAdmin(req, res, next) {
+    if (isAdmin(req.user?.email)) return next();
+    return res.status(403).json({ error: 'Accès réservé' });
+}
+
+// ── Middleware : authentification optionnelle ─────────────────────
+// Renseigne req.user si un token valide est présent, sans jamais bloquer.
+// Utilisé par le formulaire de contact : accessible à tous, mais on
+// rattache la demande au compte quand on peut.
+async function optionalAuth(req, res, next) {
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith('Bearer ')) return next();
+
+    try {
+        const payload = verifyToken(header.slice(7));
+        const user = await prisma.user.findUnique({
+            where:  { id: payload.id },
+            select: { id: true, email: true, name: true, plan: true },
+        });
+        if (user) req.user = user;
+    } catch (err) {
+        // Token absent, expiré ou compte supprimé : on continue en anonyme.
+    }
+    next();
+}
+
 // ── Middleware : limites du plan Free ─────────────────────────────
 function requirePlan(minPlan) {
     const hierarchy = { FREE: 0, PRO: 1, BUSINESS: 2 };
@@ -88,4 +133,7 @@ function requirePlan(minPlan) {
     };
 }
 
-module.exports = { hashPassword, verifyPassword, generateToken, verifyToken, requireAuth, requirePlan };
+module.exports = {
+    hashPassword, verifyPassword, generateToken, verifyToken,
+    requireAuth, optionalAuth, requirePlan, requireAdmin, isAdmin,
+};

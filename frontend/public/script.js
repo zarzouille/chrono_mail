@@ -121,6 +121,12 @@ function updateNavAuth() {
     if (loggedIn && user) {
         document.getElementById('nav-user-name').textContent = user.name || user.email;
     }
+    // Entrées « Console support » : simple confort d'affichage. Le contrôle
+    // d'accès réel est fait par requireAdmin sur /support/admin, un compte
+    // non administrateur qui forcerait #admin-support ne verrait rien.
+    document.querySelectorAll('.admin-only').forEach(el => {
+        el.style.display = (loggedIn && user?.isAdmin) ? '' : 'none';
+    });
 }
 
 function handleDashboardClick() {
@@ -149,7 +155,7 @@ function closeMobileNav() {
 // 2. NAVIGATION — Routage SPA
 // ============================================================
 function showPage(name) {
-    if (['dashboard','create','analytics','settings'].includes(name) && !isLoggedIn()) {
+    if (['dashboard','create','analytics','settings','support','admin-support'].includes(name) && !isLoggedIn()) {
         showPage('login');
         return;
     }
@@ -164,6 +170,9 @@ function showPage(name) {
     if (name === 'settings')  loadSettings();
     if (name === 'pricing')   renderPricing();
     if (name === 'create')    { _resetCreateForm(); applyPlanGates(); updateExpiredUI(); goToStep(1); }
+    if (name === 'contact')   prepareContactForm();
+    if (name === 'support')   loadMySupport();
+    if (name === 'admin-support') loadAdminSupport();
 }
 
 
@@ -2034,6 +2043,379 @@ function renderAnalyticsTable(countdowns, total) {
 }
 
 // ============================================================
+// 20b. SUPPORT — Demandes client et console d'assistance
+// ============================================================
+
+/**
+ * Libellés des thèmes et statuts, chargés depuis le serveur.
+ *
+ * Les mêmes chaînes servent à valider côté backend : les recopier ici
+ * garantirait qu'un thème ajouté un jour n'apparaisse pas dans le
+ * formulaire, ou pire, y apparaisse sous un autre nom.
+ */
+let supportMeta = null;
+async function loadSupportMeta() {
+    if (supportMeta) return supportMeta;
+    try {
+        const res = await fetch('/support/meta');
+        if (res.ok) supportMeta = await res.json();
+    } catch { /* le rendu retombe sur la clé brute */ }
+    return supportMeta;
+}
+function catLabel(key) { return supportMeta?.categories?.[key] || key; }
+function statLabel(key) { return supportMeta?.statuses?.[key] || key; }
+
+function fmtTicketDate(value) {
+    const d = new Date(value);
+    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+        + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── Formulaire de contact ────────────────────────────────────
+function updateTicketCounter() {
+    const el = document.getElementById('contact-message');
+    const counter = document.getElementById('contact-counter');
+    if (el && counter) counter.textContent = `${el.value.length} / 5000`;
+}
+
+/**
+ * Prépare le formulaire à l'affichage de la page Contact.
+ *
+ * Connecté, l'email n'est pas redemandé : le backend ignore de toute
+ * façon celui du corps de requête au profit de celui du compte, pour
+ * qu'on ne puisse pas ouvrir un ticket au nom d'un tiers.
+ */
+async function prepareContactForm() {
+    loadSupportMeta();
+    const user     = getUser();
+    const identity = document.getElementById('contact-identity');
+    const logged   = document.getElementById('contact-logged');
+    if (isLoggedIn() && user) {
+        identity.style.display = 'none';
+        logged.style.display   = 'block';
+        document.getElementById('contact-logged-email').textContent = user.email;
+    } else {
+        identity.style.display = '';
+        logged.style.display   = 'none';
+    }
+    document.getElementById('contact-success-track').style.display = isLoggedIn() ? '' : 'none';
+}
+
+function resetTicketForm() {
+    ['contact-subject', 'contact-message', 'contact-name'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('contact-error').style.display   = 'none';
+    document.getElementById('contact-success').style.display = 'none';
+    document.getElementById('contact-form-box').style.display = '';
+    updateTicketCounter();
+    prepareContactForm();
+}
+
+async function submitTicket() {
+    const btn   = document.getElementById('contact-submit');
+    const errEl = document.getElementById('contact-error');
+    errEl.style.display = 'none';
+
+    const payload = {
+        category: document.getElementById('contact-category').value,
+        subject:  document.getElementById('contact-subject').value.trim(),
+        message:  document.getElementById('contact-message').value.trim(),
+        website:  document.getElementById('contact-website').value,
+    };
+    if (!isLoggedIn()) {
+        payload.email = document.getElementById('contact-email').value.trim();
+        payload.name  = document.getElementById('contact-name').value.trim();
+        if (!payload.email) { errEl.textContent = 'Indiquez une adresse email pour qu\'on puisse vous répondre'; errEl.style.display = 'block'; return; }
+    }
+    if (payload.subject.length < 3)   { errEl.textContent = 'Précisez un objet'; errEl.style.display = 'block'; return; }
+    if (payload.message.length < 10)  { errEl.textContent = 'Décrivez votre demande en quelques mots de plus'; errEl.style.display = 'block'; return; }
+
+    btn.textContent = '⏳ Envoi...'; btn.disabled = true;
+    try {
+        const res  = await authFetch('/support/tickets', { method: 'POST', body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Erreur lors de l\'envoi'; errEl.style.display = 'block'; return; }
+        document.getElementById('contact-success-ref').textContent = data.ref || '—';
+        document.getElementById('contact-form-box').style.display  = 'none';
+        document.getElementById('contact-success').style.display   = 'block';
+        window.scrollTo(0, 0);
+    } catch {
+        errEl.textContent = 'Erreur réseau, réessayez'; errEl.style.display = 'block';
+    } finally {
+        btn.textContent = 'Envoyer ma demande'; btn.disabled = false;
+    }
+}
+
+// ── Mes demandes (client) ────────────────────────────────────
+function ticketStatusPill(status) {
+    const cls = { OPEN: 'open', PENDING: 'pending', RESOLVED: 'resolved', CLOSED: 'closed' }[status] || 'open';
+    return `<span class="ticket-pill ticket-pill-${cls}">${escapeHtml(statLabel(status))}</span>`;
+}
+
+async function loadMySupport() {
+    await loadSupportMeta();
+    const list = document.getElementById('support-list');
+    const sub  = document.getElementById('support-subtitle');
+    list.innerHTML = '<div class="ticket-empty">Chargement...</div>';
+    try {
+        const res = await authFetch('/support/tickets');
+        if (res.status === 401) { logout(); return; }
+        const tickets = await res.json();
+        const ouverts = tickets.filter(t => t.status === 'OPEN' || t.status === 'PENDING').length;
+        sub.textContent = tickets.length
+            ? `${tickets.length} demande${tickets.length > 1 ? 's' : ''} · ${ouverts} en cours`
+            : 'Aucune demande pour le moment';
+
+        if (!tickets.length) {
+            list.innerHTML = `<div class="ticket-empty">
+                <p>Vous n'avez encore envoyé aucune demande.</p>
+                <button class="btn btn-primary" onclick="showPage('contact')">Écrire au support</button>
+            </div>`;
+            return;
+        }
+        list.innerHTML = tickets.map(t => `
+            <div class="ticket-row" id="ticket-row-${t.id}">
+                <div class="ticket-row-head" onclick="toggleMyTicket('${t.id}')">
+                    <div class="ticket-row-main">
+                        <div class="ticket-row-title">${escapeHtml(t.subject)}</div>
+                        <div class="ticket-row-meta">
+                            <span class="ticket-ref">${escapeHtml(t.ref)}</span>
+                            <span class="ticket-cat">${escapeHtml(catLabel(t.category))}</span>
+                            <span>${escapeHtml(fmtTicketDate(t.lastMessageAt))}</span>
+                        </div>
+                    </div>
+                    ${ticketStatusPill(t.status)}
+                </div>
+                <div class="ticket-thread" id="ticket-thread-${t.id}" style="display:none"></div>
+            </div>`).join('');
+    } catch {
+        list.innerHTML = '<div class="ticket-empty" style="color:var(--red)">Erreur de chargement</div>';
+    }
+}
+
+async function toggleMyTicket(id) {
+    const box = document.getElementById('ticket-thread-' + id);
+    if (!box) return;
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.innerHTML = '<div class="ticket-empty">Chargement...</div>';
+    try {
+        const res = await authFetch('/support/tickets/' + id);
+        if (!res.ok) { box.innerHTML = '<div class="ticket-empty">Demande introuvable</div>'; return; }
+        const t = await res.json();
+        const closed = t.status === 'CLOSED';
+        box.innerHTML = renderThread(t.messages) + (closed
+            ? `<p class="ticket-closed-note">Cette demande est close. Ouvrez-en une nouvelle si le sujet revient.</p>`
+            : `<div class="ticket-reply">
+                   <textarea class="ticket-input ticket-textarea" id="reply-${t.id}" rows="4" maxlength="5000" placeholder="Votre réponse..."></textarea>
+                   <button class="btn btn-primary btn-sm" onclick="replyToTicket('${t.id}', this)">Envoyer</button>
+               </div>`);
+    } catch {
+        box.innerHTML = '<div class="ticket-empty" style="color:var(--red)">Erreur de chargement</div>';
+    }
+}
+
+/**
+ * Rend un fil de discussion.
+ *
+ * `who` nomme l'auteur côté client : dans la console d'assistance, « Vous »
+ * désigne le support, pas le client — le même fil se lit donc dans les
+ * deux sens selon qui le regarde.
+ */
+function renderThread(messages, who = null) {
+    const asAdmin = who !== null;
+    return `<div class="ticket-messages">` + messages.map(m => {
+        const isSupport = m.author === 'SUPPORT';
+        const author = isSupport
+            ? (asAdmin ? 'Vous (support)' : 'Support Chronomail')
+            : (asAdmin ? who : 'Vous');
+        return `
+        <div class="ticket-msg ticket-msg-${isSupport ? 'support' : 'customer'}">
+            <div class="ticket-msg-head">${escapeHtml(author)} · ${escapeHtml(fmtTicketDate(m.createdAt))}</div>
+            <div class="ticket-msg-body">${escapeHtml(m.body).replace(/\n/g, '<br>')}</div>
+        </div>`;
+    }).join('') + `</div>`;
+}
+
+async function replyToTicket(id, btn) {
+    const el   = document.getElementById('reply-' + id);
+    const body = el.value.trim();
+    if (!body) { showToast('❌ Message vide'); return; }
+    btn.textContent = '⏳'; btn.disabled = true;
+    try {
+        const res = await authFetch(`/support/tickets/${id}/messages`, { method: 'POST', body: JSON.stringify({ message: body }) });
+        const data = await res.json();
+        if (!res.ok) { showToast('❌ ' + (data.error || 'Erreur')); return; }
+        showToast('✓ Réponse envoyée');
+        await loadMySupport();
+        toggleMyTicket(id);
+    } catch { showToast('❌ Erreur réseau'); }
+    finally { btn.textContent = 'Envoyer'; btn.disabled = false; }
+}
+
+// ── Console d'assistance (admin) ─────────────────────────────
+const adminFilters = { status: 'OPEN', category: '', q: '' };
+
+function setAdminStatus(status) { adminFilters.status = status; loadAdminSupport(); }
+function setAdminCategory(cat)  { adminFilters.category = adminFilters.category === cat ? '' : cat; loadAdminSupport(); }
+
+async function loadAdminSupport() {
+    await loadSupportMeta();
+    const list = document.getElementById('admin-ticket-list');
+    const sub  = document.getElementById('admin-support-subtitle');
+    adminFilters.q = document.getElementById('admin-search')?.value.trim() || '';
+
+    list.innerHTML = '<div class="ticket-empty">Chargement...</div>';
+    const params = new URLSearchParams();
+    if (adminFilters.status)   params.set('status', adminFilters.status);
+    if (adminFilters.category) params.set('category', adminFilters.category);
+    if (adminFilters.q)        params.set('q', adminFilters.q);
+
+    try {
+        const res = await authFetch('/support/admin/tickets?' + params.toString());
+        if (res.status === 401) { logout(); return; }
+        if (res.status === 403) {
+            list.innerHTML = '<div class="ticket-empty">Cette console est réservée aux administrateurs.</div>';
+            sub.textContent = 'Accès refusé';
+            return;
+        }
+        const { tickets, counts } = await res.json();
+        renderAdminFilters(counts);
+
+        const enCours = (counts.status.OPEN || 0) + (counts.status.PENDING || 0);
+        sub.textContent = `${enCours} demande${enCours > 1 ? 's' : ''} en cours · ${tickets.length} affichée${tickets.length > 1 ? 's' : ''}`;
+
+        if (!tickets.length) {
+            list.innerHTML = '<div class="ticket-empty">Aucune demande ne correspond à ce filtre.</div>';
+            return;
+        }
+        list.innerHTML = tickets.map(t => `
+            <div class="ticket-row" id="admin-row-${t.id}">
+                <div class="ticket-row-head" onclick="toggleAdminTicket('${t.id}')">
+                    <div class="ticket-row-main">
+                        <div class="ticket-row-title">${escapeHtml(t.subject)}</div>
+                        <div class="ticket-row-meta">
+                            <span class="ticket-ref">${escapeHtml(t.ref)}</span>
+                            <span class="ticket-cat">${escapeHtml(catLabel(t.category))}</span>
+                            <span>${escapeHtml(t.email)}</span>
+                            ${t.planAtCreation ? `<span class="plan-chip">${escapeHtml(t.planAtCreation)}</span>` : ''}
+                            <span>${escapeHtml(fmtTicketDate(t.lastMessageAt))}</span>
+                        </div>
+                    </div>
+                    ${ticketStatusPill(t.status)}
+                </div>
+                <div class="ticket-thread" id="admin-thread-${t.id}" style="display:none"></div>
+            </div>`).join('');
+    } catch {
+        list.innerHTML = '<div class="ticket-empty" style="color:var(--red)">Erreur de chargement</div>';
+    }
+}
+
+/**
+ * Onglets de statut et filtres par thème.
+ *
+ * Les compteurs de thèmes ne portent que sur les demandes en cours :
+ * c'est la charge de travail restante, pas l'historique, qui doit
+ * sauter aux yeux en ouvrant la console.
+ */
+function renderAdminFilters(counts) {
+    const tabs = [
+        ['OPEN',     'À traiter'],
+        ['PENDING',  'En attente'],
+        ['RESOLVED', 'Résolues'],
+        ['CLOSED',   'Closes'],
+        ['',         'Toutes'],
+    ];
+    document.getElementById('admin-status-tabs').innerHTML = tabs.map(([key, label]) => {
+        const n = key ? (counts.status[key] || 0) : Object.values(counts.status).reduce((a, b) => a + b, 0);
+        return `<button class="admin-tab ${adminFilters.status === key ? 'active' : ''}" onclick="setAdminStatus('${key}')">
+            ${label}<span class="admin-tab-count">${n}</span>
+        </button>`;
+    }).join('');
+
+    const cats = supportMeta?.categories || {};
+    document.getElementById('admin-category-filters').innerHTML = Object.entries(cats).map(([key, label]) => {
+        const n = counts.category[key] || 0;
+        return `<div class="sidebar-item ${adminFilters.category === key ? 'active' : ''}" onclick="setAdminCategory('${key}')">
+            <span>${escapeHtml(label)}</span><span class="admin-cat-count">${n}</span>
+        </div>`;
+    }).join('');
+}
+
+async function toggleAdminTicket(id) {
+    const box = document.getElementById('admin-thread-' + id);
+    if (!box) return;
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.innerHTML = '<div class="ticket-empty">Chargement...</div>';
+    try {
+        const res = await authFetch('/support/admin/tickets/' + id);
+        if (!res.ok) { box.innerHTML = '<div class="ticket-empty">Ticket introuvable</div>'; return; }
+        const t    = await res.json();
+        const cats = supportMeta?.categories || {};
+        const opts = Object.entries(cats).map(([k, l]) =>
+            `<option value="${k}" ${k === t.category ? 'selected' : ''}>${escapeHtml(l)}</option>`).join('');
+
+        box.innerHTML = `
+            <div class="admin-ticket-toolbar">
+                <label class="ticket-label" for="admin-cat-${t.id}">Thème</label>
+                <select class="ticket-input admin-inline-select" id="admin-cat-${t.id}" onchange="adminSetCategory('${t.id}', this.value)">${opts}</select>
+                <a class="btn btn-ghost btn-sm" href="mailto:${encodeURIComponent(t.email)}?subject=${encodeURIComponent('[' + t.ref + '] ' + t.subject)}">Répondre par email</a>
+                ${t.status !== 'CLOSED' ? `<button class="btn btn-ghost btn-sm" onclick="adminSetStatus('${t.id}','CLOSED')">Clore sans réponse</button>` : ''}
+                ${t.status !== 'OPEN'   ? `<button class="btn btn-ghost btn-sm" onclick="adminSetStatus('${t.id}','OPEN')">Rouvrir</button>` : ''}
+            </div>
+            ${renderThread(t.messages, t.name ? `${t.name} (${t.email})` : t.email)}
+            <div class="ticket-reply">
+                <textarea class="ticket-input ticket-textarea" id="admin-reply-${t.id}" rows="5" maxlength="5000" placeholder="Votre réponse au client — elle lui est envoyée par email."></textarea>
+                <div class="ticket-reply-actions">
+                    <button class="btn btn-primary btn-sm" onclick="adminReply('${t.id}', true, this)">Répondre et marquer résolu</button>
+                    <button class="btn btn-ghost btn-sm" onclick="adminReply('${t.id}', false, this)">Répondre seulement</button>
+                </div>
+            </div>`;
+    } catch {
+        box.innerHTML = '<div class="ticket-empty" style="color:var(--red)">Erreur de chargement</div>';
+    }
+}
+
+async function adminReply(id, resolve, btn) {
+    const el   = document.getElementById('admin-reply-' + id);
+    const body = el.value.trim();
+    if (!body) { showToast('❌ Message vide'); return; }
+    const label = btn.textContent;
+    btn.textContent = '⏳'; btn.disabled = true;
+    try {
+        const res  = await authFetch(`/support/admin/tickets/${id}/messages`, {
+            method: 'POST', body: JSON.stringify({ message: body, resolve }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast('❌ ' + (data.error || 'Erreur')); return; }
+        showToast(resolve ? '✓ Réponse envoyée, ticket résolu' : '✓ Réponse envoyée');
+        loadAdminSupport();
+    } catch { showToast('❌ Erreur réseau'); }
+    finally { btn.textContent = label; btn.disabled = false; }
+}
+
+async function adminSetStatus(id, status) {
+    try {
+        const res = await authFetch('/support/admin/tickets/' + id, { method: 'PATCH', body: JSON.stringify({ status }) });
+        if (!res.ok) { showToast('❌ Erreur'); return; }
+        showToast('✓ Statut mis à jour');
+        loadAdminSupport();
+    } catch { showToast('❌ Erreur réseau'); }
+}
+
+async function adminSetCategory(id, category) {
+    try {
+        const res = await authFetch('/support/admin/tickets/' + id, { method: 'PATCH', body: JSON.stringify({ category }) });
+        if (!res.ok) { showToast('❌ Erreur'); return; }
+        showToast('✓ Thème mis à jour');
+        loadAdminSupport();
+    } catch { showToast('❌ Erreur réseau'); }
+}
+
+
+// ============================================================
 // 21. INIT
 // ============================================================
 updateNavAuth();
@@ -2068,7 +2450,7 @@ buildTimezoneOptions();
     const rawHash = window.location.hash.replace('#', '');
     const hash = rawHash.split('?')[0]; // strip query params (ex: reset-password?token=xxx)
     const validPages = ['landing','login','register','forgot-password','reset-password','dashboard','create','analytics','settings','pricing',
-                        'legal-mentions','legal-privacy','legal-cgu','legal-cgv','legal-cookies','contact','404'];
+                        'legal-mentions','legal-privacy','legal-cgu','legal-cgv','legal-cookies','contact','support','admin-support','404'];
     if (hash && validPages.includes(hash)) {
         showPage(hash);
     } else if (hash) {

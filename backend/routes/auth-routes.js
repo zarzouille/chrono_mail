@@ -3,7 +3,7 @@ const router   = express.Router();
 const passport = require('../lib/passport');
 const prisma   = require('../lib/prisma');
 const crypto   = require('crypto');
-const { hashPassword, verifyPassword, generateToken, requireAuth } = require('../lib/auth');
+const { hashPassword, verifyPassword, generateToken, requireAuth, isAdmin } = require('../lib/auth');
 const { sendWelcome, sendVerifyEmail, sendResetPassword } = require('../services/email-service');
 const { touchLastLogin } = require('../lib/retention');
 
@@ -50,7 +50,7 @@ router.post('/auth/login', async (req, res) => {
         if (!valid) return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
 
         const token = generateToken(user);
-        res.json({ token, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, emailVerified: user.emailVerified } });
+        res.json({ token, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, emailVerified: user.emailVerified, isAdmin: isAdmin(user.email) } });
 
         // Signal d'activité + réarmement du cycle de rétention (non bloquant)
         touchLastLogin(user.id);
@@ -69,7 +69,10 @@ router.get('/auth/me', requireAuth, async (req, res) => {
             select: { id: true, email: true, name: true, plan: true, emailVerified: true, createdAt: true },
         });
         if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
-        res.json(user);
+        // isAdmin n'est qu'un signal d'affichage pour la SPA (entrée « Assistance »
+        // dans la barre latérale) : l'accès réel est vérifié par requireAdmin
+        // sur chaque route /support/admin.
+        res.json({ ...user, isAdmin: isAdmin(user.email) });
     } catch (err) {
         res.status(500).json({ error: 'Erreur serveur' });
     }

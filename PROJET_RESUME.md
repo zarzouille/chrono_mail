@@ -171,6 +171,15 @@ enum ExpiredBehavior { SHOW_ZEROS  SHOW_TEXT  SHOW_IMAGE  REDIRECT  HIDE }
 - [x] Bouton "Upgrade" ou "Gérer abonnement" selon plan
 - [x] Carte "+" pour créer un nouveau countdown
 
+### Support (ticketing)
+- [x] Formulaire de contact avec thème obligatoire (`#contact`) — ouvert aux visiteurs non connectés
+- [x] Modèles `SupportTicket` / `SupportMessage`, référence lisible `CM-XXXXXX`
+- [x] Page « Mes demandes » (`#support`) — historique et fil de discussion côté client
+- [x] Console d'assistance (`#admin-support`) — file d'attente filtrable par thème et statut, réponse par email, reclassement
+- [x] Emails : accusé de réception, réponse du support, alerte interne à chaque nouveau ticket
+- [x] Purge automatique des tickets clos depuis 3 ans (cron `purge-tickets`)
+- [x] Accès admin par liste blanche `ADMIN_EMAILS` (fail-closed : vide = console fermée)
+
 ### Pages
 - [x] Landing page (hero, stats, steps, CTA)
 - [x] Page Pricing avec toggle mensuel/annuel
@@ -183,7 +192,6 @@ enum ExpiredBehavior { SHOW_ZEROS  SHOW_TEXT  SHOW_IMAGE  REDIRECT  HIDE }
 
 ### Priorité haute (avant lancement commercial)
 - [ ] **Pages légales** — Politique de confidentialité, CGU, Cookies (RGPD obligatoire)
-- [ ] **Page Contact** — Formulaire ou lien email
 - [ ] **Styles de countdown supplémentaires** — Glassmorphism, Circulaire, Dark pill (Pro), Split-flap/Neon (Business) — roadmap définie mais non implémentée
 - [ ] **Analytics dashboard** — Courbe d'impressions dans le temps par countdown (Pro/Business)
 - [ ] **Suppression de countdown** — Bouton dans le dashboard (route DELETE existe côté API mais pas d'UI)
