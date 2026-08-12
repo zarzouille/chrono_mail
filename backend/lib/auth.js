@@ -1,8 +1,16 @@
+require('dotenv').config();
 const jwt    = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const prisma = require('./prisma');
 
-const JWT_SECRET  = process.env.JWT_SECRET || 'dev_secret_change_in_production';
+// Pas de fallback : un secret par défaut visible dans le code source
+// permettrait de forger un token valide pour n'importe quel compte si
+// la variable est absente en production. On préfère planter au
+// démarrage plutôt que de signer silencieusement avec un secret public.
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET manquant — définis-la dans .env (ou les variables d\'environnement de l\'hébergeur) avant de démarrer le serveur.');
+}
 const JWT_EXPIRES = '7d';
 const SALT_ROUNDS = 10;
 
