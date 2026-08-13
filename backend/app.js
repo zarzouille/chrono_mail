@@ -37,13 +37,22 @@ const ticketLimiter = rateLimit({
     message: { error: 'Trop de demandes envoyées, réessayez dans une heure' },
 });
 
-// ⚠️ Le webhook Stripe doit être enregistré AVANT express.json()
-// car il a besoin du body brut pour vérifier la signature
 const stripeRoutes = require('./routes/stripe-routes');
-app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
 
-// Middleware JSON
-app.use(express.json());
+// ⚠️ Le webhook Stripe vérifie la signature sur le corps brut. Il déclare
+// lui-même son parseur (express.raw, dans stripe-routes.js) afin de rester
+// autonome quel que soit l'endroit où le routeur est monté — c'est
+// d'ailleurs ainsi que les tests le montent, seul.
+//
+// Il reste donc seulement à empêcher le parseur JSON global de le
+// devancer : sinon req.body arriverait déjà désérialisé et la signature
+// ne correspondrait plus. Ne pas remplacer ce filtre par un
+// `app.use('/stripe/webhook', express.raw(...))` ici : le corps serait
+// analysé deux fois, et ça ne tiendrait que sur un détail interne de
+// body-parser (le marqueur `req._body`).
+const jsonParser = express.json();
+app.use((req, res, next) =>
+    req.path === '/stripe/webhook' ? next() : jsonParser(req, res, next));
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 
