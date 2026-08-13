@@ -9,6 +9,11 @@
     "test": "jest --forceExit --detectOpenHandles",
     "seed:dev": "node scripts/seed-dev.js"
   },
+  "jest": {
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ]
+  },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.95",
     "@prisma/adapter-pg": "^7.4.1",
