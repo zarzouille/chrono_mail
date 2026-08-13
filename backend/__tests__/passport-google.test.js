@@ -7,9 +7,11 @@
  */
 
 // La stratégie Google est instanciée au chargement du module et refuse de
-// démarrer sans identifiants.
+// démarrer sans identifiants ; APP_URL est exigée par lib/app-url, dont
+// dérive désormais l'URL de callback.
 process.env.GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID     || 'test-client-id';
 process.env.GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || 'test-client-secret';
+process.env.APP_URL              = process.env.APP_URL              || 'http://localhost:3000';
 
 jest.mock('../lib/prisma', () => ({
     user: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },

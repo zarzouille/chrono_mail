@@ -3,6 +3,28 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const prisma = require('./prisma');
 const { sendWelcome } = require('../services/email-service');
 const { touchLastLogin } = require('./retention');
+const { APP_URL } = require('./app-url');
+
+// L'URL de callback doit correspondre au caractère près à l'une de celles
+// déclarées dans la Google Cloud Console. Elle se déduit donc d'APP_URL
+// plutôt que de retomber sur un « localhost » codé en dur : ce défaut ne
+// se signalait pas en production, Google se contentait de renvoyer
+// redirect_uri_mismatch au premier utilisateur qui tentait sa chance.
+//
+// GOOGLE_CALLBACK_URL reste accepté pour les montages où le callback
+// n'est pas servi par l'hôte de l'application, mais toute divergence est
+// signalée au démarrage : c'est le genre d'écart qui survit à une
+// migration de domaine et ne se découvre qu'à l'usage.
+const DERIVED_CALLBACK_URL = `${APP_URL}/auth/google/callback`;
+const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || DERIVED_CALLBACK_URL;
+
+if (CALLBACK_URL !== DERIVED_CALLBACK_URL) {
+    console.warn(
+        `⚠️  [OAUTH] GOOGLE_CALLBACK_URL ("${CALLBACK_URL}") ne correspond pas à APP_URL ` +
+        `("${DERIVED_CALLBACK_URL}"). Voulu ? Sinon la connexion Google échouera ` +
+        'en redirect_uri_mismatch.',
+    );
+}
 
 /**
  * Résout le compte correspondant à un profil Google.
@@ -69,7 +91,7 @@ async function resolveGoogleUser(profile) {
 passport.use(new GoogleStrategy({
         clientID:     process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL:  process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback',
+        callbackURL:  CALLBACK_URL,
     },
     async (accessToken, refreshToken, profile, done) => {
         try {
