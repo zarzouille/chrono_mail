@@ -9,6 +9,11 @@ jest.mock('../lib/prisma', () => ({
     },
     impression: {
         deleteMany: jest.fn(),
+        count:      jest.fn(),
+    },
+    supportTicket: {
+        deleteMany: jest.fn(),
+        count:      jest.fn(),
     },
 }));
 
@@ -24,7 +29,10 @@ jest.mock('../lib/retention', () => ({
 
 const prisma = require('../lib/prisma');
 const { sendActivationNudge, sendWinback, sendReactivation } = require('../services/email-service');
-const { runActivationNudge, runWinback, runReactivation, runPurgeImpressions } = require('../lib/scheduler');
+const {
+    runActivationNudge, runWinback, runReactivation,
+    runPurgeImpressions, runPurgeTickets, overdueRetention,
+} = require('../lib/scheduler');
 
 const USER = { id: 'user_1', email: 'sophie@exemple.fr', name: 'Sophie' };
 
@@ -207,5 +215,55 @@ describe('runPurgeImpressions', () => {
         prisma.impression.deleteMany.mockResolvedValue({ count: 0 });
 
         expect(await runPurgeImpressions()).toEqual({ deleted: 0 });
+    });
+});
+
+describe('runPurgeTickets', () => {
+    test('ne supprime que les demandes terminées, closes depuis plus de 3 ans', async () => {
+        prisma.supportTicket.deleteMany.mockResolvedValue({ count: 7 });
+
+        const result = await runPurgeTickets();
+
+        const where = prisma.supportTicket.deleteMany.mock.calls[0][0].where;
+        // Une demande encore ouverte signale un oubli, pas une donnée à effacer.
+        expect(where.status).toEqual({ in: ['RESOLVED', 'CLOSED'] });
+        // Le compte à rebours part de la clôture, comme l'annonce la
+        // politique de confidentialité (« 3 ans après la clôture »).
+        const ageJours = (Date.now() - where.resolvedAt.lt.getTime()) / (24 * 3600 * 1000);
+        expect(ageJours).toBeCloseTo(3 * 365, 0);
+        expect(result).toEqual({ deleted: 7 });
+    });
+});
+
+describe('overdueRetention', () => {
+    test('applique une marge de 24 h aux deux échéances', async () => {
+        prisma.supportTicket.count.mockResolvedValue(0);
+        prisma.impression.count.mockResolvedValue(0);
+
+        await overdueRetention();
+
+        const ticketCutoff     = prisma.supportTicket.count.mock.calls[0][0].where.resolvedAt.lt;
+        const impressionCutoff = prisma.impression.count.mock.calls[0][0].where.createdAt.lt;
+        const jours = d => (Date.now() - d.getTime()) / (24 * 3600 * 1000);
+
+        // Une purge nocturne laisse normalement traîner quelques heures de
+        // données fraîchement expirées : sans marge, l'alerte crierait
+        // chaque jour pour rien.
+        expect(jours(ticketCutoff)).toBeCloseTo(3 * 365 + 1, 1);
+        expect(jours(impressionCutoff)).toBeCloseTo(365 + 1, 1);
+    });
+
+    test('remonte ce qui aurait dû être purgé', async () => {
+        prisma.supportTicket.count.mockResolvedValue(3);
+        prisma.impression.count.mockResolvedValue(120);
+
+        expect(await overdueRetention()).toEqual({ tickets: 3, impressions: 120 });
+    });
+
+    test('rien en retard quand les purges tournent', async () => {
+        prisma.supportTicket.count.mockResolvedValue(0);
+        prisma.impression.count.mockResolvedValue(0);
+
+        expect(await overdueRetention()).toEqual({ tickets: 0, impressions: 0 });
     });
 });

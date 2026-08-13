@@ -14,6 +14,10 @@
  * instances Render, ou un redémarrage pendant le job — ne peuvent pas
  * envoyer deux fois : une seule voit count === 1.
  *
+ * Rétention : au démarrage, overdueRetention() signale les données qui
+ * auraient déjà dû être purgées. Une purge qui ne tourne plus laisse
+ * sinon la politique de confidentialité mentir en silence.
+ *
  * Env :
  *   DISABLE_CRON=true         désactive tous les jobs
  *   CRON_TIMEZONE             défaut Europe/Paris
@@ -37,6 +41,9 @@ const WINBACK_DELAY_D      = 14;
 const REACTIVATION_DELAY_D = 30;
 const IMPRESSION_RETENTION_D = 365;
 const TICKET_RETENTION_D     = 3 * 365;
+// Marge avant de conclure qu'une purge a été manquée : elles tournent une
+// fois par nuit, un reliquat de quelques heures est donc normal.
+const PURGE_GRACE_H = 24;
 
 /**
  * Filtre « inactif depuis N jours ».
@@ -203,12 +210,61 @@ async function runPurgeTickets() {
 }
 
 /**
+ * Compte les données dont la durée de conservation annoncée est dépassée
+ * depuis plus d'une journée — celles que la dernière purge nocturne
+ * aurait dû supprimer.
+ *
+ * Les deleteMany sont auto-rattrapants : une nuit manquée est réparée par
+ * la suivante, qui reprend tout ce qui est encore éligible. Ce qui ne se
+ * répare pas tout seul, c'est une purge qui ne tourne plus du tout —
+ * DISABLE_CRON resté à true en production, tâches jamais enregistrées,
+ * erreur qui se répète chaque nuit. Rien ne le signalait, alors que la
+ * politique de confidentialité annonce des durées précises : la promesse
+ * devenait fausse en silence.
+ */
+async function overdueRetention() {
+    const grace            = PURGE_GRACE_H * 3600 * 1000;
+    const ticketCutoff     = new Date(Date.now() - TICKET_RETENTION_D * 24 * 3600 * 1000 - grace);
+    const impressionCutoff = new Date(Date.now() - IMPRESSION_RETENTION_D * 24 * 3600 * 1000 - grace);
+
+    const [tickets, impressions] = await Promise.all([
+        prisma.supportTicket.count({
+            where: { status: { in: ['RESOLVED', 'CLOSED'] }, resolvedAt: { lt: ticketCutoff } },
+        }),
+        prisma.impression.count({ where: { createdAt: { lt: impressionCutoff } } }),
+    ]);
+
+    return { tickets, impressions };
+}
+
+/**
+ * Signale une rétention dépassée, sans jamais bloquer ni faire échouer le
+ * démarrage : le serveur doit pouvoir répondre même si la base tarde.
+ */
+function reportOverdueRetention() {
+    return overdueRetention()
+        .then(({ tickets, impressions }) => {
+            if (!tickets && !impressions) return;
+            console.warn(
+                `⚠️  [CRON] Rétention dépassée : ${tickets} demande(s) de support et ` +
+                `${impressions} impression(s) auraient dû être purgées depuis plus de ` +
+                `${PURGE_GRACE_H} h — la purge nocturne ne tourne plus.`,
+            );
+        })
+        .catch(err => console.error('⏱️  [CRON] Contrôle de rétention impossible :', err.message));
+}
+
+/**
  * Enregistre les jobs. Appelé une fois au démarrage du serveur.
  * Renvoie les tâches créées (utile en test / pour un arrêt propre).
  */
 function start() {
+    // Contrôle mené même tâches désactivées : c'est précisément quand les
+    // purges ne tournent pas que l'information a de la valeur.
+    reportOverdueRetention();
+
     if (process.env.DISABLE_CRON === 'true') {
-        console.log('⏱️  [CRON] Désactivé (DISABLE_CRON=true)');
+        console.log('⏱️  [CRON] Désactivé (DISABLE_CRON=true) — ni relances ni purges de rétention');
         return [];
     }
 
@@ -242,4 +298,9 @@ function start() {
     return tasks;
 }
 
-module.exports = { start, runActivationNudge, runWinback, runReactivation, runPurgeImpressions, runPurgeTickets };
+module.exports = {
+    start,
+    runActivationNudge, runWinback, runReactivation,
+    runPurgeImpressions, runPurgeTickets,
+    overdueRetention,
+};
