@@ -4,6 +4,68 @@ const prisma = require('./prisma');
 const { sendWelcome } = require('../services/email-service');
 const { touchLastLogin } = require('./retention');
 
+/**
+ * Résout le compte correspondant à un profil Google.
+ *
+ * Extrait de la stratégie pour être testable : Passport n'expose pas son
+ * callback de vérification, et la règle de rattachement ci-dessous mérite
+ * des tests à elle seule.
+ */
+async function resolveGoogleUser(profile) {
+    const email = profile.emails?.[0]?.value;
+    const name  = profile.displayName;
+
+    if (!email) throw new Error('Email Google introuvable');
+
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+        user = await prisma.user.create({
+            data: {
+                email,
+                name,
+                password: 'google_oauth', // pas de mot de passe pour les comptes Google
+                plan: 'FREE',
+                emailVerified: true, // Google a déjà vérifié l'email
+            },
+        });
+        sendWelcome(user.email, user.name).catch(() => {});
+        touchLastLogin(user.id);
+        return user;
+    }
+
+    // Compte préexistant créé par mot de passe, dont personne n'a jamais
+    // prouvé qu'il possédait l'adresse : /auth/register ne vérifie que
+    // l'unicité de l'email, pas sa propriété. N'importe qui pouvait donc
+    // s'inscrire avec l'adresse d'un tiers, attendre que celui-ci se
+    // connecte via Google, et conserver un accès permanent au compte —
+    // avec tout ce que la victime y créerait ensuite.
+    //
+    // Google vient, lui, de prouver la possession de l'adresse. Le compte
+    // revient donc à qui contrôle la boîte mail, et le mot de passe jamais
+    // vérifié est invalidé. Un utilisateur légitime qui n'avait tout
+    // simplement pas confirmé son email garde ses données et se reconnecte
+    // par Google (ou repasse par « mot de passe oublié »).
+    if (user.password !== 'google_oauth' && !user.emailVerified) {
+        user = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password:         'google_oauth',
+                emailVerified:    true,
+                emailVerifyToken: null,
+                // Un lien de réinitialisation encore valide rouvrirait la porte.
+                resetToken:       null,
+                resetTokenExpiry: null,
+            },
+        });
+        console.warn(`⚠️  [OAUTH] ${email} — compte non vérifié repris via Google, mot de passe invalidé`);
+    }
+
+    // Signal d'activité + réarmement du cycle de rétention (non bloquant)
+    touchLastLogin(user.id);
+    return user;
+}
+
 passport.use(new GoogleStrategy({
         clientID:     process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -11,35 +73,7 @@ passport.use(new GoogleStrategy({
     },
     async (accessToken, refreshToken, profile, done) => {
         try {
-            const email = profile.emails?.[0]?.value;
-            const name  = profile.displayName;
-
-            if (!email) return done(new Error('Email Google introuvable'), null);
-
-            // Chercher l'utilisateur existant ou le créer
-            let user = await prisma.user.findUnique({ where: { email } });
-
-            let isNewUser = false;
-            if (!user) {
-                user = await prisma.user.create({
-                    data: {
-                        email,
-                        name,
-                        password: 'google_oauth', // pas de mot de passe pour les comptes Google
-                        plan: 'FREE',
-                        emailVerified: true, // Google a déjà vérifié l'email
-                    },
-                });
-                isNewUser = true;
-            }
-
-            // Email de bienvenue pour les nouveaux inscrits Google (non bloquant)
-            if (isNewUser) sendWelcome(user.email, user.name).catch(() => {});
-
-            // Signal d'activité + réarmement du cycle de rétention (non bloquant)
-            touchLastLogin(user.id);
-
-            return done(null, user);
+            return done(null, await resolveGoogleUser(profile));
         } catch (err) {
             return done(err, null);
         }
@@ -50,3 +84,4 @@ passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) => done(null, { id }));
 
 module.exports = passport;
+module.exports.resolveGoogleUser = resolveGoogleUser;
