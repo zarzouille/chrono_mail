@@ -7,13 +7,14 @@
  */
 const { Resend } = require('resend');
 const { categoryLabel } = require('../lib/support-labels');
+const { APP_URL } = require('../lib/app-url');
 
 const resend = process.env.RESEND_API_KEY
     ? new Resend(process.env.RESEND_API_KEY)
     : null;
 
 const FROM = process.env.MAIL_FROM || 'Chronomail <noreply@chrono-mail.app>';
-const APP  = process.env.APP_URL   || 'http://localhost:3000';
+const APP  = APP_URL;
 
 // ── Helper : base HTML layout ────────────────────────────────────
 // opts.unsubscribeUrl : ajoute le lien de désinscription. Obligatoire

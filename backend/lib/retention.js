@@ -14,8 +14,9 @@
  */
 const prisma = require('./prisma');
 const crypto = require('crypto');
+const { APP_URL } = require('./app-url');
 
-const APP = process.env.APP_URL || 'http://localhost:3000';
+const APP = APP_URL;
 
 /**
  * Enregistre une connexion. Non bloquant : un échec ne doit jamais

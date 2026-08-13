@@ -4,6 +4,7 @@ const Stripe  = require('stripe');
 const stripe  = new Stripe(process.env.STRIPE_SECRET_KEY);
 const prisma  = require('../lib/prisma');
 const { requireAuth } = require('../lib/auth');
+const { APP_URL } = require('../lib/app-url');
 const { sendUpgradeConfirmed, sendPaymentFailed, sendCancellationConfirmed, sendDowngraded } = require('../services/email-service');
 
 const PRICES = {
@@ -40,14 +41,13 @@ router.post('/stripe/checkout', requireAuth, async (req, res) => {
             await prisma.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
         }
 
-        const appUrl = process.env.APP_URL || 'http://localhost:3000';
         const session = await stripe.checkout.sessions.create({
             customer:              customerId,
             payment_method_types:  ['card'],
             line_items:            [{ price: priceId, quantity: 1 }],
             mode:                  'subscription',
-            success_url:           `${appUrl}/?checkout=success`,
-            cancel_url:            `${appUrl}/?checkout=cancelled`,
+            success_url:           `${APP_URL}/?checkout=success`,
+            cancel_url:            `${APP_URL}/?checkout=cancelled`,
             allow_promotion_codes: true,
         });
 
@@ -64,10 +64,9 @@ router.post('/stripe/portal', requireAuth, async (req, res) => {
         const user = await prisma.user.findUnique({ where: { id: req.user.id } });
         if (!user.stripeCustomerId) return res.status(400).json({ error: 'Aucun abonnement actif' });
 
-        const appUrl = process.env.APP_URL || 'http://localhost:3000';
         const session = await stripe.billingPortal.sessions.create({
             customer:   user.stripeCustomerId,
-            return_url: appUrl,
+            return_url: APP_URL,
         });
         res.json({ url: session.url });
     } catch (err) {

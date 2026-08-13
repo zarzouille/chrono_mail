@@ -78,10 +78,13 @@ route ouverte en production.
 
 ## Jobs planifiés
 
-Trois relances sont envoyées par `node-cron` depuis `backend/lib/scheduler.js`
-(activation à 48h, win-back à 14 jours, réactivation à 30 jours). Au
-démarrage, le serveur logue une ligne `⏱️ [CRON]` par job : leur absence
-signale que `DISABLE_CRON=true` est actif.
+Cinq jobs tournent via `node-cron` depuis `backend/lib/scheduler.js` :
+trois relances (activation à 48h, win-back à 14 jours, réactivation à
+30 jours) et deux purges — impressions et tickets de support — qui
+tiennent les durées de conservation annoncées dans la politique de
+confidentialité. Au démarrage, le serveur logue une ligne `⏱️ [CRON]`
+par job : leur absence signale que `DISABLE_CRON=true` est actif.
 
 Réglages : `DISABLE_CRON`, `CRON_TIMEZONE` (défaut `Europe/Paris`),
-`CRON_ACTIVATION_NUDGE`, `CRON_WINBACK`, `CRON_REACTIVATION`.
+`CRON_ACTIVATION_NUDGE`, `CRON_WINBACK`, `CRON_REACTIVATION`,
+`CRON_PURGE_IMPRESSIONS`, `CRON_PURGE_TICKETS`.

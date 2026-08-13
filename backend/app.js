@@ -7,12 +7,13 @@ const cors       = require('cors');
 const helmet     = require('helmet');
 const rateLimit  = require('express-rate-limit');
 const passport   = require('./lib/passport');
+const { APP_URL } = require('./lib/app-url');
 const app        = express();
 
 // ── Sécurité ──────────────────────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
-    origin: process.env.APP_URL || '*',
+    origin: APP_URL,
     credentials: true,
 }));
 
