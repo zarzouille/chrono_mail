@@ -235,7 +235,13 @@ router.post('/auth/reset-password', async (req, res) => {
         const hashed = await hashPassword(password);
         await prisma.user.update({
             where: { id: user.id },
-            data:  { password: hashed, resetToken: null, resetTokenExpiry: null },
+            data:  {
+                password: hashed, resetToken: null, resetTokenExpiry: null,
+                // On réinitialise son mot de passe précisément quand on
+                // soupçonne qu'un autre y a accès : les jetons déjà émis
+                // doivent tomber avec l'ancien mot de passe.
+                sessionsValidFrom: new Date(),
+            },
         });
 
         res.json({ success: true });

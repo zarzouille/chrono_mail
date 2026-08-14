@@ -31,6 +31,12 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
 
+  // Révocation des JWT déjà émis. Un jeton signé avant cette date est
+  // refusé, même si le compte existe toujours : sans ce champ, un jeton
+  // volé restait valable jusqu'à sept jours après que ses identifiants
+  // aient été invalidés. Null = aucune révocation, tous les jetons valent.
+  sessionsValidFrom DateTime?
+
   stripeCustomerId       String?   @unique
   stripeSubscriptionId   String?   @unique
   stripePriceId          String?

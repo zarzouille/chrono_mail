@@ -78,6 +78,9 @@ async function resolveGoogleUser(profile) {
                 // Un lien de réinitialisation encore valide rouvrirait la porte.
                 resetToken:       null,
                 resetTokenExpiry: null,
+                // Comme un JWT déjà émis, qui survivrait sinon sept jours
+                // à la reprise du compte.
+                sessionsValidFrom: new Date(),
             },
         });
         console.warn(`⚠️  [OAUTH] ${email} — compte non vérifié repris via Google, mot de passe invalidé`);

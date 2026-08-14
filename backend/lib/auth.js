@@ -38,6 +38,25 @@ function verifyToken(token) {
     return jwt.verify(token, JWT_SECRET);
 }
 
+/**
+ * Un jeton signé avant la dernière révocation du compte est-il périmé ?
+ *
+ * La comparaison se fait à la seconde, pas à la milliseconde : `iat` est
+ * un entier de secondes, arrondi vers le bas. Comparer à un instant plus
+ * fin rejetterait un jeton émis dans la même seconde que la révocation —
+ * or c'est le cas courant, pas un cas limite : après avoir réinitialisé
+ * son mot de passe, on se reconnecte dans la foulée.
+ *
+ * En contrepartie, un jeton émis pendant cette même seconde survit à la
+ * révocation. Fenêtre négligeable : dans le scénario visé, celui de
+ * l'attaquant a été émis bien avant.
+ */
+function isTokenRevoked(payload, sessionsValidFrom) {
+    if (!sessionsValidFrom) return false; // aucune révocation sur ce compte
+    if (!payload.iat) return true;        // jeton sans date d'émission : refusé
+    return payload.iat < Math.floor(sessionsValidFrom.getTime() / 1000);
+}
+
 // ── Middleware Express : protège les routes ───────────────────────
 async function requireAuth(req, res, next) {
     const header = req.headers.authorization;
@@ -62,10 +81,19 @@ async function requireAuth(req, res, next) {
         // plutôt que de faire confiance aveuglément au payload signé.
         const user = await prisma.user.findUnique({
             where:  { id: payload.id },
-            select: { id: true, email: true, name: true, plan: true },
+            select: { id: true, email: true, name: true, plan: true, sessionsValidFrom: true },
         });
         if (!user) return res.status(401).json({ error: 'Compte introuvable' });
-        req.user = user; // { id, email, name, plan } à jour
+
+        // Exister ne suffit pas : les identifiants ont pu être invalidés
+        // depuis (reprise du compte via Google, réinitialisation du mot de
+        // passe). Le jeton d'alors ne doit plus ouvrir la porte.
+        if (isTokenRevoked(payload, user.sessionsValidFrom)) {
+            return res.status(401).json({ error: 'Session expirée, reconnectez-vous' });
+        }
+
+        const { sessionsValidFrom, ...safeUser } = user;
+        req.user = safeUser; // { id, email, name, plan } à jour
         next();
     } catch (err) {
         console.error('Erreur requireAuth :', err);
@@ -109,9 +137,14 @@ async function optionalAuth(req, res, next) {
         const payload = verifyToken(header.slice(7));
         const user = await prisma.user.findUnique({
             where:  { id: payload.id },
-            select: { id: true, email: true, name: true, plan: true },
+            select: { id: true, email: true, name: true, plan: true, sessionsValidFrom: true },
         });
-        if (user) req.user = user;
+        // Même règle de révocation qu'ici requireAuth : un jeton périmé ne
+        // doit pas rattacher une demande au compte qu'il a cessé d'ouvrir.
+        if (user && !isTokenRevoked(payload, user.sessionsValidFrom)) {
+            const { sessionsValidFrom, ...safeUser } = user;
+            req.user = safeUser;
+        }
     } catch (err) {
         // Token absent, expiré ou compte supprimé : on continue en anonyme.
     }
@@ -134,6 +167,6 @@ function requirePlan(minPlan) {
 }
 
 module.exports = {
-    hashPassword, verifyPassword, generateToken, verifyToken,
+    hashPassword, verifyPassword, generateToken, verifyToken, isTokenRevoked,
     requireAuth, optionalAuth, requirePlan, requireAdmin, isAdmin,
 };
