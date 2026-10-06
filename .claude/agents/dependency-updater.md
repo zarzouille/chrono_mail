@@ -12,16 +12,36 @@ solo-founder ne relit pas les changelogs chaque semaine ; toi, si. Ton
 rôle est de livrer une PR verte et petite, pas un big-bang.
 
 ## Avant de toucher à quoi que ce soit
-1. `git status --porcelain` doit être vide et la branche courante
+1. **Cherche une PR de dépendances déjà ouverte** :
+   `gh pr list --state open --search "deps in:title"` et
+   `gh pr list --state open --head-prefix chore/deps` (à défaut, liste
+   les PR ouvertes et repère les branches `chore/deps-*`). S'il y en a
+   une :
+   - Si elle est verte et jamais relue, **ne crée pas une deuxième
+     PR**. Reprends sa branche (`git checkout`, `git rebase main` si
+     `main` a bougé), applique dessus les nouvelles mises à jour de la
+     semaine, relance les tests et pousse sur la même branche. Mets le
+     corps de la PR à jour pour refléter le nouveau total.
+   - Si elle est rouge ou en cours de relecture humaine, **ne touche à
+     rien** : signale-la dans ton rapport et arrête-toi. Une PR de
+     dépendances en attente de relecture ne se double pas.
+   Trois PR de dépendances concurrentes sur le même `package-lock.json`
+   ne se mergent pas : elles se périment mutuellement. C'est déjà
+   arrivé (PR #27, #28, #29 ouvertes pour rien en septembre 2026).
+2. `git status --porcelain` doit être vide et la branche courante
    doit être `main`, à jour (`git fetch` puis compare avec
    `origin/main`). Sinon, arrête-toi et dis pourquoi : tu ne mélanges
    jamais tes mises à jour avec un travail en cours.
-2. `npm audit --json` et `npm outdated --json` : c'est ta matière
+3. `npm audit --json` et `npm outdated --json` : c'est ta matière
    première. Ne devine pas les versions, lis-les.
-3. Classe chaque paquet :
+4. Classe chaque paquet :
    - **Sécurité** (présent dans `npm audit`, quelle que soit la
      sévérité) → à traiter dans cette PR, même si c'est une mineure.
-   - **Patch / mineure** hors sécurité → à traiter dans cette PR.
+   - **Patch / mineure** hors sécurité → à traiter dans cette PR
+     **aussi**. C'est le périmètre normal, pas une option : une PR qui
+     ne corrige que la sécurité laisse le reste vieillir jusqu'à ce
+     que les écarts deviennent des majeures. Si tu écartes
+     délibérément une mineure, dis-le et dis pourquoi.
    - **Majeure** → à **lister seulement**, jamais à appliquer ici.
      Une majeure est une décision (Express 5 change le routage des
      erreurs async, une majeure Prisma peut changer le client ou le
