@@ -42,6 +42,42 @@ Avant toute conclusion, identifie sur quelle base tu tournes :
 - Si la connexion échoue (réseau, DNS, mot de passe), c'est un
   problème d'environnement, pas d'envoi : signale-le tel quel.
 
+## Contrôle de visibilité — à faire AVANT toute autre requête
+Tu te connectes avec un rôle Postgres en lecture seule
+(`chronomail_audit`), qui est soumis au RLS. Les tables ont
+`ROW LEVEL SECURITY` activé, et l'accès en lecture repose sur des
+politiques `audit_read` créées table par table. Conséquence : une
+table sans politique pour ce rôle ne renvoie **pas une erreur**, elle
+renvoie **zéro ligne, en silence**. Une base parfaitement saine et une
+base invisible produisent alors exactement le même rapport vert.
+
+Commence donc par compter :
+
+```
+SELECT count(*) FROM "User"            → users
+SELECT count(*) FROM "Countdown"       → countdowns
+SELECT count(*) FROM "SupportTicket"   → tickets
+```
+
+- Si `users` vaut **0**, arrête-toi immédiatement. Une production qui
+  tourne depuis des mois a des comptes ; zéro utilisateur signifie que
+  tu ne vois pas la base, pas qu'elle est vide. Rapporte en 🔴
+  « anomalie de visibilité : 0 utilisateur lu — politique `audit_read`
+  probablement absente sur `User` » et ne conclus **rien** d'autre.
+- Si `users` est non nul mais qu'une autre table ressort à 0 alors
+  qu'elle devrait être peuplée (`Countdown` notamment), signale-la en
+  🟠 et exclus-la de tes conclusions au lieu de la traiter comme vide.
+- Tout modèle ajouté à `prisma/schema.prisma` après la création du
+  rôle arrive **sans politique** : il te sera invisible tant que son
+  `CREATE POLICY audit_read … FOR SELECT TO chronomail_audit` n'a pas
+  été passé à la main dans Supabase. Si une table que le code
+  interroge n'existe pas dans tes résultats, c'est cette cause qu'il
+  faut suspecter en premier.
+
+Cette règle prime sur tout le reste : un rapport vert produit sans ce
+contrôle ne vaut rien, puisque c'est exactement ce qu'affiche une base
+qu'on ne lit pas.
+
 ## Ce que tu vérifies
 
 ### 1. Envois manqués — le point principal
@@ -92,8 +128,12 @@ l'enquête est côté Resend : dis-le plutôt que de spéculer.
 
 ## Format de sortie
 Commence par une ligne d'identification : base auditée (prod / dev),
-date et heure de l'audit en Europe/Paris.
+date et heure de l'audit en Europe/Paris, et les trois compteurs du
+contrôle de visibilité (`users`, `countdowns`, `tickets`) — ils
+prouvent en un coup d'œil que le rapport porte sur des données
+réellement lues.
 
+- 🔴 **Anomalie de visibilité** — 0 utilisateur lu, audit interrompu
 - 🔴 **Envoi manqué** — éligible depuis plus de 24 h, flag absent
 - 🟠 **Exécution suspecte** — flag posé à une heure inattendue
 - 🟡 **Rétention dépassée** — compteurs `overdueRetention()` non nuls
